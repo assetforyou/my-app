@@ -28,7 +28,7 @@ function HomePage() {
       <section className="hero">
         <div className="hero-content">
           <h1>Welcome to Noble Asset Vault</h1>
-          <p>Where Your Assets Are Treasured, Not Just Stored</p>
+          <p>Assets Are Treasured, Not Just Stored</p>
           <a href="#about" className="cta-button">Learn More</a>
         </div>
       </section>
