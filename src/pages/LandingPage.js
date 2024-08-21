@@ -1,11 +1,24 @@
-// src/components/LandingPage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth } from '../firebase';
 import './LandingPage.css';
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
+  const [userName, setUserName] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUserName(user.displayName || 'User');
+      } else {
+        navigate('/login');
+      }
+    });
+
+    return unsubscribe;
+  }, [navigate]);
 
   const handleSignOut = () => {
     // Perform any sign-out logic here, like clearing tokens
@@ -18,11 +31,6 @@ function LandingPage() {
 
   const renderContent = () => {
     switch (selectedAsset) {
-      case 'home':
-        return <div>
-           <h1>Noble Asset Vault</h1>
-           <p>Assets Are Treasured, Not Just Stored.</p> 
-        </div>;
       case 'auto':
         return <div>Manage your Auto Assets</div>;
       case 'cash':
@@ -40,6 +48,10 @@ function LandingPage() {
 
   return (
     <div className="landing-page">
+      <div className="top-bar">
+        <div className="title">Noble Asset Vault</div>
+        <div className="user-name">{userName}</div>
+      </div>
       <div className="sidebar">
         <button onClick={() => setSelectedAsset('home')}>Home</button>
         <div className="dropdown">
@@ -63,5 +75,6 @@ function LandingPage() {
 }
 
 export default LandingPage;
+
 
 

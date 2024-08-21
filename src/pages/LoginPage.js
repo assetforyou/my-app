@@ -1,33 +1,51 @@
-import React from 'react';
-import './LoginPage.css'; // Add CSS for styling the login page
+// src/components/LoginPage.js
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
+import './LoginPage.css';
 
 function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Assuming successful login:
-    navigate('/landing');
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate('/landing');
+    } catch (error) {
+      setError('Failed to log in. Please check your email and password.');
+    }
   };
+
   return (
     <div className="login-page">
-      <div className="login-content">
-        <h1>Welcome to Noble Asset Vault</h1>
-        <p>Please log in to access your account.</p>
-        <form className="login-form" onSubmit={handleLogin}>
-          <label htmlFor="username">Username:</label>
-          <input type="text" id="username" name="username" required />
-
-          <label htmlFor="password">Password:</label>
-          <input type="password" id="password" name="password" required />
-
-          <button type="submit">Log In</button>
-        </form>
-      </div>
+      <h1>Welcome to Noble Asset Vault</h1>
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit">Login</button>
+        {error && <p className="error">{error}</p>}
+      </form>
     </div>
   );
 }
 
 export default LoginPage;
+
 
