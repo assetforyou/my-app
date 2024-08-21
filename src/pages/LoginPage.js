@@ -42,10 +42,15 @@ function LoginPage() {
         <button type="submit">Login</button>
         {error && <p className="error">{error}</p>}
       </form>
+      <div className="signup-link">
+        <p>Don't have an account?</p>
+        <a href="/signup">Sign Up</a>
+      </div>
     </div>
   );
 }
 
 export default LoginPage;
+
 
 

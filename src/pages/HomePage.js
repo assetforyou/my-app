@@ -1,13 +1,17 @@
 // src/pages/HomePage.js
 import React from 'react';
-import './HomePage.css';
-import { useNavigate } from 'react-router-dom'; // Assuming you're using React Router
+import { useNavigate } from 'react-router-dom';
+import './HomePage.css'; // Make sure this file is created with the styles below
 
 function HomePage() {
   const navigate = useNavigate();
 
   const handleLoginClick = () => {
-    navigate('/login'); // Navigate to the login route
+    navigate('/login'); // Navigate to the login page
+  };
+
+  const handleSignUpClick = () => {
+    navigate('/signup'); // Navigate to the sign-up page
   };
 
   return (
@@ -22,7 +26,10 @@ function HomePage() {
             <li><a href="#contact">Contact</a></li>
           </ul>
         </nav>
-        <button className="login-button" onClick={handleLoginClick}>Login</button>
+        <div className="auth-buttons">
+          <button className="login-button" onClick={handleLoginClick}>Login</button>
+          <button className="signup-button" onClick={handleSignUpClick}>Sign Up</button>
+        </div>
       </header>
 
       <section className="hero">
@@ -33,12 +40,12 @@ function HomePage() {
         </div>
       </section>
 
-      <section id="about" className="about">
+      <section id="about" className="section">
         <h2>About Us</h2>
         <p>We are a digital agency specializing in creating stunning and user-friendly websites.</p>
       </section>
 
-      <section id="services" className="services">
+      <section id="services" className="section">
         <h2>Our Services</h2>
         <div className="service-cards">
           <div className="card">
@@ -56,7 +63,7 @@ function HomePage() {
         </div>
       </section>
 
-      <section id="portfolio" className="portfolio">
+      <section id="portfolio" className="section">
         <h2>Our Portfolio</h2>
         <div className="portfolio-grid">
           <div className="portfolio-item">Project 1</div>
@@ -66,7 +73,7 @@ function HomePage() {
         </div>
       </section>
 
-      <section id="contact" className="contact">
+      <section id="contact" className="section">
         <h2>Contact Us</h2>
         <form className="contact-form">
           <input type="text" placeholder="Your Name" />
@@ -77,10 +84,11 @@ function HomePage() {
       </section>
 
       <footer className="footer">
-        <p>© 2024 MySophisticatedSite. All rights reserved.</p>
+        <p>© 2024 Noble Asset Vault. All rights reserved.</p>
       </footer>
     </div>
   );
 }
 
 export default HomePage;
+

@@ -5,13 +5,13 @@ import './LandingPage.css';
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
-  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        setUserName(user.displayName || 'User');
+        setUserEmail(user.email || 'User');
       } else {
         navigate('/login');
       }
@@ -21,8 +21,11 @@ function LandingPage() {
   }, [navigate]);
 
   const handleSignOut = () => {
-    // Perform any sign-out logic here, like clearing tokens
-    navigate('/login');
+    auth.signOut().then(() => {
+      navigate('/login');
+    }).catch((error) => {
+      console.error('Sign out error:', error);
+    });
   };
 
   const handleBackToWebsite = () => {
@@ -50,7 +53,7 @@ function LandingPage() {
     <div className="landing-page">
       <div className="top-bar">
         <div className="title">Noble Asset Vault</div>
-        <div className="user-name">{userName}</div>
+        <div className="user-email">{userEmail}</div>
       </div>
       <div className="sidebar">
         <button onClick={() => setSelectedAsset('home')}>Home</button>
@@ -75,6 +78,7 @@ function LandingPage() {
 }
 
 export default LandingPage;
+
 
 
 

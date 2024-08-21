@@ -1,89 +1,78 @@
 /* src/pages/HomePage.css */
+
 body, html {
   margin: 0;
   padding: 0;
+  font-family: Arial, sans-serif;
   height: 100%;
-  font-family: 'Arial', sans-serif;
-  background-color: #f4f4f4;
+  overflow-x: hidden; /* Prevent horizontal overflow */
 }
 
-.homepage {
+.home-page {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Full height of the viewport */
+  min-height: 100vh; /* Ensure the page takes full height but allows scrolling */
 }
 
 .header {
   display: flex;
   justify-content: space-between;
-  padding: 20px;
-  background-color: #222;
+  padding: 20px 40px;
+  background-color: #003366;
   color: #fff;
   position: fixed;
   top: 0;
   width: 100%;
-  box-sizing: border-box; /* Include padding in width calculation */
+  box-sizing: border-box;
   z-index: 1000;
 }
 
 .logo {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
 }
 
-.nav {
-  display: flex;
-  flex-direction: column; /* Stack items vertically */
-  align-items: flex-end; /* Align items to the right */
-}
-
 .nav ul {
-  list-style-type: none;
+  list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
-  gap: 10px;
-  margin-left: 0; /* Remove any extra margin on the left */  
-  padding-left: 30px; /* Adjust this value to move the buttons further left */
-}
-
-.nav ul li {
-  margin-left: 0; /* Ensure no extra margin on each list item */
+  gap: 20px;
 }
 
 .nav ul li a {
   color: #fff;
   text-decoration: none;
   font-weight: bold;
-  font-size: 20px;
 }
 
-.login-button {
-  background-color: #007bff;
-  color: #fff;
-  padding: 10px 20px;
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.login-button, .signup-button {
+  background-color: #0066cc;
+  color: white;
   border: none;
+  padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
-  font-weight: bold;
-  margin-top: 10px; /* Space above the button */
 }
 
-.login-button:hover {
-  background-color: #0056b3;
+.login-button:hover, .signup-button:hover {
+  background-color: #004d99;
 }
+
 .hero {
-  background: url('../images/space.jpg') no-repeat center center/cover;
-  height: 100vh; /* Full height of the viewport */
+  background: url('../images/1.jpg') no-repeat center center/cover;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  padding-top: 80px; /* Adjust for the header */
-}
-
-.hero-content {
   text-align: center;
+  padding-top: 80px; /* Adjusted for fixed header */
 }
 
 .hero-content h1 {
@@ -97,51 +86,54 @@ body, html {
 }
 
 .cta-button {
-  background-color: #007bff;
-  color: #6a2626;
+  background-color: #0066cc;
+  color: #fff;
   padding: 15px 30px;
   text-decoration: none;
   border-radius: 5px;
   font-weight: bold;
 }
 
-.about, .services, .portfolio, .contact {
-  padding: 60px 20px;
-  background-color: #7cd918;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.cta-button:hover {
+  background-color: #004d99;
 }
 
-h2 {
+.section {
+  padding: 60px 20px;
+  background-color: #f4f4f4;
+  text-align: center;
+  margin-top: 80px; /* Ensure space below fixed header */
+}
+
+.section h2 {
   font-size: 32px;
   margin-bottom: 20px;
 }
 
 .service-cards {
   display: flex;
-  justify-content: flex-start;
-  gap: 30px;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .card {
-  background-color: #f8f8f8;
+  background-color: #fff;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-  flex-basis: 30%;
+  flex: 1 1 calc(33.333% - 40px);
+  margin: 10px;
 }
 
 .portfolio-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
 }
 
 .portfolio-item {
-  background-color: #f8f8f8;
+  background-color: #fff;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
@@ -164,16 +156,20 @@ h2 {
 
 .contact-form button {
   padding: 15px 30px;
-  background-color: #007bff;
+  background-color: #0066cc;
   color: #fff;
   border: none;
   border-radius: 5px;
   font-weight: bold;
 }
 
+.contact-form button:hover {
+  background-color: #004d99;
+}
+
 .footer {
   padding: 20px;
-  background-color: #222;
+  background-color: #003366;
   color: #fff;
   text-align: center;
 }
