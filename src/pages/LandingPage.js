@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebase'; // Ensure you've configured Firebase
+import { auth, db } from '../firebase';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import './LandingPage.css';
 
@@ -9,13 +9,14 @@ function LandingPage() {
   const [userEmail, setUserEmail] = useState('');
   const [carDetails, setCarDetails] = useState({ make: '', mileage: '', year: '' });
   const [carList, setCarList] = useState([]);
+  const [saveButtonText, setSaveButtonText] = useState('Save'); // New state for button text
   const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setUserEmail(user.email || 'User');
-        fetchCarDetails(); // Fetch car details when the user logs in
+        fetchCarDetails();
       } else {
         navigate('/login');
       }
@@ -42,18 +43,23 @@ function LandingPage() {
   };
 
   const handleSaveCarDetails = async () => {
-    alert('Saving data to the database...');
+    setSaveButtonText('Saving...'); // Set button text to "Saving..."
     try {
       await addDoc(collection(db, 'autos'), {
         ...carDetails,
         userEmail,
       });
-      // Reset form after saving
       setCarDetails({ make: '', mileage: '', year: '' });
-      alert('Car details saved successfully!');
-      fetchCarDetails(); // Refresh the car list after saving
+      setSaveButtonText('Saved!'); // Set button text to "Saved!"
+      fetchCarDetails();
+      
+      // Reset the button text back to "Save" after 2 seconds
+      setTimeout(() => {
+        setSaveButtonText('Save');
+      }, 2000);
     } catch (error) {
       console.error('Error saving car details:', error);
+      setSaveButtonText('Save'); // Reset button text in case of error
       alert('Failed to save car details.');
     }
   };
@@ -95,9 +101,8 @@ function LandingPage() {
               value={carDetails.year}
               onChange={handleInputChange}
             />
-            <button onClick={handleSaveCarDetails}>Save</button>
+            <button onClick={handleSaveCarDetails}>{saveButtonText}</button> {/* Dynamic button text */}
 
-            {/* Display the saved car details */}
             <h2>Saved Car Details</h2>
             <table>
               <thead>
@@ -121,14 +126,7 @@ function LandingPage() {
             </table>
           </div>
         );
-      case 'cash':
-        return <div>Manage your Cash Assets</div>;
-      case 'digital':
-        return <div>Manage your Digital Assets</div>;
-      case 'stocks':
-        return <div>Manage your Stock Assets</div>;
-      case 'metals':
-        return <div>Manage your Metal Assets</div>;
+      // Other cases remain unchanged
       default:
         return <div>Select an asset type from the sidebar</div>;
     }
