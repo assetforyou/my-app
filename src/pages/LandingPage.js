@@ -13,6 +13,12 @@ function LandingPage() {
   const [cashDetails, setCashDetails] = useState({ amount: '', currency: 'USD' });
   const [cashList, setCashList] = useState([]);
   const [cashTotal, setCashTotal] = useState(0);
+  const [stockDetails, setStockDetails] = useState({ name: '', number: '', value: '', currency: 'USD' });
+  const [stockList, setStockList] = useState([]);
+  const [stockTotal, setStockTotal] = useState(0);
+  const [metalDetails, setMetalDetails] = useState({ type: '', grams: '', valuePerGram: '', currency: 'USD' });
+  const [metalList, setMetalList] = useState([]);
+  const [metalTotal, setMetalTotal] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,6 +27,8 @@ function LandingPage() {
         setUserEmail(user.email || 'User');
         fetchCarDetails();
         fetchCashDetails();
+        fetchStockDetails();
+        fetchMetalDetails();
       } else {
         navigate('/login');
       }
@@ -41,10 +49,14 @@ function LandingPage() {
     navigate('/');
   };
 
-  const handleInputChange = (e, isCash = false) => {
+  const handleInputChange = (e, isCash = false, isStock = false, isMetal = false) => {
     const { name, value } = e.target;
     if (isCash) {
       setCashDetails({ ...cashDetails, [name]: value });
+    } else if (isStock) {
+      setStockDetails({ ...stockDetails, [name]: value });
+    } else if (isMetal) {
+      setMetalDetails({ ...metalDetails, [name]: value });
     } else {
       setCarDetails({ ...carDetails, [name]: value });
     }
@@ -77,7 +89,6 @@ function LandingPage() {
         const amountInSelectedCurrency = parseFloat(cashDetails.amount);
         const newTotal = cashTotal + amountInSelectedCurrency;
 
-        // Create or update a document to store the cash details and total
         await addDoc(collection(db, 'cash'), {
             amount: amountInSelectedCurrency,
             currency: cashDetails.currency,
@@ -100,6 +111,67 @@ function LandingPage() {
     }
   };
 
+  const handleSaveStockDetails = async () => {
+    setSaveButtonText('Saving...');
+    try {
+      const numberOfStocks = parseFloat(stockDetails.number);
+      const valuePerStock = parseFloat(stockDetails.value);
+      const totalValue = numberOfStocks * valuePerStock;
+
+      await addDoc(collection(db, 'stocks'), {
+        name: stockDetails.name,
+        number: numberOfStocks,
+        value: valuePerStock,
+        total: totalValue,
+        currency: stockDetails.currency,
+        userEmail,
+      });
+
+      setStockTotal(stockTotal + totalValue);
+      setStockDetails({ name: '', number: '', value: '', currency: 'USD' });
+      setSaveButtonText('Saved!');
+      fetchStockDetails();
+
+      setTimeout(() => {
+        setSaveButtonText('Save');
+      }, 2000);
+    } catch (error) {
+      console.error('Error saving stock details:', error);
+      setSaveButtonText('Save');
+      alert('Failed to save stock details.');
+    }
+  };
+
+  const handleSaveMetalDetails = async () => {
+    setSaveButtonText('Saving...');
+    try {
+      const grams = parseFloat(metalDetails.grams);
+      const valuePerGram = parseFloat(metalDetails.valuePerGram);
+      const totalValue = grams * valuePerGram;
+
+      await addDoc(collection(db, 'metals'), {
+        type: metalDetails.type,
+        grams,
+        valuePerGram,
+        total: totalValue,
+        currency: metalDetails.currency,
+        userEmail,
+      });
+
+      setMetalTotal(metalTotal + totalValue);
+      setMetalDetails({ type: '', grams: '', valuePerGram: '', currency: 'USD' });
+      setSaveButtonText('Saved!');
+      fetchMetalDetails();
+
+      setTimeout(() => {
+        setSaveButtonText('Save');
+      }, 2000);
+    } catch (error) {
+      console.error('Error saving metal details:', error);
+      setSaveButtonText('Save');
+      alert('Failed to save metal details.');
+    }
+  };
 
   const fetchCarDetails = async () => {
     try {
@@ -120,6 +192,30 @@ function LandingPage() {
       setCashTotal(total);
     } catch (error) {
       console.error('Error fetching cash details:', error);
+    }
+  };
+
+  const fetchStockDetails = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'stocks'));
+      const stocks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setStockList(stocks);
+      const total = stocks.reduce((sum, stock) => sum + parseFloat(stock.total), 0);
+      setStockTotal(total);
+    } catch (error) {
+      console.error('Error fetching stock details:', error);
+    }
+  };
+
+  const fetchMetalDetails = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'metals'));
+      const metals = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMetalList(metals);
+      const total = metals.reduce((sum, metal) => sum + parseFloat(metal.total), 0);
+      setMetalTotal(total);
+    } catch (error) {
+      console.error('Error fetching metal details:', error);
     }
   };
 
@@ -227,6 +323,150 @@ function LandingPage() {
             <h2>Total in Selected Currency: {cashTotal}</h2>
           </div>
         );
+      case 'stocks':
+        return (
+          <div className="auto-asset-form">
+            <h2>Enter Stock Details</h2>
+            <input
+              type="text"
+              name="name"
+              placeholder="Stock Name"
+              value={stockDetails.name}
+              onChange={(e) => handleInputChange(e, false, true)}
+            />
+            <input
+              type="number"
+              name="number"
+              placeholder="Number of Stocks"
+              value={stockDetails.number}
+              onChange={(e) => handleInputChange(e, false, true)}
+            />
+            <input
+              type="number"
+              name="value"
+              placeholder="Value per Stock"
+              value={stockDetails.value}
+              onChange={(e) => handleInputChange(e, false, true)}
+            />
+            <select
+              name="currency"
+              value={stockDetails.currency}
+              onChange={(e) => handleInputChange(e, false, true)}
+            >
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+              <option value="AUD">AUD</option>
+              <option value="CAD">CAD</option>
+              <option value="CHF">CHF</option>
+              <option value="CNY">CNY</option>
+              <option value="INR">INR</option>
+              {/* Add more currencies as needed */}
+            </select>
+            <button onClick={handleSaveStockDetails}>{saveButtonText}</button>
+
+            <h2>Saved Stock Details</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Stock Name</th>
+                  <th>Number of Stocks</th>
+                  <th>Value per Stock</th>
+                  <th>Total Value</th>
+                  <th>Currency</th>
+                  <th>User</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stockList.map(stock => (
+                  <tr key={stock.id}>
+                    <td>{stock.name}</td>
+                    <td>{stock.number}</td>
+                    <td>{stock.value}</td>
+                    <td>{stock.total}</td>
+                    <td>{stock.currency}</td>
+                    <td>{stock.userEmail}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <h2>Total Value of Stocks: {stockTotal}</h2>
+          </div>
+        );
+      case 'metals':
+        return (
+          <div className="auto-asset-form">
+            <h2>Enter Metal Details</h2>
+            <input
+              type="text"
+              name="type"
+              placeholder="Type of Metal"
+              value={metalDetails.type}
+              onChange={(e) => handleInputChange(e, false, false, true)}
+            />
+            <input
+              type="number"
+              name="grams"
+              placeholder="Grams"
+              value={metalDetails.grams}
+              onChange={(e) => handleInputChange(e, false, false, true)}
+            />
+            <input
+              type="number"
+              name="valuePerGram"
+              placeholder="Value per Gram"
+              value={metalDetails.valuePerGram}
+              onChange={(e) => handleInputChange(e, false, false, true)}
+            />
+            <select
+              name="currency"
+              value={metalDetails.currency}
+              onChange={(e) => handleInputChange(e, false, false, true)}
+            >
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+              <option value="AUD">AUD</option>
+              <option value="CAD">CAD</option>
+              <option value="CHF">CHF</option>
+              <option value="CNY">CNY</option>
+              <option value="INR">INR</option>
+              {/* Add more currencies as needed */}
+            </select>
+            <button onClick={handleSaveMetalDetails}>{saveButtonText}</button>
+
+            <h2>Saved Metal Details</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Type of Metal</th>
+                  <th>Grams</th>
+                  <th>Value per Gram</th>
+                  <th>Total Value</th>
+                  <th>Currency</th>
+                  <th>User</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metalList.map(metal => (
+                  <tr key={metal.id}>
+                    <td>{metal.type}</td>
+                    <td>{metal.grams}</td>
+                    <td>{metal.valuePerGram}</td>
+                    <td>{metal.total}</td>
+                    <td>{metal.currency}</td>
+                    <td>{metal.userEmail}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <h2>Total Value of Metals: {metalTotal}</h2>
+          </div>
+        );
       default:
         return <div>Select an asset type from the sidebar</div>;
     }
@@ -245,7 +485,6 @@ function LandingPage() {
           <div className="dropdown-content">
             <button onClick={() => setSelectedAsset('auto')}>Auto</button>
             <button onClick={() => setSelectedAsset('cash')}>Cash</button>
-            <button onClick={() => setSelectedAsset('digital')}>Digital</button>
             <button onClick={() => setSelectedAsset('stocks')}>Stocks</button>
             <button onClick={() => setSelectedAsset('metals')}>Metals</button>
           </div>
@@ -261,6 +500,3 @@ function LandingPage() {
 }
 
 export default LandingPage;
-
-
-
