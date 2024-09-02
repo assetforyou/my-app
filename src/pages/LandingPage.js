@@ -172,7 +172,7 @@ function LandingPage() {
       alert('Failed to save metal details.');
     }
   };
-
+  
   const fetchCarDetails = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'autos'));
@@ -467,6 +467,28 @@ function LandingPage() {
             <h2>Total Value of Metals: {metalTotal}</h2>
           </div>
         );
+      case 'home':
+      // Modern summary section
+      return (
+        <div className="summary-container">
+          <div className="summary-box">
+            <h3>Cash</h3>
+            <p>Total Cash: {cashTotal}</p>
+          </div>
+          <div className="summary-box">
+            <h3>Stocks</h3>
+            <p>Total Value of Stocks: {stockTotal}</p>
+          </div>
+          <div className="summary-box">
+            <h3>Metals</h3>
+            <p>Total Value of Metals: {metalTotal}</p>
+          </div>
+          <div className="summary-box">
+            <h3>Autos</h3>
+            <p>Total Autos: {carList.length}</p>
+          </div>
+        </div>
+      );
       default:
         return <div>Select an asset type from the sidebar</div>;
     }
@@ -493,7 +515,13 @@ function LandingPage() {
         <button className="back-to-website-btn" onClick={handleBackToWebsite}>Back to Website</button>
       </div>
       <div className="content">
-        {renderContent()}
+      {selectedAsset === 'home' && (
+        <div className="home-summary">
+          <h2 className="summary-heading">Asset Summary</h2>
+          {renderContent()}
+        </div>
+      )}
+      {selectedAsset !== 'home' && renderContent()}
       </div>
     </div>
   );
