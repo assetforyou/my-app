@@ -9,7 +9,10 @@ function LandingPage() {
   const [userEmail, setUserEmail] = useState('');
   const [carDetails, setCarDetails] = useState({ make: '', mileage: '', year: '' });
   const [carList, setCarList] = useState([]);
-  const [saveButtonText, setSaveButtonText] = useState('Save'); // New state for button text
+  const [saveButtonText, setSaveButtonText] = useState('Save');
+  const [cashDetails, setCashDetails] = useState({ amount: '', currency: 'USD' });
+  const [cashList, setCashList] = useState([]);
+  const [cashTotal, setCashTotal] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,6 +20,7 @@ function LandingPage() {
       if (user) {
         setUserEmail(user.email || 'User');
         fetchCarDetails();
+        fetchCashDetails();
       } else {
         navigate('/login');
       }
@@ -37,32 +41,65 @@ function LandingPage() {
     navigate('/');
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e, isCash = false) => {
     const { name, value } = e.target;
-    setCarDetails({ ...carDetails, [name]: value });
+    if (isCash) {
+      setCashDetails({ ...cashDetails, [name]: value });
+    } else {
+      setCarDetails({ ...carDetails, [name]: value });
+    }
   };
 
   const handleSaveCarDetails = async () => {
-    setSaveButtonText('Saving...'); // Set button text to "Saving..."
+    setSaveButtonText('Saving...');
     try {
       await addDoc(collection(db, 'autos'), {
         ...carDetails,
         userEmail,
       });
       setCarDetails({ make: '', mileage: '', year: '' });
-      setSaveButtonText('Saved!'); // Set button text to "Saved!"
+      setSaveButtonText('Saved!');
       fetchCarDetails();
-      
-      // Reset the button text back to "Save" after 2 seconds
+
       setTimeout(() => {
         setSaveButtonText('Save');
       }, 2000);
     } catch (error) {
       console.error('Error saving car details:', error);
-      setSaveButtonText('Save'); // Reset button text in case of error
+      setSaveButtonText('Save');
       alert('Failed to save car details.');
     }
   };
+
+  const handleSaveCashDetails = async () => {
+    setSaveButtonText('Saving...');
+    try {
+        const amountInSelectedCurrency = parseFloat(cashDetails.amount);
+        const newTotal = cashTotal + amountInSelectedCurrency;
+
+        // Create or update a document to store the cash details and total
+        await addDoc(collection(db, 'cash'), {
+            amount: amountInSelectedCurrency,
+            currency: cashDetails.currency,
+            total: newTotal,
+            userEmail,
+        });
+
+        setCashTotal(newTotal);
+        setCashDetails({ amount: '', currency: 'USD' });
+        setSaveButtonText('Saved!');
+        fetchCashDetails();
+
+        setTimeout(() => {
+            setSaveButtonText('Save');
+        }, 2000);
+    } catch (error) {
+        console.error('Error saving cash details:', error);
+        setSaveButtonText('Save');
+        alert('Failed to save cash details.');
+    }
+  };
+
 
   const fetchCarDetails = async () => {
     try {
@@ -71,6 +108,18 @@ function LandingPage() {
       setCarList(cars);
     } catch (error) {
       console.error('Error fetching car details:', error);
+    }
+  };
+
+  const fetchCashDetails = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'cash'));
+      const cashEntries = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCashList(cashEntries);
+      const total = cashEntries.reduce((sum, entry) => sum + parseFloat(entry.amount), 0);
+      setCashTotal(total);
+    } catch (error) {
+      console.error('Error fetching cash details:', error);
     }
   };
 
@@ -101,7 +150,7 @@ function LandingPage() {
               value={carDetails.year}
               onChange={handleInputChange}
             />
-            <button onClick={handleSaveCarDetails}>{saveButtonText}</button> {/* Dynamic button text */}
+            <button onClick={handleSaveCarDetails}>{saveButtonText}</button>
 
             <h2>Saved Car Details</h2>
             <table>
@@ -126,7 +175,58 @@ function LandingPage() {
             </table>
           </div>
         );
-      // Other cases remain unchanged
+      case 'cash':
+        return (
+          <div className="auto-asset-form">
+            <h2>Enter Cash Details</h2>
+            <input
+              type="number"
+              name="amount"
+              placeholder="Amount"
+              value={cashDetails.amount}
+              onChange={(e) => handleInputChange(e, true)}
+            />
+            <select
+              name="currency"
+              value={cashDetails.currency}
+              onChange={(e) => handleInputChange(e, true)}
+            >
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+              <option value="AUD">AUD</option>
+              <option value="CAD">CAD</option>
+              <option value="CHF">CHF</option>
+              <option value="CNY">CNY</option>
+              <option value="INR">INR</option>
+              {/* Add more currencies as needed */}
+            </select>
+            <button onClick={handleSaveCashDetails}>{saveButtonText}</button>
+
+            <h2>Saved Cash Details</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Amount</th>
+                  <th>Currency</th>
+                  <th>User</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cashList.map(cash => (
+                  <tr key={cash.id}>
+                    <td>{cash.amount}</td>
+                    <td>{cash.currency}</td>
+                    <td>{cash.userEmail}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <h2>Total in Selected Currency: {cashTotal}</h2>
+          </div>
+        );
       default:
         return <div>Select an asset type from the sidebar</div>;
     }
