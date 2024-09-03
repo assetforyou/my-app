@@ -7,8 +7,9 @@ import './LandingPage.css';
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
   const [userEmail, setUserEmail] = useState('');
-  const [carDetails, setCarDetails] = useState({ make: '', mileage: '', year: '' });
+  const [carDetails, setCarDetails] = useState({ make: '', mileage: '', year: '',value: '', currency: 'USD' });
   const [carList, setCarList] = useState([]);
+  const [autoTotal, setAutoTotal] = useState(0);
   const [saveButtonText, setSaveButtonText] = useState('Save');
   const [cashDetails, setCashDetails] = useState({ amount: '', currency: 'USD' });
   const [cashList, setCashList] = useState([]);
@@ -65,13 +66,19 @@ function LandingPage() {
   const handleSaveCarDetails = async () => {
     setSaveButtonText('Saving...');
     try {
-      await addDoc(collection(db, 'autos'), {
-        ...carDetails,
-        userEmail,
-      });
-      setCarDetails({ make: '', mileage: '', year: '' });
-      setSaveButtonText('Saved!');
-      fetchCarDetails();
+        const carValue = parseFloat(carDetails.value);
+        const newTotal = autoTotal + carValue;
+
+        await addDoc(collection(db, 'autos'), {
+            ...carDetails,
+            userEmail,
+            total: newTotal,  // Save the individual car value
+        });
+
+        setAutoTotal(newTotal);  // Update the state with the new total
+        setCarDetails({ make: '', mileage: '', year: '', value: '', currency: 'USD' });
+        setSaveButtonText('Saved!');
+        fetchCarDetails();  // Fetch the latest car details including the total
 
       setTimeout(() => {
         setSaveButtonText('Save');
@@ -246,6 +253,29 @@ function LandingPage() {
               value={carDetails.year}
               onChange={handleInputChange}
             />
+            <input
+              type="number"
+              name="value"
+              placeholder="Value"
+              value={carDetails.value}
+              onChange={handleInputChange}
+            />
+            <select
+              name="currency"
+              value={carDetails.currency}
+              onChange={handleInputChange}
+            >
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+              <option value="AUD">AUD</option>
+              <option value="CAD">CAD</option>
+              <option value="CHF">CHF</option>
+              <option value="CNY">CNY</option>
+              <option value="INR">INR</option>
+              {/* Add more currency options as needed */}
+            </select>
             <button onClick={handleSaveCarDetails}>{saveButtonText}</button>
 
             <h2>Saved Car Details</h2>
@@ -255,6 +285,8 @@ function LandingPage() {
                   <th>Make</th>
                   <th>Mileage</th>
                   <th>Year</th>
+                  <th>Value</th>
+                  <th>Currency</th>
                   <th>User</th>
                 </tr>
               </thead>
@@ -264,11 +296,15 @@ function LandingPage() {
                     <td>{car.make}</td>
                     <td>{car.mileage}</td>
                     <td>{car.year}</td>
+                    <td>{car.value}</td>
+                    <td>{car.currency}</td>
                     <td>{car.userEmail}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
+            <h2>Total in Selected Currency: {autoTotal}</h2>
           </div>
         );
       case 'cash':
@@ -486,6 +522,7 @@ function LandingPage() {
           <div className="summary-box">
             <h3>Autos</h3>
             <p>Total Autos: {carList.length}</p>
+            <p>Total Value of Autos: {autoTotal}</p>
           </div>
         </div>
       );
