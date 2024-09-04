@@ -25,6 +25,21 @@ function LandingPage() {
   const [metalDetails, setMetalDetails] = useState({ type: '', grams: '', valuePerGram: '', currency: 'USD' });
   const [metalList, setMetalList] = useState([]);
   const [metalTotal, setMetalTotal] = useState(0);
+  const [propertyDetails, setPropertyDetails] = useState({
+    address: '',
+    bedrooms: '',
+    bathrooms: '',
+    basement: '',
+    price: '',
+    mortgagePayment: '',
+    interestRate: '',
+    utilities: '',
+    otherExpenses: '',
+    currency: 'USD'
+  });
+  const [propertyList, setPropertyList] = useState([]);
+  const [propertyTotalPrice, setPropertyTotalPrice] = useState(0);
+  const [propertyTotalMonthlyCost, setPropertyTotalMonthlyCost] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,6 +50,7 @@ function LandingPage() {
         fetchCashDetails();
         fetchStockDetails();
         fetchMetalDetails();
+        fetchPropertyDetails();
       } else {
         navigate('/login');
       }
@@ -55,7 +71,7 @@ function LandingPage() {
     navigate('/');
   };
 
-  const handleInputChange = (e, isCash = false, isStock = false, isMetal = false) => {
+  const handleInputChange = (e, isCash = false, isStock = false, isMetal = false, isProperty = false) => {
     const { name, value } = e.target;
     if (isCash) {
       setCashDetails({ ...cashDetails, [name]: value });
@@ -63,6 +79,8 @@ function LandingPage() {
       setStockDetails({ ...stockDetails, [name]: value });
     } else if (isMetal) {
       setMetalDetails({ ...metalDetails, [name]: value });
+    } else if (isProperty) {
+      setPropertyDetails({ ...propertyDetails, [name]: value });
     } else {
       setCarDetails({ ...carDetails, [name]: value });
     }
@@ -195,6 +213,50 @@ function LandingPage() {
     }
   };
 
+  const handleSavePropertyDetails = async () => {
+    setSaveButtonText('Saving...');
+    try {
+      const mortgagePayment = parseFloat(propertyDetails.mortgagePayment);
+      const utilities = parseFloat(propertyDetails.utilities);
+      const otherExpenses = parseFloat(propertyDetails.otherExpenses);
+      const totalMonthlyCost = mortgagePayment + utilities + otherExpenses;
+
+      const price = parseFloat(propertyDetails.price);
+
+      await addDoc(collection(db, 'properties'), {
+        ...propertyDetails,
+        userEmail,
+        totalMonthlyCost,
+        price,
+      });
+
+      setPropertyTotalPrice(propertyTotalPrice + price);
+      setPropertyTotalMonthlyCost(propertyTotalMonthlyCost + totalMonthlyCost);
+      setPropertyDetails({
+        address: '',
+        bedrooms: '',
+        bathrooms: '',
+        basement: '',
+        price: '',
+        mortgagePayment: '',
+        interestRate: '',
+        utilities: '',
+        otherExpenses: '',
+        currency: 'USD'
+      });
+      setSaveButtonText('Saved!');
+      fetchPropertyDetails();
+
+      setTimeout(() => {
+        setSaveButtonText('Save');
+      }, 2000);
+    } catch (error) {
+      console.error('Error saving property details:', error);
+      setSaveButtonText('Save');
+      alert('Failed to save property details.');
+    }
+  };
+
   const fetchCarDetails = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'autos'));
@@ -241,6 +303,22 @@ function LandingPage() {
       setMetalTotal(total);
     } catch (error) {
       console.error('Error fetching metal details:', error);
+    }
+  };
+
+  const fetchPropertyDetails = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'properties'));
+      const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPropertyList(properties);
+
+      const totalPrice = properties.reduce((sum, property) => sum + parseFloat(property.price || 0), 0);
+      const totalMonthlyCost = properties.reduce((sum, property) => sum + parseFloat(property.totalMonthlyCost || 0), 0);
+
+      setPropertyTotalPrice(totalPrice);
+      setPropertyTotalMonthlyCost(totalMonthlyCost);
+    } catch (error) {
+      console.error('Error fetching property details:', error);
     }
   };
 
@@ -534,6 +612,133 @@ function LandingPage() {
             <h2>Total Value of Metals: {metalTotal}</h2>
           </div>
         );
+      case 'property':
+        return (
+          <div className="property-asset-form">
+            <h2>Enter Property Details</h2>
+            <input
+              type="text"
+              name="address"
+              placeholder="Address"
+              value={propertyDetails.address}
+              onChange={(e) => handleInputChange(e, false, false, false, true)}
+            />
+            <input
+              type="number"
+              name="bedrooms"
+              placeholder="Number of Bedrooms"
+              value={propertyDetails.bedrooms}
+              onChange={(e) => handleInputChange(e, false, false, false, true)}
+            />
+            <input
+              type="number"
+              name="bathrooms"
+              placeholder="Number of Bathrooms"
+              value={propertyDetails.bathrooms}
+              onChange={(e) => handleInputChange(e, false, false, false, true)}
+            />
+            <input
+              type="text"
+              name="basement"
+              placeholder="Basement Type"
+              value={propertyDetails.basement}
+              onChange={(e) => handleInputChange(e, false, false, false, true)}
+            />
+            <input
+              type="number"
+              name="price"
+              placeholder="Price"
+              value={propertyDetails.price}
+              onChange={(e) => handleInputChange(e, false, false, false, true)}
+            />
+            <input
+              type="number"
+              name="mortgagePayment"
+              placeholder="Mortgage Payment"
+              value={propertyDetails.mortgagePayment}
+              onChange={(e) => handleInputChange(e, false, false, false, true)}
+            />
+            <input
+              type="number"
+              name="interestRate"
+              placeholder="Interest Rate"
+              value={propertyDetails.interestRate}
+              onChange={(e) => handleInputChange(e, false, false, false, true)}
+            />
+            <input
+              type="number"
+              name="utilities"
+              placeholder="Utilities"
+              value={propertyDetails.utilities}
+              onChange={(e) => handleInputChange(e, false, false, false, true)}
+            />
+            <input
+              type="number"
+              name="otherExpenses"
+              placeholder="Other Expenses"
+              value={propertyDetails.otherExpenses}
+              onChange={(e) => handleInputChange(e, false, false, false, true)}
+            />
+            <select
+              name="currency"
+              value={propertyDetails.currency}
+              onChange={(e) => handleInputChange(e, false, false, false, true)}
+            >
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+              <option value="AUD">AUD</option>
+              <option value="CAD">CAD</option>
+              <option value="CHF">CHF</option>
+              <option value="CNY">CNY</option>
+              <option value="INR">INR</option>
+              {/* Add more currencies as needed */}
+            </select>
+            <button onClick={handleSavePropertyDetails}>{saveButtonText}</button>
+
+            <h2>Saved Property Details</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Address</th>
+                  <th>Bedrooms</th>
+                  <th>Bathrooms</th>
+                  <th>Basement Type</th>
+                  <th>Price</th>
+                  <th>Mortgage Payment</th>
+                  <th>Interest Rate</th>
+                  <th>Utilities</th>
+                  <th>Other Expenses</th>
+                  <th>Total Monthly Cost</th>
+                  <th>Currency</th>
+                  <th>User</th>
+                </tr>
+              </thead>
+              <tbody>
+                {propertyList.map(property => (
+                  <tr key={property.id}>
+                    <td>{property.address}</td>
+                    <td>{property.bedrooms}</td>
+                    <td>{property.bathrooms}</td>
+                    <td>{property.basement}</td>
+                    <td>{property.price}</td>
+                    <td>{property.mortgagePayment}</td>
+                    <td>{property.interestRate}</td>
+                    <td>{property.utilities}</td>
+                    <td>{property.otherExpenses}</td>
+                    <td>{property.totalMonthlyCost}</td>
+                    <td>{property.currency}</td>
+                    <td>{property.userEmail}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <h2>Total Property Value: {propertyTotalPrice}</h2>
+            <h2>Total Monthly Cost: {propertyTotalMonthlyCost}</h2>
+          </div>
+        );
       case 'home':
         return (
           <div className="summary-container">
@@ -553,6 +758,11 @@ function LandingPage() {
               <h3>Autos</h3>
               <p>Total Autos: {carList.length}</p>
               <p>Total Value of Autos: {autoTotal}</p>
+            </div>
+            <div className="summary-box">
+              <h3>Properties</h3>
+              <p>Total Property Value: {propertyTotalPrice}</p>
+              <p>Total Monthly Cost: {propertyTotalMonthlyCost}</p>
             </div>
           </div>
         );
@@ -576,6 +786,7 @@ function LandingPage() {
             <button onClick={() => setSelectedAsset('cash')}>Cash</button>
             <button onClick={() => setSelectedAsset('stocks')}>Stocks</button>
             <button onClick={() => setSelectedAsset('metals')}>Metals</button>
+            <button onClick={() => setSelectedAsset('property')}>Property</button>
           </div>
         </div>
         <button className="sign-out-btn" onClick={handleSignOut}>Sign Out</button>
