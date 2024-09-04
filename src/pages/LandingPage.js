@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
+import axios from 'axios';
 import './LandingPage.css';
+
+const ALPHA_VANTAGE_API_KEY = 'your_alpha_vantage_api_key';  // Replace with your actual API key
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
@@ -17,6 +20,8 @@ function LandingPage() {
   const [stockDetails, setStockDetails] = useState({ name: '', number: '', value: '', currency: 'USD' });
   const [stockList, setStockList] = useState([]);
   const [stockTotal, setStockTotal] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   const [metalDetails, setMetalDetails] = useState({ type: '', grams: '', valuePerGram: '', currency: 'USD' });
   const [metalList, setMetalList] = useState([]);
   const [metalTotal, setMetalTotal] = useState(0);
@@ -63,6 +68,47 @@ function LandingPage() {
     }
   };
 
+  const fetchLiveStockPrice = async (symbol) => {
+    try {
+      const response = await axios.get(
+        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
+      );
+      const price = parseFloat(response.data['Global Quote']['05. price']);
+      return price;
+    } catch (error) {
+      console.error('Error fetching stock price:', error);
+      return null;
+    }
+  };
+
+  const handleSaveStockDetails = async () => {
+    const livePrice = await fetchLiveStockPrice(stockDetails.name);
+    if (livePrice) {
+      const numberOfStocks = parseFloat(stockDetails.number);
+      const totalValue = numberOfStocks * livePrice;
+
+      try {
+        await addDoc(collection(db, 'stocks'), {
+          name: stockDetails.name,
+          number: numberOfStocks,
+          value: livePrice,
+          total: totalValue,
+          currency: stockDetails.currency,
+          userEmail,
+        });
+
+        setStockTotal(stockTotal + totalValue);
+        setStockDetails({ name: '', number: '', value: '', currency: 'USD' });
+        fetchStockDetails();
+      } catch (error) {
+        console.error('Error saving stock details:', error);
+        alert('Failed to save stock details.');
+      }
+    } else {
+      alert('Failed to fetch live stock price.');
+    }
+  };
+
   const handleSaveCarDetails = async () => {
     setSaveButtonText('Saving...');
     try {
@@ -72,14 +118,13 @@ function LandingPage() {
       await addDoc(collection(db, 'autos'), {
         ...carDetails,
         userEmail,
-        value: carValue, // Ensure value is stored as a number
+        value: carValue,
       });
 
-      // Update local state and fetch the latest details
       setAutoTotal(newTotal);
       setCarDetails({ make: '', mileage: '', year: '', value: '', currency: 'USD' });
       setSaveButtonText('Saved!');
-      fetchCarDetails(); // Fetch the latest car details including the total
+      fetchCarDetails();
 
       setTimeout(() => {
         setSaveButtonText('Save');
@@ -116,37 +161,6 @@ function LandingPage() {
       console.error('Error saving cash details:', error);
       setSaveButtonText('Save');
       alert('Failed to save cash details.');
-    }
-  };
-
-  const handleSaveStockDetails = async () => {
-    setSaveButtonText('Saving...');
-    try {
-      const numberOfStocks = parseFloat(stockDetails.number);
-      const valuePerStock = parseFloat(stockDetails.value);
-      const totalValue = numberOfStocks * valuePerStock;
-
-      await addDoc(collection(db, 'stocks'), {
-        name: stockDetails.name,
-        number: numberOfStocks,
-        value: valuePerStock,
-        total: totalValue,
-        currency: stockDetails.currency,
-        userEmail,
-      });
-
-      setStockTotal(stockTotal + totalValue);
-      setStockDetails({ name: '', number: '', value: '', currency: 'USD' });
-      setSaveButtonText('Saved!');
-      fetchStockDetails();
-
-      setTimeout(() => {
-        setSaveButtonText('Save');
-      }, 2000);
-    } catch (error) {
-      console.error('Error saving stock details:', error);
-      setSaveButtonText('Save');
-      alert('Failed to save stock details.');
     }
   };
 
@@ -187,9 +201,8 @@ function LandingPage() {
       const cars = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setCarList(cars);
 
-      // Calculate the total value of all cars
       const total = cars.reduce((sum, car) => sum + parseFloat(car.value || 0), 0);
-      setAutoTotal(total); // Update the state with the new total
+      setAutoTotal(total);
     } catch (error) {
       console.error('Error fetching car details:', error);
     }
@@ -229,6 +242,32 @@ function LandingPage() {
     } catch (error) {
       console.error('Error fetching metal details:', error);
     }
+  };
+
+  const handleSearchStocks = async () => {
+    try {
+      const response = await axios.get(
+        `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${searchQuery}&apikey=${ALPHA_VANTAGE_API_KEY}`
+      );
+      setSearchResults(response.data.bestMatches || []);
+    } catch (error) {
+      console.error('Error searching stocks:', error);
+    }
+  };
+
+  const renderStockSearchResults = () => {
+    return (
+      <div>
+        <h2>Search Results</h2>
+        <ul>
+          {searchResults.map((result, index) => (
+            <li key={index}>
+              {result['1. symbol']} - {result['2. name']}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
   };
 
   const renderContent = () => {
@@ -371,7 +410,7 @@ function LandingPage() {
             <input
               type="text"
               name="name"
-              placeholder="Stock Name"
+              placeholder="Stock Symbol"
               value={stockDetails.name}
               onChange={(e) => handleInputChange(e, false, true)}
             />
@@ -382,30 +421,17 @@ function LandingPage() {
               value={stockDetails.number}
               onChange={(e) => handleInputChange(e, false, true)}
             />
+            <button onClick={handleSaveStockDetails}>Save</button>
+
+            <h2>Search for Stocks</h2>
             <input
-              type="number"
-              name="value"
-              placeholder="Value per Stock"
-              value={stockDetails.value}
-              onChange={(e) => handleInputChange(e, false, true)}
+              type="text"
+              placeholder="Search Stocks"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <select
-              name="currency"
-              value={stockDetails.currency}
-              onChange={(e) => handleInputChange(e, false, true)}
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="JPY">JPY</option>
-              <option value="AUD">AUD</option>
-              <option value="CAD">CAD</option>
-              <option value="CHF">CHF</option>
-              <option value="CNY">CNY</option>
-              <option value="INR">INR</option>
-              {/* Add more currencies as needed */}
-            </select>
-            <button onClick={handleSaveStockDetails}>{saveButtonText}</button>
+            <button onClick={handleSearchStocks}>Search</button>
+            {renderStockSearchResults()}
 
             <h2>Saved Stock Details</h2>
             <table>
