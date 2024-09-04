@@ -7,7 +7,7 @@ import './LandingPage.css';
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
   const [userEmail, setUserEmail] = useState('');
-  const [carDetails, setCarDetails] = useState({ make: '', mileage: '', year: '',value: '', currency: 'USD' });
+  const [carDetails, setCarDetails] = useState({ make: '', mileage: '', year: '', value: '', currency: 'USD' });
   const [carList, setCarList] = useState([]);
   const [autoTotal, setAutoTotal] = useState(0);
   const [saveButtonText, setSaveButtonText] = useState('Save');
@@ -66,19 +66,20 @@ function LandingPage() {
   const handleSaveCarDetails = async () => {
     setSaveButtonText('Saving...');
     try {
-        const carValue = parseFloat(carDetails.value);
-        const newTotal = autoTotal + carValue;
+      const carValue = parseFloat(carDetails.value);
+      const newTotal = autoTotal + carValue;
 
-        await addDoc(collection(db, 'autos'), {
-            ...carDetails,
-            userEmail,
-            total: newTotal,  // Save the individual car value
-        });
+      await addDoc(collection(db, 'autos'), {
+        ...carDetails,
+        userEmail,
+        value: carValue, // Ensure value is stored as a number
+      });
 
-        setAutoTotal(newTotal);  // Update the state with the new total
-        setCarDetails({ make: '', mileage: '', year: '', value: '', currency: 'USD' });
-        setSaveButtonText('Saved!');
-        fetchCarDetails();  // Fetch the latest car details including the total
+      // Update local state and fetch the latest details
+      setAutoTotal(newTotal);
+      setCarDetails({ make: '', mileage: '', year: '', value: '', currency: 'USD' });
+      setSaveButtonText('Saved!');
+      fetchCarDetails(); // Fetch the latest car details including the total
 
       setTimeout(() => {
         setSaveButtonText('Save');
@@ -93,28 +94,28 @@ function LandingPage() {
   const handleSaveCashDetails = async () => {
     setSaveButtonText('Saving...');
     try {
-        const amountInSelectedCurrency = parseFloat(cashDetails.amount);
-        const newTotal = cashTotal + amountInSelectedCurrency;
+      const amountInSelectedCurrency = parseFloat(cashDetails.amount);
+      const newTotal = cashTotal + amountInSelectedCurrency;
 
-        await addDoc(collection(db, 'cash'), {
-            amount: amountInSelectedCurrency,
-            currency: cashDetails.currency,
-            total: newTotal,
-            userEmail,
-        });
+      await addDoc(collection(db, 'cash'), {
+        amount: amountInSelectedCurrency,
+        currency: cashDetails.currency,
+        total: newTotal,
+        userEmail,
+      });
 
-        setCashTotal(newTotal);
-        setCashDetails({ amount: '', currency: 'USD' });
-        setSaveButtonText('Saved!');
-        fetchCashDetails();
+      setCashTotal(newTotal);
+      setCashDetails({ amount: '', currency: 'USD' });
+      setSaveButtonText('Saved!');
+      fetchCashDetails();
 
-        setTimeout(() => {
-            setSaveButtonText('Save');
-        }, 2000);
-    } catch (error) {
-        console.error('Error saving cash details:', error);
+      setTimeout(() => {
         setSaveButtonText('Save');
-        alert('Failed to save cash details.');
+      }, 2000);
+    } catch (error) {
+      console.error('Error saving cash details:', error);
+      setSaveButtonText('Save');
+      alert('Failed to save cash details.');
     }
   };
 
@@ -179,12 +180,16 @@ function LandingPage() {
       alert('Failed to save metal details.');
     }
   };
-  
+
   const fetchCarDetails = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'autos'));
       const cars = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setCarList(cars);
+
+      // Calculate the total value of all cars
+      const total = cars.reduce((sum, car) => sum + parseFloat(car.value || 0), 0);
+      setAutoTotal(total); // Update the state with the new total
     } catch (error) {
       console.error('Error fetching car details:', error);
     }
@@ -304,7 +309,7 @@ function LandingPage() {
               </tbody>
             </table>
 
-            <h2>Total in Selected Currency: {autoTotal}</h2>
+            <h2>Total Value of Autos: {autoTotal}</h2>
           </div>
         );
       case 'cash':
@@ -504,28 +509,27 @@ function LandingPage() {
           </div>
         );
       case 'home':
-      // Modern summary section
-      return (
-        <div className="summary-container">
-          <div className="summary-box">
-            <h3>Cash</h3>
-            <p>Total Cash: {cashTotal}</p>
+        return (
+          <div className="summary-container">
+            <div className="summary-box">
+              <h3>Cash</h3>
+              <p>Total Cash: {cashTotal}</p>
+            </div>
+            <div className="summary-box">
+              <h3>Stocks</h3>
+              <p>Total Value of Stocks: {stockTotal}</p>
+            </div>
+            <div className="summary-box">
+              <h3>Metals</h3>
+              <p>Total Value of Metals: {metalTotal}</p>
+            </div>
+            <div className="summary-box">
+              <h3>Autos</h3>
+              <p>Total Autos: {carList.length}</p>
+              <p>Total Value of Autos: {autoTotal}</p>
+            </div>
           </div>
-          <div className="summary-box">
-            <h3>Stocks</h3>
-            <p>Total Value of Stocks: {stockTotal}</p>
-          </div>
-          <div className="summary-box">
-            <h3>Metals</h3>
-            <p>Total Value of Metals: {metalTotal}</p>
-          </div>
-          <div className="summary-box">
-            <h3>Autos</h3>
-            <p>Total Autos: {carList.length}</p>
-            <p>Total Value of Autos: {autoTotal}</p>
-          </div>
-        </div>
-      );
+        );
       default:
         return <div>Select an asset type from the sidebar</div>;
     }
@@ -552,13 +556,13 @@ function LandingPage() {
         <button className="back-to-website-btn" onClick={handleBackToWebsite}>Back to Website</button>
       </div>
       <div className="content">
-      {selectedAsset === 'home' && (
-        <div className="home-summary">
-          <h2 className="summary-heading">Asset Summary</h2>
-          {renderContent()}
-        </div>
-      )}
-      {selectedAsset !== 'home' && renderContent()}
+        {selectedAsset === 'home' && (
+          <div className="home-summary">
+            <h2 className="summary-heading">Asset Summary</h2>
+            {renderContent()}
+          </div>
+        )}
+        {selectedAsset !== 'home' && renderContent()}
       </div>
     </div>
   );
