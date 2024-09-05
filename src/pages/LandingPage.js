@@ -352,7 +352,7 @@ function LandingPage() {
     switch (selectedAsset) {
       case 'auto':
         return (
-          <div className="auto-asset-form">
+          <div className="asset-form">
             <h2>Enter Car Details</h2>
             <input
               type="text"
@@ -431,7 +431,7 @@ function LandingPage() {
         );
       case 'cash':
         return (
-          <div className="auto-asset-form">
+          <div className="asset-form">
             <h2>Enter Cash Details</h2>
             <input
               type="number"
@@ -483,7 +483,7 @@ function LandingPage() {
         );
       case 'stocks':
         return (
-          <div className="auto-asset-form">
+          <div className="asset-form">
             <h2>Enter Stock Details</h2>
             <input
               type="text"
@@ -542,7 +542,7 @@ function LandingPage() {
         );
       case 'metals':
         return (
-          <div className="auto-asset-form">
+          <div className="asset-form">
             <h2>Enter Metal Details</h2>
             <input
               type="text"
@@ -614,7 +614,7 @@ function LandingPage() {
         );
       case 'property':
         return (
-          <div className="property-asset-form">
+          <div className="asset-form">
             <h2>Enter Property Details</h2>
             <input
               type="text"
@@ -761,6 +761,7 @@ function LandingPage() {
             </div>
             <div className="summary-box">
               <h3>Properties</h3>
+              <p>Total Properties: {propertyList.length}</p> 
               <p>Total Property Value: {propertyTotalPrice}</p>
               <p>Total Monthly Cost: {propertyTotalMonthlyCost}</p>
             </div>

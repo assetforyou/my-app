@@ -119,50 +119,6 @@
   background-color: #3498db;
 }
 
-.content {
-  margin-left: 250px; /* Same as the sidebar width */
-  padding: 20px;
-  background-color: #ecf0f1;
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  justify-content: center; 
-  align-items: center;
-  text-align: center;
-}
-
-.auto-asset-form {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.auto-asset-form input[type="text"],
-.auto-asset-form input[type="file"] {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.auto-asset-form button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.auto-asset-form button:hover {
-  background-color: #0056b3;
-}
-
 .summary-container {
   display: flex;
   flex-wrap: wrap;
@@ -192,4 +148,86 @@
   color: #666;
 }
 
+.content {
+  margin-left: 280px; /* Same as the sidebar width */
+  padding: 80px 20px 20px; /* Padding for top bar and page content */
+  background-color: #ecf0f1;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center; 
+  align-items: center;
+  text-align: center;
+}
 
+.asset-form-container {
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: flex-start; /* Align to the top */
+  padding: 20px; /* Adjust padding for better visibility */
+  background-color: #f8f9fa;
+}
+
+.asset-form-card {
+  background-color: white;
+  padding: 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%;
+  margin: 0 20px;
+  z-index: 2; /* Ensure the card stays above the content */
+}
+
+.asset-form h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.asset-form input,
+.asset-form select {
+  margin-bottom: 15px;
+  padding: 10px;
+  width: 100%;
+  font-size: 16px;
+}
+
+.asset-form button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.asset-form button:hover {
+  background-color: #45a049;
+}
+
+.asset-form table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.asset-form table th,
+.asset-form table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.asset-form table th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #f2f2f2;
+  color: black;
+}
+
+.asset-form table td {
+  text-align: left;
+}
