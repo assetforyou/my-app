@@ -1,36 +1,124 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-function Metals({ userEmail, metalList, metalTotal, fetchMetalDetails }) {
-  const [metalDetails, setMetalDetails] = useState({ type: '', grams: '', valuePerGram: '', currency: 'USD' });
+const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
+
+function Metals({ userEmail, metalList, fetchMetalDetails }) {
+  const [metalDetails, setMetalDetails] = useState({ type: '', grams: '', currency: 'USD' });
   const [saveButtonText, setSaveButtonText] = useState('Save');
+  const [availableMetals, setAvailableMetals] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredMetals, setFilteredMetals] = useState([]);
+  const [totalValue, setTotalValue] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchAvailableMetals();
+  }, []);
+
+  useEffect(() => {
+    calculateTotalValue();
+  }, [metalDetails.grams, metalDetails.type, availableMetals]);
+
+  const fetchMetalPrice = async (symbol) => {
+    try {
+      const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`);
+      const data = await response.json();
+      if (data['Global Quote'] && data['Global Quote']['05. price']) {
+        return parseFloat(data['Global Quote']['05. price']);
+      } else {
+        console.error('Unexpected API response structure:', data);
+        throw new Error('Unexpected API response structure');
+      }
+    } catch (error) {
+      console.error(`Error fetching price for ${symbol}:`, error);
+      throw error;
+    }
+  };
+
+  const fetchAvailableMetals = async () => {
+    setIsLoading(true);
+    setError(null);
+    const metals = [
+      { symbol: 'XAUUSD', name: 'Gold' },
+      { symbol: 'XAGUSD', name: 'Silver' },
+      { symbol: 'XPTUSD', name: 'Platinum' },
+      { symbol: 'PALL', name: 'Palladium' }
+    ];
+
+    try {
+      const fetchedMetals = await Promise.all(
+        metals.map(async (metal) => {
+          try {
+            const price = await fetchMetalPrice(metal.symbol);
+            return { ...metal, price };
+          } catch (error) {
+            console.error(`Failed to fetch price for ${metal.name}:`, error);
+            return { ...metal, price: null };
+          }
+        })
+      );
+      console.log('Fetched metals:', fetchedMetals);
+      setAvailableMetals(fetchedMetals);
+      setFilteredMetals(fetchedMetals);
+    } catch (error) {
+      console.error('Error fetching metal prices:', error);
+      setError('Failed to fetch metal prices. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setMetalDetails({ ...metalDetails, [name]: value });
   };
 
+  const handleSearch = () => {
+    const filtered = availableMetals.filter(metal => 
+      metal.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredMetals(filtered);
+  };
+
+  const handleMetalSelection = (metal) => {
+    setMetalDetails({
+      ...metalDetails,
+      type: metal.name,
+    });
+  };
+
+  const calculateTotalValue = () => {
+    const grams = parseFloat(metalDetails.grams) || 0;
+    const selectedMetal = availableMetals.find(metal => metal.name.toLowerCase() === metalDetails.type.toLowerCase());
+    console.log('Selected metal:', selectedMetal);
+    const valuePerGram = selectedMetal && selectedMetal.price ? (selectedMetal.price / 31.1035) : 0; // Convert from troy oz to gram
+    console.log('Value per gram:', valuePerGram);
+    const total = grams * valuePerGram;
+    console.log('Total value:', total);
+    setTotalValue(total.toFixed(2));
+  };
+
   const handleSaveMetalDetails = async () => {
     setSaveButtonText('Saving...');
     try {
       const grams = parseFloat(metalDetails.grams);
-      const valuePerGram = parseFloat(metalDetails.valuePerGram);
-      const totalValue = grams * valuePerGram;
-
+      const selectedMetal = availableMetals.find(metal => metal.name.toLowerCase() === metalDetails.type.toLowerCase());
+      const valuePerGram = selectedMetal && selectedMetal.price ? (selectedMetal.price / 31.1035) : 0;
+      const total = grams * valuePerGram;
       await addDoc(collection(db, 'metals'), {
         type: metalDetails.type,
         grams,
         valuePerGram,
-        total: totalValue,
+        total,
         currency: metalDetails.currency,
         userEmail,
       });
-
-      setMetalDetails({ type: '', grams: '', valuePerGram: '', currency: 'USD' });
+      setMetalDetails({ type: '', grams: '', currency: 'USD' });
       setSaveButtonText('Saved!');
       fetchMetalDetails();
-
       setTimeout(() => {
         setSaveButtonText('Save');
       }, 2000);
@@ -41,9 +129,28 @@ function Metals({ userEmail, metalList, metalTotal, fetchMetalDetails }) {
     }
   };
 
+  if (isLoading) return <div>Loading metal prices...</div>;
+  if (error) return <div>Error: {error}</div>;
+
   return (
     <div className="asset-form">
       <h2>Enter Metal Details</h2>
+      <div>
+        <input
+          type="text"
+          placeholder="Search for metals"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button onClick={handleSearch}>Search</button>
+      </div>
+      <ul>
+        {filteredMetals.map(metal => (
+          <li key={metal.symbol} onClick={() => handleMetalSelection(metal)}>
+            {metal.name}: {metal.price ? `$${metal.price.toFixed(2)} per oz` : 'Price unavailable'}
+          </li>
+        ))}
+      </ul>
       <input
         type="text"
         name="type"
@@ -56,13 +163,6 @@ function Metals({ userEmail, metalList, metalTotal, fetchMetalDetails }) {
         name="grams"
         placeholder="Grams"
         value={metalDetails.grams}
-        onChange={handleInputChange}
-      />
-      <input
-        type="number"
-        name="valuePerGram"
-        placeholder="Value per Gram"
-        value={metalDetails.valuePerGram}
         onChange={handleInputChange}
       />
       <select
@@ -81,7 +181,7 @@ function Metals({ userEmail, metalList, metalTotal, fetchMetalDetails }) {
         <option value="INR">INR</option>
       </select>
       <button onClick={handleSaveMetalDetails}>{saveButtonText}</button>
-
+      <h2>Total Value: ${totalValue}</h2>
       <h2>Saved Metal Details</h2>
       <table>
         <thead>
@@ -99,16 +199,14 @@ function Metals({ userEmail, metalList, metalTotal, fetchMetalDetails }) {
             <tr key={metal.id}>
               <td>{metal.type}</td>
               <td>{metal.grams}</td>
-              <td>{metal.valuePerGram}</td>
-              <td>{metal.total}</td>
+              <td>${metal.valuePerGram.toFixed(2)}</td>
+              <td>${metal.total.toFixed(2)}</td>
               <td>{metal.currency}</td>
               <td>{metal.userEmail}</td>
             </tr>
           ))}
         </tbody>
       </table>
-
-      <h2>Total Value of Metals: {metalTotal}</h2>
     </div>
   );
 }

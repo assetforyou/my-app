@@ -3,7 +3,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import axios from 'axios';
 
-const ALPHA_VANTAGE_API_KEY = 'your_alpha_vantage_api_key';  // Replace with your actual API key
+const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';  // Replace with your actual API key
 
 function Stocks({ userEmail, stockList, stockTotal, fetchStockDetails }) {
   const [stockDetails, setStockDetails] = useState({ name: '', number: '', value: '', currency: 'USD' });
