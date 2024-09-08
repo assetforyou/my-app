@@ -1,42 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
-import axios from 'axios';
+import { collection, getDocs } from 'firebase/firestore';
+import Auto from './Auto';
+import Cash from './Cash';
+import Stocks from './Stocks';
+import Metals from './Metals';
+import Property from './Property';
 import './LandingPage.css';
-
-const ALPHA_VANTAGE_API_KEY = 'your_alpha_vantage_api_key';  // Replace with your actual API key
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
   const [userEmail, setUserEmail] = useState('');
-  const [carDetails, setCarDetails] = useState({ make: '', mileage: '', year: '', value: '', currency: 'USD' });
   const [carList, setCarList] = useState([]);
   const [autoTotal, setAutoTotal] = useState(0);
-  const [saveButtonText, setSaveButtonText] = useState('Save');
-  const [cashDetails, setCashDetails] = useState({ amount: '', currency: 'USD' });
   const [cashList, setCashList] = useState([]);
   const [cashTotal, setCashTotal] = useState(0);
-  const [stockDetails, setStockDetails] = useState({ name: '', number: '', value: '', currency: 'USD' });
   const [stockList, setStockList] = useState([]);
   const [stockTotal, setStockTotal] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [metalDetails, setMetalDetails] = useState({ type: '', grams: '', valuePerGram: '', currency: 'USD' });
   const [metalList, setMetalList] = useState([]);
   const [metalTotal, setMetalTotal] = useState(0);
-  const [propertyDetails, setPropertyDetails] = useState({
-    address: '',
-    bedrooms: '',
-    bathrooms: '',
-    basement: '',
-    price: '',
-    mortgagePayment: '',
-    interestRate: '',
-    utilities: '',
-    otherExpenses: '',
-    currency: 'USD'
-  });
   const [propertyList, setPropertyList] = useState([]);
   const [propertyTotalPrice, setPropertyTotalPrice] = useState(0);
   const [propertyTotalMonthlyCost, setPropertyTotalMonthlyCost] = useState(0);
@@ -71,198 +54,11 @@ function LandingPage() {
     navigate('/');
   };
 
-  const handleInputChange = (e, isCash = false, isStock = false, isMetal = false, isProperty = false) => {
-    const { name, value } = e.target;
-    if (isCash) {
-      setCashDetails({ ...cashDetails, [name]: value });
-    } else if (isStock) {
-      setStockDetails({ ...stockDetails, [name]: value });
-    } else if (isMetal) {
-      setMetalDetails({ ...metalDetails, [name]: value });
-    } else if (isProperty) {
-      setPropertyDetails({ ...propertyDetails, [name]: value });
-    } else {
-      setCarDetails({ ...carDetails, [name]: value });
-    }
-  };
-
-  const fetchLiveStockPrice = async (symbol) => {
-    try {
-      const response = await axios.get(
-        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
-      );
-      const price = parseFloat(response.data['Global Quote']['05. price']);
-      return price;
-    } catch (error) {
-      console.error('Error fetching stock price:', error);
-      return null;
-    }
-  };
-
-  const handleSaveStockDetails = async () => {
-    const livePrice = await fetchLiveStockPrice(stockDetails.name);
-    if (livePrice) {
-      const numberOfStocks = parseFloat(stockDetails.number);
-      const totalValue = numberOfStocks * livePrice;
-
-      try {
-        await addDoc(collection(db, 'stocks'), {
-          name: stockDetails.name,
-          number: numberOfStocks,
-          value: livePrice,
-          total: totalValue,
-          currency: stockDetails.currency,
-          userEmail,
-        });
-
-        setStockTotal(stockTotal + totalValue);
-        setStockDetails({ name: '', number: '', value: '', currency: 'USD' });
-        fetchStockDetails();
-      } catch (error) {
-        console.error('Error saving stock details:', error);
-        alert('Failed to save stock details.');
-      }
-    } else {
-      alert('Failed to fetch live stock price.');
-    }
-  };
-
-  const handleSaveCarDetails = async () => {
-    setSaveButtonText('Saving...');
-    try {
-      const carValue = parseFloat(carDetails.value);
-      const newTotal = autoTotal + carValue;
-
-      await addDoc(collection(db, 'autos'), {
-        ...carDetails,
-        userEmail,
-        value: carValue,
-      });
-
-      setAutoTotal(newTotal);
-      setCarDetails({ make: '', mileage: '', year: '', value: '', currency: 'USD' });
-      setSaveButtonText('Saved!');
-      fetchCarDetails();
-
-      setTimeout(() => {
-        setSaveButtonText('Save');
-      }, 2000);
-    } catch (error) {
-      console.error('Error saving car details:', error);
-      setSaveButtonText('Save');
-      alert('Failed to save car details.');
-    }
-  };
-
-  const handleSaveCashDetails = async () => {
-    setSaveButtonText('Saving...');
-    try {
-      const amountInSelectedCurrency = parseFloat(cashDetails.amount);
-      const newTotal = cashTotal + amountInSelectedCurrency;
-
-      await addDoc(collection(db, 'cash'), {
-        amount: amountInSelectedCurrency,
-        currency: cashDetails.currency,
-        total: newTotal,
-        userEmail,
-      });
-
-      setCashTotal(newTotal);
-      setCashDetails({ amount: '', currency: 'USD' });
-      setSaveButtonText('Saved!');
-      fetchCashDetails();
-
-      setTimeout(() => {
-        setSaveButtonText('Save');
-      }, 2000);
-    } catch (error) {
-      console.error('Error saving cash details:', error);
-      setSaveButtonText('Save');
-      alert('Failed to save cash details.');
-    }
-  };
-
-  const handleSaveMetalDetails = async () => {
-    setSaveButtonText('Saving...');
-    try {
-      const grams = parseFloat(metalDetails.grams);
-      const valuePerGram = parseFloat(metalDetails.valuePerGram);
-      const totalValue = grams * valuePerGram;
-
-      await addDoc(collection(db, 'metals'), {
-        type: metalDetails.type,
-        grams,
-        valuePerGram,
-        total: totalValue,
-        currency: metalDetails.currency,
-        userEmail,
-      });
-
-      setMetalTotal(metalTotal + totalValue);
-      setMetalDetails({ type: '', grams: '', valuePerGram: '', currency: 'USD' });
-      setSaveButtonText('Saved!');
-      fetchMetalDetails();
-
-      setTimeout(() => {
-        setSaveButtonText('Save');
-      }, 2000);
-    } catch (error) {
-      console.error('Error saving metal details:', error);
-      setSaveButtonText('Save');
-      alert('Failed to save metal details.');
-    }
-  };
-
-  const handleSavePropertyDetails = async () => {
-    setSaveButtonText('Saving...');
-    try {
-      const mortgagePayment = parseFloat(propertyDetails.mortgagePayment);
-      const utilities = parseFloat(propertyDetails.utilities);
-      const otherExpenses = parseFloat(propertyDetails.otherExpenses);
-      const totalMonthlyCost = mortgagePayment + utilities + otherExpenses;
-
-      const price = parseFloat(propertyDetails.price);
-
-      await addDoc(collection(db, 'properties'), {
-        ...propertyDetails,
-        userEmail,
-        totalMonthlyCost,
-        price,
-      });
-
-      setPropertyTotalPrice(propertyTotalPrice + price);
-      setPropertyTotalMonthlyCost(propertyTotalMonthlyCost + totalMonthlyCost);
-      setPropertyDetails({
-        address: '',
-        bedrooms: '',
-        bathrooms: '',
-        basement: '',
-        price: '',
-        mortgagePayment: '',
-        interestRate: '',
-        utilities: '',
-        otherExpenses: '',
-        currency: 'USD'
-      });
-      setSaveButtonText('Saved!');
-      fetchPropertyDetails();
-
-      setTimeout(() => {
-        setSaveButtonText('Save');
-      }, 2000);
-    } catch (error) {
-      console.error('Error saving property details:', error);
-      setSaveButtonText('Save');
-      alert('Failed to save property details.');
-    }
-  };
-
   const fetchCarDetails = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'autos'));
       const cars = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setCarList(cars);
-
       const total = cars.reduce((sum, car) => sum + parseFloat(car.value || 0), 0);
       setAutoTotal(total);
     } catch (error) {
@@ -311,10 +107,8 @@ function LandingPage() {
       const querySnapshot = await getDocs(collection(db, 'properties'));
       const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setPropertyList(properties);
-
       const totalPrice = properties.reduce((sum, property) => sum + parseFloat(property.price || 0), 0);
       const totalMonthlyCost = properties.reduce((sum, property) => sum + parseFloat(property.totalMonthlyCost || 0), 0);
-
       setPropertyTotalPrice(totalPrice);
       setPropertyTotalMonthlyCost(totalMonthlyCost);
     } catch (error) {
@@ -322,423 +116,18 @@ function LandingPage() {
     }
   };
 
-  const handleSearchStocks = async () => {
-    try {
-      const response = await axios.get(
-        `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${searchQuery}&apikey=${ALPHA_VANTAGE_API_KEY}`
-      );
-      setSearchResults(response.data.bestMatches || []);
-    } catch (error) {
-      console.error('Error searching stocks:', error);
-    }
-  };
-
-  const renderStockSearchResults = () => {
-    return (
-      <div>
-        <h2>Search Results</h2>
-        <ul>
-          {searchResults.map((result, index) => (
-            <li key={index}>
-              {result['1. symbol']} - {result['2. name']}
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
-
   const renderContent = () => {
     switch (selectedAsset) {
       case 'auto':
-        return (
-          <div className="asset-form">
-            <h2>Enter Car Details</h2>
-            <input
-              type="text"
-              name="make"
-              placeholder="Make"
-              value={carDetails.make}
-              onChange={handleInputChange}
-            />
-            <input
-              type="text"
-              name="mileage"
-              placeholder="Mileage"
-              value={carDetails.mileage}
-              onChange={handleInputChange}
-            />
-            <input
-              type="text"
-              name="year"
-              placeholder="Year of Build"
-              value={carDetails.year}
-              onChange={handleInputChange}
-            />
-            <input
-              type="number"
-              name="value"
-              placeholder="Value"
-              value={carDetails.value}
-              onChange={handleInputChange}
-            />
-            <select
-              name="currency"
-              value={carDetails.currency}
-              onChange={handleInputChange}
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="JPY">JPY</option>
-              <option value="AUD">AUD</option>
-              <option value="CAD">CAD</option>
-              <option value="CHF">CHF</option>
-              <option value="CNY">CNY</option>
-              <option value="INR">INR</option>
-              {/* Add more currency options as needed */}
-            </select>
-            <button onClick={handleSaveCarDetails}>{saveButtonText}</button>
-
-            <h2>Saved Car Details</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Make</th>
-                  <th>Mileage</th>
-                  <th>Year</th>
-                  <th>Value</th>
-                  <th>Currency</th>
-                  <th>User</th>
-                </tr>
-              </thead>
-              <tbody>
-                {carList.map(car => (
-                  <tr key={car.id}>
-                    <td>{car.make}</td>
-                    <td>{car.mileage}</td>
-                    <td>{car.year}</td>
-                    <td>{car.value}</td>
-                    <td>{car.currency}</td>
-                    <td>{car.userEmail}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <h2>Total Value of Autos: {autoTotal}</h2>
-          </div>
-        );
+        return <Auto userEmail={userEmail} carList={carList} autoTotal={autoTotal} fetchCarDetails={fetchCarDetails} />;
       case 'cash':
-        return (
-          <div className="asset-form">
-            <h2>Enter Cash Details</h2>
-            <input
-              type="number"
-              name="amount"
-              placeholder="Amount"
-              value={cashDetails.amount}
-              onChange={(e) => handleInputChange(e, true)}
-            />
-            <select
-              name="currency"
-              value={cashDetails.currency}
-              onChange={(e) => handleInputChange(e, true)}
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="JPY">JPY</option>
-              <option value="AUD">AUD</option>
-              <option value="CAD">CAD</option>
-              <option value="CHF">CHF</option>
-              <option value="CNY">CNY</option>
-              <option value="INR">INR</option>
-              {/* Add more currencies as needed */}
-            </select>
-            <button onClick={handleSaveCashDetails}>{saveButtonText}</button>
-
-            <h2>Saved Cash Details</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Amount</th>
-                  <th>Currency</th>
-                  <th>User</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cashList.map(cash => (
-                  <tr key={cash.id}>
-                    <td>{cash.amount}</td>
-                    <td>{cash.currency}</td>
-                    <td>{cash.userEmail}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <h2>Total in Selected Currency: {cashTotal}</h2>
-          </div>
-        );
+        return <Cash userEmail={userEmail} cashList={cashList} cashTotal={cashTotal} fetchCashDetails={fetchCashDetails} />;
       case 'stocks':
-        return (
-          <div className="asset-form">
-            <h2>Enter Stock Details</h2>
-            <input
-              type="text"
-              name="name"
-              placeholder="Stock Symbol"
-              value={stockDetails.name}
-              onChange={(e) => handleInputChange(e, false, true)}
-            />
-            <input
-              type="number"
-              name="number"
-              placeholder="Number of Stocks"
-              value={stockDetails.number}
-              onChange={(e) => handleInputChange(e, false, true)}
-            />
-            <button onClick={handleSaveStockDetails}>Save</button>
-
-            <h2>Search for Stocks</h2>
-            <input
-              type="text"
-              placeholder="Search Stocks"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button onClick={handleSearchStocks}>Search</button>
-            {renderStockSearchResults()}
-
-            <h2>Saved Stock Details</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Stock Name</th>
-                  <th>Number of Stocks</th>
-                  <th>Value per Stock</th>
-                  <th>Total Value</th>
-                  <th>Currency</th>
-                  <th>User</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stockList.map(stock => (
-                  <tr key={stock.id}>
-                    <td>{stock.name}</td>
-                    <td>{stock.number}</td>
-                    <td>{stock.value}</td>
-                    <td>{stock.total}</td>
-                    <td>{stock.currency}</td>
-                    <td>{stock.userEmail}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <h2>Total Value of Stocks: {stockTotal}</h2>
-          </div>
-        );
+        return <Stocks userEmail={userEmail} stockList={stockList} stockTotal={stockTotal} fetchStockDetails={fetchStockDetails} />;
       case 'metals':
-        return (
-          <div className="asset-form">
-            <h2>Enter Metal Details</h2>
-            <input
-              type="text"
-              name="type"
-              placeholder="Type of Metal"
-              value={metalDetails.type}
-              onChange={(e) => handleInputChange(e, false, false, true)}
-            />
-            <input
-              type="number"
-              name="grams"
-              placeholder="Grams"
-              value={metalDetails.grams}
-              onChange={(e) => handleInputChange(e, false, false, true)}
-            />
-            <input
-              type="number"
-              name="valuePerGram"
-              placeholder="Value per Gram"
-              value={metalDetails.valuePerGram}
-              onChange={(e) => handleInputChange(e, false, false, true)}
-            />
-            <select
-              name="currency"
-              value={metalDetails.currency}
-              onChange={(e) => handleInputChange(e, false, false, true)}
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="JPY">JPY</option>
-              <option value="AUD">AUD</option>
-              <option value="CAD">CAD</option>
-              <option value="CHF">CHF</option>
-              <option value="CNY">CNY</option>
-              <option value="INR">INR</option>
-              {/* Add more currencies as needed */}
-            </select>
-            <button onClick={handleSaveMetalDetails}>{saveButtonText}</button>
-
-            <h2>Saved Metal Details</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Type of Metal</th>
-                  <th>Grams</th>
-                  <th>Value per Gram</th>
-                  <th>Total Value</th>
-                  <th>Currency</th>
-                  <th>User</th>
-                </tr>
-              </thead>
-              <tbody>
-                {metalList.map(metal => (
-                  <tr key={metal.id}>
-                    <td>{metal.type}</td>
-                    <td>{metal.grams}</td>
-                    <td>{metal.valuePerGram}</td>
-                    <td>{metal.total}</td>
-                    <td>{metal.currency}</td>
-                    <td>{metal.userEmail}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <h2>Total Value of Metals: {metalTotal}</h2>
-          </div>
-        );
+        return <Metals userEmail={userEmail} metalList={metalList} metalTotal={metalTotal} fetchMetalDetails={fetchMetalDetails} />;
       case 'property':
-        return (
-          <div className="asset-form">
-            <h2>Enter Property Details</h2>
-            <input
-              type="text"
-              name="address"
-              placeholder="Address"
-              value={propertyDetails.address}
-              onChange={(e) => handleInputChange(e, false, false, false, true)}
-            />
-            <input
-              type="number"
-              name="bedrooms"
-              placeholder="Number of Bedrooms"
-              value={propertyDetails.bedrooms}
-              onChange={(e) => handleInputChange(e, false, false, false, true)}
-            />
-            <input
-              type="number"
-              name="bathrooms"
-              placeholder="Number of Bathrooms"
-              value={propertyDetails.bathrooms}
-              onChange={(e) => handleInputChange(e, false, false, false, true)}
-            />
-            <input
-              type="text"
-              name="basement"
-              placeholder="Basement Type"
-              value={propertyDetails.basement}
-              onChange={(e) => handleInputChange(e, false, false, false, true)}
-            />
-            <input
-              type="number"
-              name="price"
-              placeholder="Price"
-              value={propertyDetails.price}
-              onChange={(e) => handleInputChange(e, false, false, false, true)}
-            />
-            <input
-              type="number"
-              name="mortgagePayment"
-              placeholder="Mortgage Payment"
-              value={propertyDetails.mortgagePayment}
-              onChange={(e) => handleInputChange(e, false, false, false, true)}
-            />
-            <input
-              type="number"
-              name="interestRate"
-              placeholder="Interest Rate"
-              value={propertyDetails.interestRate}
-              onChange={(e) => handleInputChange(e, false, false, false, true)}
-            />
-            <input
-              type="number"
-              name="utilities"
-              placeholder="Utilities"
-              value={propertyDetails.utilities}
-              onChange={(e) => handleInputChange(e, false, false, false, true)}
-            />
-            <input
-              type="number"
-              name="otherExpenses"
-              placeholder="Other Expenses"
-              value={propertyDetails.otherExpenses}
-              onChange={(e) => handleInputChange(e, false, false, false, true)}
-            />
-            <select
-              name="currency"
-              value={propertyDetails.currency}
-              onChange={(e) => handleInputChange(e, false, false, false, true)}
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="JPY">JPY</option>
-              <option value="AUD">AUD</option>
-              <option value="CAD">CAD</option>
-              <option value="CHF">CHF</option>
-              <option value="CNY">CNY</option>
-              <option value="INR">INR</option>
-              {/* Add more currencies as needed */}
-            </select>
-            <button onClick={handleSavePropertyDetails}>{saveButtonText}</button>
-
-            <h2>Saved Property Details</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Address</th>
-                  <th>Bedrooms</th>
-                  <th>Bathrooms</th>
-                  <th>Basement Type</th>
-                  <th>Price</th>
-                  <th>Mortgage Payment</th>
-                  <th>Interest Rate</th>
-                  <th>Utilities</th>
-                  <th>Other Expenses</th>
-                  <th>Total Monthly Cost</th>
-                  <th>Currency</th>
-                  <th>User</th>
-                </tr>
-              </thead>
-              <tbody>
-                {propertyList.map(property => (
-                  <tr key={property.id}>
-                    <td>{property.address}</td>
-                    <td>{property.bedrooms}</td>
-                    <td>{property.bathrooms}</td>
-                    <td>{property.basement}</td>
-                    <td>{property.price}</td>
-                    <td>{property.mortgagePayment}</td>
-                    <td>{property.interestRate}</td>
-                    <td>{property.utilities}</td>
-                    <td>{property.otherExpenses}</td>
-                    <td>{property.totalMonthlyCost}</td>
-                    <td>{property.currency}</td>
-                    <td>{property.userEmail}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <h2>Total Property Value: {propertyTotalPrice}</h2>
-            <h2>Total Monthly Cost: {propertyTotalMonthlyCost}</h2>
-          </div>
-        );
+        return <Property userEmail={userEmail} propertyList={propertyList} propertyTotalPrice={propertyTotalPrice} propertyTotalMonthlyCost={propertyTotalMonthlyCost} fetchPropertyDetails={fetchPropertyDetails} />;
       case 'home':
         return (
           <div className="summary-container">
@@ -794,13 +183,13 @@ function LandingPage() {
         <button className="back-to-website-btn" onClick={handleBackToWebsite}>Back to Website</button>
       </div>
       <div className="content">
-        {selectedAsset === 'home' && (
+      {selectedAsset === 'home' && (
           <div className="home-summary">
             <h2 className="summary-heading">Asset Summary</h2>
             {renderContent()}
           </div>
         )}
-        {selectedAsset !== 'home' && renderContent()}
+      {selectedAsset !== 'home' && renderContent()}
       </div>
     </div>
   );
