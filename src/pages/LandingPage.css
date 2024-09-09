@@ -236,16 +236,16 @@
 
 /* Styles for the autocomplete wrapper */
 .autocomplete-wrapper {
-  display: flex;
+  position: relative;
   width: 100%;
-  max-width: 500px;
-  margin-bottom: 0px;
+  max-width: 400px;
+  margin-bottom: 10px;
 }
 
 /* Styles for the input field */
 .autocomplete-wrapper input {
   width: 100%;
-  padding: 10px;
+  padding: 10px 15px;
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 4px;
