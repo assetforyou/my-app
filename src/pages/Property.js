@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -16,10 +16,48 @@ function Property({ userEmail, propertyList, propertyTotalPrice, propertyTotalMo
     currency: 'USD'
   });
   const [saveButtonText, setSaveButtonText] = useState('Save');
+  const [suggestions, setSuggestions] = useState([]);
+  const inputRef = useRef(null);
+
+  const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func(...args), delay);
+    };
+  };
+
+  const fetchSuggestions = useCallback(
+    debounce(async (input) => {
+      if (input.length > 2) {
+        try {
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}`);
+          const data = await response.json();
+          setSuggestions(data.map(item => item.display_name));
+        } catch (error) {
+          console.error('Error fetching address suggestions:', error);
+        }
+      } else {
+        setSuggestions([]);
+      }
+    }, 300),
+    []
+  );
+
+  const handleAddressInputChange = (e) => {
+    const { value } = e.target;
+    setPropertyDetails(prev => ({ ...prev, address: value }));
+    fetchSuggestions(value);
+  };
+
+  const handleSuggestionSelect = (suggestion) => {
+    setPropertyDetails(prev => ({ ...prev, address: suggestion }));
+    setSuggestions([]);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setPropertyDetails({ ...propertyDetails, [name]: value });
+    setPropertyDetails(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSavePropertyDetails = async () => {
@@ -67,13 +105,25 @@ function Property({ userEmail, propertyList, propertyTotalPrice, propertyTotalMo
   return (
     <div className="asset-form">
       <h2>Enter Property Details</h2>
-      <input
-        type="text"
-        name="address"
-        placeholder="Address"
-        value={propertyDetails.address}
-        onChange={handleInputChange}
-      />
+      <div className="autocomplete-wrapper">
+        <input
+          ref={inputRef}
+          type="text"
+          name="address"
+          placeholder="Address"
+          value={propertyDetails.address}
+          onChange={handleAddressInputChange}
+        />
+        {suggestions.length > 0 && (
+          <ul className="suggestions-list">
+            {suggestions.map((suggestion, index) => (
+              <li key={index} onClick={() => handleSuggestionSelect(suggestion)}>
+                {suggestion}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <input
         type="number"
         name="bedrooms"

@@ -150,7 +150,7 @@
 
 .content {
   margin-left: 280px; /* Same as the sidebar width */
-  padding: 80px 20px 20px; /* Padding for top bar and page content */
+  padding: 200px 50px 50px; /* Padding for top bar and page content */
   background-color: #ecf0f1;
   flex: 1;
   overflow-y: auto;
@@ -164,7 +164,7 @@
   display: flex;
   justify-content: center; /* Center horizontally */
   align-items: flex-start; /* Align to the top */
-  padding: 20px; /* Adjust padding for better visibility */
+  padding: 50px; /* Adjust padding for better visibility */
   background-color: #f8f9fa;
 }
 
@@ -181,7 +181,7 @@
 
 .asset-form h2 {
   text-align: center;
-  margin-bottom: 2px;
+  margin-bottom: 15px;
   font-size: 24px;
   font-weight: bold;
   background-color: #d80c0c;
@@ -232,4 +232,102 @@
 
 .asset-form table td {
   text-align: left;
+}
+
+/* Styles for the autocomplete wrapper */
+.autocomplete-wrapper {
+  display: flex;
+  width: 100%;
+  max-width: 500px;
+  margin-bottom: 0px;
+}
+
+/* Styles for the input field */
+.autocomplete-wrapper input {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.autocomplete-wrapper input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 2px 10px rgba(74, 144, 226, 0.2);
+}
+
+/* Styles for the suggestions list */
+.suggestions-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+/* Styles for individual suggestion items */
+.suggestions-list li {
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.suggestions-list li:hover {
+  background-color: #f0f8ff;
+}
+
+/* Alternating background colors for better readability */
+.suggestions-list li:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.suggestions-list li:nth-child(even):hover {
+  background-color: #e9f3ff;
+}
+
+/* Scrollbar styles for webkit browsers */
+.suggestions-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.suggestions-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.suggestions-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.suggestions-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .autocomplete-wrapper {
+    max-width: 100%;
+  }
+
+  .autocomplete-wrapper input {
+    font-size: 14px;
+  }
+
+  .suggestions-list li {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
 }
