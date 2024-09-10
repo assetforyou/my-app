@@ -1,128 +1,153 @@
-// src/pages/HomePage.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './HomePage.css'; // Ensure this file is created with the styles below
+import { motion } from 'framer-motion';
+import { FaShieldAlt, FaChartLine, FaLock, FaUser, FaBuilding } from 'react-icons/fa';
+import './HomePage.css';
 
 function HomePage() {
   const navigate = useNavigate();
 
-  const handleLoginClick = () => {
-    navigate('/login'); // Navigate to the login page
+  const handleNavigation = (path) => {
+    navigate(path);
   };
 
-  const handleSignUpClick = () => {
-    navigate('/signup'); // Navigate to the sign-up page
+  const fadeInUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6 }
   };
 
   return (
     <div className="home-page">
       <header className="header">
-        <div className="logo">Noble Asset Vault</div>
-        <nav className="nav">
-          <ul>
-            <li><a href="#about">About</a></li>
-            <li><a href="#services">Services</a></li>
-            <li><a href="#portfolio">Portfolio</a></li>
-            <li><a href="#contact">Contact</a></li>
-          </ul>
-        </nav>
-        <div className="auth-buttons">
-          <button className="login-button" onClick={handleLoginClick}>Login</button>
-          <button className="signup-button" onClick={handleSignUpClick}>Sign Up</button>
+        <div className="container">
+          <div className="logo">Noble Asset Vault</div>
+          <nav className="nav">
+            <ul>
+              {['About', 'Services', 'Solutions', 'Contact'].map((item) => (
+                <li key={item}>
+                  <a href={`#${item.toLowerCase()}`}>{item}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div className="auth-buttons">
+            <button className="login-button" onClick={() => handleNavigation('/login')}>Login</button>
+            <button className="signup-button" onClick={() => handleNavigation('/signup')}>Sign Up</button>
+          </div>
         </div>
       </header>
 
-      <section className="hero">
+      <motion.section className="hero" {...fadeInUp}>
         <div className="hero-content">
-          <h1>Welcome to Noble Asset Vault</h1>
-          <p>Assets Are Treasured, Not Just Stored</p>
-          <a href="#about" className="cta-button">Learn More</a>
+          <h1>Secure Your Digital Fortune</h1>
+          <p>Advanced Asset Management for the Modern Investor</p>
+          <button className="cta-button" onClick={() => handleNavigation('/demo')}>
+            Request a Demo
+          </button>
         </div>
-      </section>
+      </motion.section>
 
-      <section id="about" className="section about-us-section">
-        <div className="about-us-content">
-          <h2>About Us</h2>
-          <p className="about-us-intro">
-            At Noble Asset Vault, we understand that managing a diverse range of assets can be overwhelming. From your home and car to cash in the bank, digital assets, and stock portfolios, keeping track of it all is a challenge. That’s why we’ve created a platform where you can consolidate all your assets in one place, offering a streamlined solution to asset management.
-          </p>
-          <div className="about-us-features">
-            <div className="feature-card">
-              <h3>Comprehensive Tracking</h3>
-              <p>Manage all your assets in one centralized location, simplifying your financial life.</p>
-            </div>
-            <div className="feature-card">
-              <h3>Privacy and Security</h3>
-              <p>Your data is safe with us. Control what you share and with whom.</p>
-            </div>
-            <div className="feature-card">
-              <h3>Expert Solutions</h3>
-              <p>Access both free and premium features tailored to your asset management needs.</p>
-            </div>
-          </div>
-          <h3>Our Journey</h3>
+      <motion.section id="about" className="section about-section" {...fadeInUp}>
+        <div className="container">
+          <h2>About Noble Asset Vault</h2>
           <p>
-            We started with a simple idea: to build a sample website that could serve as a proof of concept. From there, we acquired a domain, began publishing articles, and built a robust platform. Our next steps include deploying the website for public use, engaging with users, and attracting investors to scale our operations.
+            At Noble Asset Vault, we combine cutting-edge technology with financial expertise to provide a secure, 
+            comprehensive asset management platform. Our solution caters to both individual investors and 
+            financial institutions, offering unparalleled security and insights for your digital assets.
           </p>
-          <h3>The Future of Asset Management</h3>
-          <p>
-            Looking ahead, Noble Asset Vault will continue to innovate, offering advanced features that cater to the evolving needs of our users. Whether you're looking to manage your assets privately or share your profile with select information, our platform is here to support your financial goals.
-          </p>
-        </div>
-      </section>
-
-      <section id="services" className="section">
-        <h2>Our Services</h2>
-        <div className="service-cards">
-          <div className="card">
-            <h3>Asset Management Dashboard</h3>
-            <p>Track and manage all your assets in one place with our comprehensive dashboard.</p>
-          </div>
-          <div className="card">
-            <h3>Secure Asset Storage</h3>
-            <p>Store your asset information securely with our advanced encryption and privacy controls.</p>
-          </div>
-          <div className="card">
-            <h3>Financial Planning Tools</h3>
-            <p>Set goals, track progress, and optimize your asset allocation for long-term growth.</p>
-          </div>
-          <div className="card">
-            <h3>Asset Valuation and Analysis</h3>
-            <p>Get accurate valuations and personalized recommendations to enhance your portfolio.</p>
-          </div>
-          <div className="card">
-            <h3>Estate Planning Assistance</h3>
-            <p>Manage your estate planning documents and ensure your assets are distributed as you wish.</p>
-          </div>
-          <div className="card">
-            <h3>Premium Features</h3>
-            <p>Access advanced reporting, priority support, and personalized financial advice.</p>
+          <div className="feature-grid">
+            {[
+              { icon: <FaShieldAlt />, title: 'Bank-Grade Security', description: 'Multi-layer encryption and advanced protocols' },
+              { icon: <FaChartLine />, title: 'Real-Time Analytics', description: 'Comprehensive dashboards and performance tracking' },
+              { icon: <FaLock />, title: 'Privacy First', description: 'Your data remains yours, always' }
+            ].map((feature, index) => (
+              <motion.div key={index} className="feature-card" whileHover={{ scale: 1.05 }}>
+                {feature.icon}
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      <section id="portfolio" className="section">
-        <h2>Our Portfolio</h2>
-        <div className="portfolio-grid">
-          <div className="portfolio-item">Project 1</div>
-          <div className="portfolio-item">Project 2</div>
-          <div className="portfolio-item">Project 3</div>
-          <div className="portfolio-item">Project 4</div>
+      <motion.section id="services" className="section services-section" {...fadeInUp}>
+        <div className="container">
+          <h2>Our Services</h2>
+          <div className="service-grid">
+            {[
+              'Asset Tracking & Management',
+              'Portfolio Analysis',
+              'Risk Assessment',
+              'Tax Reporting',
+              'Estate Planning',
+              'Secure Document Storage'
+            ].map((service, index) => (
+              <motion.div key={index} className="service-card" whileHover={{ scale: 1.05 }}>
+                <h3>{service}</h3>
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </section>
+      </motion.section>
 
-      <section id="contact" className="section contact-us-section">
-        <h2>Contact Us</h2>
-        <form className="contact-form" action="mailto:assetforryou@gmail.com" method="post" encType="text/plain">
-          <input type="text" name="name" placeholder="Your Name" required />
-          <input type="email" name="email" placeholder="Your Email" required />
-          <textarea name="message" placeholder="Your Message" required></textarea>
-          <button type="submit">Send Message</button>
-        </form>
-      </section>
+      <motion.section id="solutions" className="section solutions-section" {...fadeInUp}>
+        <div className="container">
+          <h2>Tailored Solutions</h2>
+          <div className="solutions-grid">
+            <motion.div className="solution-card" whileHover={{ scale: 1.05 }}>
+              <FaUser className="solution-icon" />
+              <h3>For Individuals</h3>
+              <ul>
+                <li>Personal Asset Dashboard</li>
+                <li>Goal-based Planning</li>
+                <li>Mobile App Access</li>
+              </ul>
+            </motion.div>
+            <motion.div className="solution-card" whileHover={{ scale: 1.05 }}>
+              <FaBuilding className="solution-icon" />
+              <h3>For Institutions</h3>
+              <ul>
+                <li>Multi-User Access Control</li>
+                <li>API Integration</li>
+                <li>Customized Reporting</li>
+              </ul>
+            </motion.div>
+          </div>
+        </div>
+      </motion.section>
+
+      <motion.section id="contact" className="section contact-section" {...fadeInUp}>
+        <div className="container">
+          <h2>Get in Touch</h2>
+          <form className="contact-form" onSubmit={(e) => e.preventDefault()}>
+            <input type="text" placeholder="Full Name" required />
+            <input type="email" placeholder="Email Address" required />
+            <select>
+              <option value="">Select Inquiry Type</option>
+              <option value="demo">Request Demo</option>
+              <option value="support">Technical Support</option>
+              <option value="partnership">Partnership Opportunities</option>
+            </select>
+            <textarea placeholder="Your Message" required></textarea>
+            <button type="submit">Send Message</button>
+          </form>
+        </div>
+      </motion.section>
 
       <footer className="footer">
-        <p>© 2024 Noble Asset Vault. All rights reserved.</p>
+        <div className="container">
+          <div className="footer-content">
+            <div className="footer-logo">Noble Asset Vault</div>
+            <div className="footer-links">
+              <a href="/privacy">Privacy Policy</a>
+              <a href="/terms">Terms of Service</a>
+              <a href="/careers">Careers</a>
+            </div>
+          </div>
+          <p>&copy; {new Date().getFullYear()} Noble Asset Vault. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );
