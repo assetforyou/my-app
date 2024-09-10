@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaShieldAlt, FaChartLine, FaLock, FaUser, FaBuilding } from 'react-icons/fa';
@@ -6,10 +6,60 @@ import './HomePage.css';
 
 function HomePage() {
   const navigate = useNavigate();
+  const contactRef = useRef(null);
+  const [formStatus, setFormStatus] = useState('');
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    inquiryType: '',
+    message: ''
+  });
 
   const handleNavigation = (path) => {
-    navigate(path);
+    if (path === '/demo') {
+      contactRef.current.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate(path);
+    }
   };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFormStatus('Sending message...');
+  
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+  
+      setFormStatus('Message sent');
+      setFormData({
+        fullName: '',
+        email: '',
+        inquiryType: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      setFormStatus('Error sending message. Please try again.');
+    }
+  };  
 
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
@@ -118,20 +168,47 @@ function HomePage() {
         </div>
       </motion.section>
 
-      <motion.section id="contact" className="section contact-section" {...fadeInUp}>
+      <motion.section id="contact" className="section contact-section" {...fadeInUp} ref={contactRef}>
         <div className="container">
           <h2>Get in Touch</h2>
-          <form className="contact-form" onSubmit={(e) => e.preventDefault()}>
-            <input type="text" placeholder="Full Name" required />
-            <input type="email" placeholder="Email Address" required />
-            <select>
+          <form className="contact-form" onSubmit={handleSubmit}>
+            <input
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleInputChange}
+              placeholder="Full Name"
+              required
+            />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="Email Address"
+              required
+            />
+            <select
+              name="inquiryType"
+              value={formData.inquiryType}
+              onChange={handleInputChange}
+              required
+            >
               <option value="">Select Inquiry Type</option>
               <option value="demo">Request Demo</option>
               <option value="support">Technical Support</option>
               <option value="partnership">Partnership Opportunities</option>
             </select>
-            <textarea placeholder="Your Message" required></textarea>
-            <button type="submit">Send Message</button>
+            <textarea
+              name="message"
+              value={formData.message}
+              onChange={handleInputChange}
+              placeholder="Your Message"
+              required
+            ></textarea>
+            <button type="submit" disabled={formStatus === 'Sending message...'}>
+              {formStatus || 'Send Message'}
+            </button>
           </form>
         </div>
       </motion.section>
