@@ -1,8 +1,7 @@
-// LandingPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import Auto from './Auto';
 import Cash from './Cash';
 import Stocks from './Stocks';
@@ -30,11 +29,11 @@ function LandingPage() {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setUserEmail(user.email || 'User');
-        fetchCarDetails();
-        fetchCashDetails();
-        fetchStockDetails();
-        fetchMetalDetails();
-        fetchPropertyDetails();
+        fetchCarDetails(user.email);
+        fetchCashDetails(user.email);
+        fetchStockDetails(user.email);
+        fetchMetalDetails(user.email);
+        fetchPropertyDetails(user.email);
       } else {
         navigate('/login');
       }
@@ -55,9 +54,10 @@ function LandingPage() {
     navigate('/');
   };
 
-  const fetchCarDetails = async () => {
+  const fetchCarDetails = async (email) => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'autos'));
+      const q = query(collection(db, 'autos'), where("userEmail", "==", email));
+      const querySnapshot = await getDocs(q);
       const cars = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setCarList(cars);
       const total = cars.reduce((sum, car) => sum + parseFloat(car.value || 0), 0);
@@ -67,9 +67,10 @@ function LandingPage() {
     }
   };
 
-  const fetchCashDetails = async () => {
+  const fetchCashDetails = async (email) => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'cash'));
+      const q = query(collection(db, 'cash'), where("userEmail", "==", email));
+      const querySnapshot = await getDocs(q);
       const cashEntries = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setCashList(cashEntries);
       const total = cashEntries.reduce((sum, entry) => sum + parseFloat(entry.amount), 0);
@@ -79,9 +80,10 @@ function LandingPage() {
     }
   };
 
-  const fetchStockDetails = async () => {
+  const fetchStockDetails = async (email) => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'stocks'));
+      const q = query(collection(db, 'stocks'), where("userEmail", "==", email));
+      const querySnapshot = await getDocs(q);
       const stocks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setStockList(stocks);
       const total = stocks.reduce((sum, stock) => sum + parseFloat(stock.total), 0);
@@ -91,9 +93,10 @@ function LandingPage() {
     }
   };
 
-  const fetchMetalDetails = async () => {
+  const fetchMetalDetails = async (email) => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'metals'));
+      const q = query(collection(db, 'metals'), where("userEmail", "==", email));
+      const querySnapshot = await getDocs(q);
       const metals = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setMetalList(metals);
       const total = metals.reduce((sum, metal) => sum + parseFloat(metal.total), 0);
@@ -103,9 +106,10 @@ function LandingPage() {
     }
   };
 
-  const fetchPropertyDetails = async () => {
+  const fetchPropertyDetails = async (email) => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'properties'));
+      const q = query(collection(db, 'properties'), where("userEmail", "==", email));
+      const querySnapshot = await getDocs(q);
       const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setPropertyList(properties);
       const totalPrice = properties.reduce((sum, property) => sum + parseFloat(property.price || 0), 0);
