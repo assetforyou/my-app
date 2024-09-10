@@ -1,3 +1,4 @@
+// LandingPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
@@ -168,28 +169,34 @@ function LandingPage() {
         <div className="user-email">{userEmail}</div>
       </div>
       <div className="sidebar">
-        <button onClick={() => setSelectedAsset('home')}>Home</button>
-        <div className="dropdown">
-          <button className="dropbtn">Assets</button>
-          <div className="dropdown-content">
-            <button onClick={() => setSelectedAsset('auto')}>Auto</button>
-            <button onClick={() => setSelectedAsset('cash')}>Cash</button>
-            <button onClick={() => setSelectedAsset('stocks')}>Stocks</button>
-            <button onClick={() => setSelectedAsset('metals')}>Metals</button>
-            <button onClick={() => setSelectedAsset('property')}>Property</button>
+        <div className="sidebar-content">
+          <div className="sidebar-buttons">
+            <button onClick={() => setSelectedAsset('home')}>Home</button>
+            <div className="dropdown">
+              <button className="dropbtn">Assets</button>
+              <div className="dropdown-content">
+                <button onClick={() => setSelectedAsset('auto')}>Auto</button>
+                <button onClick={() => setSelectedAsset('cash')}>Cash</button>
+                <button onClick={() => setSelectedAsset('stocks')}>Stocks</button>
+                <button onClick={() => setSelectedAsset('metals')}>Metals</button>
+                <button onClick={() => setSelectedAsset('property')}>Property</button>
+              </div>
+            </div>
+          </div>
+          <div className="sidebar-footer">
+            <button className="back-to-website-btn" onClick={handleBackToWebsite}>Back to Website</button>
+            <button className="sign-out-btn" onClick={handleSignOut}>Sign Out</button>
           </div>
         </div>
-        <button className="sign-out-btn" onClick={handleSignOut}>Sign Out</button>
-        <button className="back-to-website-btn" onClick={handleBackToWebsite}>Back to Website</button>
       </div>
       <div className="content">
-      {selectedAsset === 'home' && (
+        {selectedAsset === 'home' && (
           <div className="home-summary">
             <h2 className="summary-heading">Asset Summary</h2>
             {renderContent()}
           </div>
         )}
-      {selectedAsset !== 'home' && renderContent()}
+        {selectedAsset !== 'home' && renderContent()}
       </div>
     </div>
   );
