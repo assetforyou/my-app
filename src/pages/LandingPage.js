@@ -7,6 +7,7 @@ import Cash from './Cash';
 import Stocks from './Stocks';
 import Metals from './Metals';
 import Property from './Property';
+import Loan from './Loan';
 import './LandingPage.css';
 
 function LandingPage() {
@@ -23,6 +24,8 @@ function LandingPage() {
   const [propertyList, setPropertyList] = useState([]);
   const [propertyTotalPrice, setPropertyTotalPrice] = useState(0);
   const [propertyTotalMonthlyCost, setPropertyTotalMonthlyCost] = useState(0);
+  const [loanList, setLoanList] = useState([]);
+  const [loanTotal, setLoanTotal] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,6 +37,7 @@ function LandingPage() {
         fetchStockDetails(user.email);
         fetchMetalDetails(user.email);
         fetchPropertyDetails(user.email);
+        fetchLoanDetails(user.email);
       } else {
         navigate('/login');
       }
@@ -121,6 +125,19 @@ function LandingPage() {
     }
   };
 
+  const fetchLoanDetails = async (email) => {
+    try {
+      const q = query(collection(db, 'loans'), where("userEmail", "==", email));
+      const querySnapshot = await getDocs(q);
+      const loans = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setLoanList(loans);
+      const total = loans.reduce((sum, loan) => sum + parseFloat(loan.loanValue || 0), 0);
+      setLoanTotal(total);
+    } catch (error) {
+      console.error('Error fetching loan details:', error);
+    }
+  };
+
   const renderContent = () => {
     switch (selectedAsset) {
       case 'auto':
@@ -133,31 +150,38 @@ function LandingPage() {
         return <Metals userEmail={userEmail} metalList={metalList} metalTotal={metalTotal} fetchMetalDetails={fetchMetalDetails} />;
       case 'property':
         return <Property userEmail={userEmail} propertyList={propertyList} propertyTotalPrice={propertyTotalPrice} propertyTotalMonthlyCost={propertyTotalMonthlyCost} fetchPropertyDetails={fetchPropertyDetails} />;
+      case 'loan':
+        return <Loan userEmail={userEmail} loanList={loanList} loanTotal={loanTotal} fetchLoanDetails={fetchLoanDetails} />;
       case 'home':
         return (
           <div className="summary-container">
             <div className="summary-box">
               <h3>Cash</h3>
-              <p>Total Cash: {cashTotal}</p>
+              <p>Total Cash: ${cashTotal.toFixed(2)}</p>
             </div>
             <div className="summary-box">
               <h3>Stocks</h3>
-              <p>Total Value of Stocks: {stockTotal}</p>
+              <p>Total Value of Stocks: ${stockTotal.toFixed(2)}</p>
             </div>
             <div className="summary-box">
               <h3>Metals</h3>
-              <p>Total Value of Metals: {metalTotal}</p>
+              <p>Total Value of Metals: ${metalTotal.toFixed(2)}</p>
             </div>
             <div className="summary-box">
               <h3>Autos</h3>
               <p>Total Autos: {carList.length}</p>
-              <p>Total Value of Autos: {autoTotal}</p>
+              <p>Total Value of Autos: ${autoTotal.toFixed(2)}</p>
             </div>
             <div className="summary-box">
               <h3>Properties</h3>
               <p>Total Properties: {propertyList.length}</p> 
-              <p>Total Property Value: {propertyTotalPrice}</p>
-              <p>Total Monthly Cost: {propertyTotalMonthlyCost}</p>
+              <p>Total Property Value: ${propertyTotalPrice.toFixed(2)}</p>
+              <p>Total Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</p>
+            </div>
+            <div className="summary-box">
+              <h3>Loans</h3>
+              <p>Total Loans: {loanList.length}</p>
+              <p>Total Loan Value: ${loanTotal.toFixed(2)}</p>
             </div>
           </div>
         );
@@ -184,6 +208,7 @@ function LandingPage() {
                 <button onClick={() => setSelectedAsset('stocks')}>Stocks</button>
                 <button onClick={() => setSelectedAsset('metals')}>Metals</button>
                 <button onClick={() => setSelectedAsset('property')}>Property</button>
+                <button onClick={() => setSelectedAsset('loan')}>Loan</button>
               </div>
             </div>
           </div>
