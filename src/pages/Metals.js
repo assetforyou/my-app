@@ -4,23 +4,18 @@ import { db } from '../firebase';
 
 const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
 
-function Metals({ userEmail, metalList, fetchMetalDetails }) {
+function Metals({ userEmail, metalList, metalTotal, fetchMetalDetails }) {
   const [metalDetails, setMetalDetails] = useState({ type: '', grams: '', currency: 'USD' });
   const [saveButtonText, setSaveButtonText] = useState('Save');
   const [availableMetals, setAvailableMetals] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMetals, setFilteredMetals] = useState([]);
-  const [totalValue, setTotalValue] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchAvailableMetals();
   }, []);
-
-  useEffect(() => {
-    calculateTotalValue();
-  }, [metalDetails.grams, metalDetails.type, availableMetals]);
 
   const fetchMetalPrice = async (symbol) => {
     try {
@@ -73,7 +68,7 @@ function Metals({ userEmail, metalList, fetchMetalDetails }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setMetalDetails({ ...metalDetails, [name]: value });
+    setMetalDetails(prevDetails => ({ ...prevDetails, [name]: value }));
   };
 
   const handleSearch = () => {
@@ -84,21 +79,10 @@ function Metals({ userEmail, metalList, fetchMetalDetails }) {
   };
 
   const handleMetalSelection = (metal) => {
-    setMetalDetails({
-      ...metalDetails,
+    setMetalDetails(prevDetails => ({
+      ...prevDetails,
       type: metal.name,
-    });
-  };
-
-  const calculateTotalValue = () => {
-    const grams = parseFloat(metalDetails.grams) || 0;
-    const selectedMetal = availableMetals.find(metal => metal.name.toLowerCase() === metalDetails.type.toLowerCase());
-    console.log('Selected metal:', selectedMetal);
-    const valuePerGram = selectedMetal && selectedMetal.price ? (selectedMetal.price / 31.1035) : 0; // Convert from troy oz to gram
-    console.log('Value per gram:', valuePerGram);
-    const total = grams * valuePerGram;
-    console.log('Total value:', total);
-    setTotalValue(total.toFixed(2));
+    }));
   };
 
   const handleSaveMetalDetails = async () => {
@@ -136,7 +120,7 @@ function Metals({ userEmail, metalList, fetchMetalDetails }) {
     if (window.confirm('Are you sure you want to delete this Metal?')) {
       try {
         await deleteDoc(doc(db, 'metals', metalId));
-        fetchAvailableMetals();
+        fetchMetalDetails();
         alert('Metal detail deleted successfully.');
       } catch (error) {
         console.error('Error deleting metal detail:', error);
@@ -194,7 +178,7 @@ function Metals({ userEmail, metalList, fetchMetalDetails }) {
         <option value="INR">INR</option>
       </select>
       <button onClick={handleSaveMetalDetails}>{saveButtonText}</button>
-      <h2>Total Value: ${totalValue}</h2>
+      <h2>Total Value of Metals: ${metalTotal.toFixed(2)}</h2>
       <h2>Saved Metal Details</h2>
       <table>
         <thead>
