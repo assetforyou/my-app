@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 function Auto({ userEmail, carList, autoTotal, fetchCarDetails }) {
@@ -15,17 +15,14 @@ function Auto({ userEmail, carList, autoTotal, fetchCarDetails }) {
     setSaveButtonText('Saving...');
     try {
       const carValue = parseFloat(carDetails.value);
-
       await addDoc(collection(db, 'autos'), {
         ...carDetails,
         userEmail,
         value: carValue,
       });
-
       setCarDetails({ make: '', mileage: '', year: '', value: '', currency: 'USD' });
       setSaveButtonText('Saved!');
       fetchCarDetails();
-
       setTimeout(() => {
         setSaveButtonText('Save');
       }, 2000);
@@ -33,6 +30,19 @@ function Auto({ userEmail, carList, autoTotal, fetchCarDetails }) {
       console.error('Error saving car details:', error);
       setSaveButtonText('Save');
       alert('Failed to save car details.');
+    }
+  };
+
+  const handleDeleteCar = async (carId) => {
+    if (window.confirm('Are you sure you want to delete this car?')) {
+      try {
+        await deleteDoc(doc(db, 'autos', carId));
+        fetchCarDetails();
+        alert('Car deleted successfully.');
+      } catch (error) {
+        console.error('Error deleting car:', error);
+        alert('Failed to delete car.');
+      }
     }
   };
 
@@ -83,7 +93,7 @@ function Auto({ userEmail, carList, autoTotal, fetchCarDetails }) {
         <option value="INR">INR</option>
       </select>
       <button onClick={handleSaveCarDetails}>{saveButtonText}</button>
-
+      
       <h2>Saved Car Details</h2>
       <table>
         <thead>
@@ -94,6 +104,7 @@ function Auto({ userEmail, carList, autoTotal, fetchCarDetails }) {
             <th>Value</th>
             <th>Currency</th>
             <th>User</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -105,11 +116,13 @@ function Auto({ userEmail, carList, autoTotal, fetchCarDetails }) {
               <td>{car.value}</td>
               <td>{car.currency}</td>
               <td>{car.userEmail}</td>
+              <td>
+                <button onClick={() => handleDeleteCar(car.id)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
-
       <h2>Total Value of Autos: {autoTotal}</h2>
     </div>
   );

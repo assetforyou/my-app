@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 function Cash({ userEmail, cashList, cashTotal, fetchCashDetails }) {
@@ -33,6 +33,19 @@ function Cash({ userEmail, cashList, cashTotal, fetchCashDetails }) {
       console.error('Error saving cash details:', error);
       setSaveButtonText('Save');
       alert('Failed to save cash details.');
+    }
+  };
+  
+  const handleDeleteCash = async (cashId) => {
+    if (window.confirm('Are you sure you want to delete this cash detail?')) {
+      try {
+        await deleteDoc(doc(db, 'cash', cashId));
+        fetchCashDetails();
+        alert('Cash detail deleted successfully.');
+      } catch (error) {
+        console.error('Error deleting cash detail:', error);
+        alert('Failed to delete cash detail.');
+      }
     }
   };
 
@@ -70,6 +83,7 @@ function Cash({ userEmail, cashList, cashTotal, fetchCashDetails }) {
             <th>Amount</th>
             <th>Currency</th>
             <th>User</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -78,6 +92,9 @@ function Cash({ userEmail, cashList, cashTotal, fetchCashDetails }) {
               <td>{cash.amount}</td>
               <td>{cash.currency}</td>
               <td>{cash.userEmail}</td>
+              <td>
+                <button onClick={() => handleDeleteCash(cash.id)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>

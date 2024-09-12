@@ -1,8 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-function Property({ userEmail, propertyList, propertyTotalPrice, propertyTotalMonthlyCost, fetchPropertyDetails }) {
+function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, propertyTotalMonthlyCost, fetchPropertyDetails }) {
   const [propertyDetails, setPropertyDetails] = useState({
     address: '',
     bedrooms: '',
@@ -70,12 +70,21 @@ function Property({ userEmail, propertyList, propertyTotalPrice, propertyTotalMo
 
       const price = parseFloat(propertyDetails.price);
 
-      await addDoc(collection(db, 'properties'), {
+      const docRef = await addDoc(collection(db, 'properties'), {
         ...propertyDetails,
         userEmail,
         totalMonthlyCost,
         price,
       });
+
+      // Update the UI immediately
+      setPropertyList([...propertyList, {
+        id: docRef.id,
+        ...propertyDetails,
+        userEmail,
+        totalMonthlyCost,
+        price,
+      }]);
 
       setPropertyDetails({
         address: '',
@@ -90,7 +99,6 @@ function Property({ userEmail, propertyList, propertyTotalPrice, propertyTotalMo
         currency: 'USD'
       });
       setSaveButtonText('Saved!');
-      fetchPropertyDetails();
 
       setTimeout(() => {
         setSaveButtonText('Save');
@@ -99,6 +107,20 @@ function Property({ userEmail, propertyList, propertyTotalPrice, propertyTotalMo
       console.error('Error saving property details:', error);
       setSaveButtonText('Save');
       alert('Failed to save property details.');
+    }
+  };
+  
+  const handleDeleteProperty = async (propertyId) => {
+    if (window.confirm('Are you sure you want to delete this Property?')) {
+      try {
+        await deleteDoc(doc(db, 'properties', propertyId));
+        // Update the UI immediately
+        setPropertyList(propertyList.filter(property => property.id !== propertyId));
+        alert('Property detail deleted successfully.');
+      } catch (error) {
+        console.error('Error deleting property detail:', error);
+        alert('Failed to delete Property.');
+      }
     }
   };
 
@@ -213,6 +235,7 @@ function Property({ userEmail, propertyList, propertyTotalPrice, propertyTotalMo
             <th>Total Monthly Cost</th>
             <th>Currency</th>
             <th>User</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -230,6 +253,9 @@ function Property({ userEmail, propertyList, propertyTotalPrice, propertyTotalMo
               <td>{property.totalMonthlyCost}</td>
               <td>{property.currency}</td>
               <td>{property.userEmail}</td>
+              <td>
+                <button onClick={() => handleDeleteProperty(property.id)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>

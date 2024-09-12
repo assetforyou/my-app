@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
@@ -131,6 +131,19 @@ function Metals({ userEmail, metalList, fetchMetalDetails }) {
 
   if (isLoading) return <div>Loading metal prices...</div>;
   if (error) return <div>Error: {error}</div>;
+  
+  const handleDeleteMetal = async (metalId) => {
+    if (window.confirm('Are you sure you want to delete this Metal?')) {
+      try {
+        await deleteDoc(doc(db, 'metals', metalId));
+        fetchAvailableMetals();
+        alert('Metal detail deleted successfully.');
+      } catch (error) {
+        console.error('Error deleting metal detail:', error);
+        alert('Failed to delete Metal.');
+      }
+    }
+  };
 
   return (
     <div className="asset-form">
@@ -192,6 +205,7 @@ function Metals({ userEmail, metalList, fetchMetalDetails }) {
             <th>Total Value</th>
             <th>Currency</th>
             <th>User</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -203,6 +217,9 @@ function Metals({ userEmail, metalList, fetchMetalDetails }) {
               <td>${metal.total.toFixed(2)}</td>
               <td>{metal.currency}</td>
               <td>{metal.userEmail}</td>
+              <td>
+                <button onClick={() => handleDeleteMetal(metal.id)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import axios from 'axios';
 
 const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';  // Replace with your actual API key
 
-function Stocks({ userEmail, stockList, stockTotal, fetchStockDetails }) {
+function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDetails }) {
   const [stockDetails, setStockDetails] = useState({ name: '', number: '', value: '', currency: 'USD' });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -35,7 +35,7 @@ function Stocks({ userEmail, stockList, stockTotal, fetchStockDetails }) {
       const totalValue = numberOfStocks * livePrice;
 
       try {
-        await addDoc(collection(db, 'stocks'), {
+        const docRef = await addDoc(collection(db, 'stocks'), {
           name: stockDetails.name,
           number: numberOfStocks,
           value: livePrice,
@@ -44,8 +44,17 @@ function Stocks({ userEmail, stockList, stockTotal, fetchStockDetails }) {
           userEmail,
         });
 
+        setStockList([...stockList, {
+          id: docRef.id,
+          name: stockDetails.name,
+          number: numberOfStocks,
+          value: livePrice,
+          total: totalValue,
+          currency: stockDetails.currency,
+          userEmail,
+        }]);
+
         setStockDetails({ name: '', number: '', value: '', currency: 'USD' });
-        fetchStockDetails();
       } catch (error) {
         console.error('Error saving stock details:', error);
         alert('Failed to save stock details.');
@@ -79,6 +88,19 @@ function Stocks({ userEmail, stockList, stockTotal, fetchStockDetails }) {
         </ul>
       </div>
     );
+  };
+  
+  const handleDeleteStock = async (stockId) => {
+    if (window.confirm('Are you sure you want to delete this Stock?')) {
+      try {
+        await deleteDoc(doc(db, 'stocks', stockId));
+        setStockList(stockList.filter(stock => stock.id !== stockId));
+        alert('Stock detail deleted successfully.');
+      } catch (error) {
+        console.error('Error deleting Stock detail:', error);
+        alert('Failed to delete Stock.');
+      }
+    }
   };
 
   return (
@@ -120,6 +142,7 @@ function Stocks({ userEmail, stockList, stockTotal, fetchStockDetails }) {
             <th>Total Value</th>
             <th>Currency</th>
             <th>User</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -131,6 +154,9 @@ function Stocks({ userEmail, stockList, stockTotal, fetchStockDetails }) {
               <td>{stock.total}</td>
               <td>{stock.currency}</td>
               <td>{stock.userEmail}</td>
+              <td>
+                <button onClick={() => handleDeleteStock(stock.id)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>
