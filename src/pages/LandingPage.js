@@ -8,6 +8,8 @@ import Stocks from './Stocks';
 import Metals from './Metals';
 import Property from './Property';
 import Loan from './Loan';
+import CreateAsset from './CreateAsset';
+import CustomAsset from './CustomAsset';
 import './LandingPage.css';
 
 function LandingPage() {
@@ -26,6 +28,7 @@ function LandingPage() {
   const [propertyTotalMonthlyCost, setPropertyTotalMonthlyCost] = useState(0);
   const [loanList, setLoanList] = useState([]);
   const [loanTotal, setLoanTotal] = useState(0);
+  const [customAssets, setCustomAssets] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,6 +41,7 @@ function LandingPage() {
         fetchMetalDetails(user.email);
         fetchPropertyDetails(user.email);
         fetchLoanDetails(user.email);
+        fetchCustomAssets(user.email);
       } else {
         navigate('/login');
       }
@@ -138,6 +142,17 @@ function LandingPage() {
     }
   };
 
+  const fetchCustomAssets = async (email) => {
+    try {
+      const q = query(collection(db, 'customAssets'), where("userEmail", "==", email));
+      const querySnapshot = await getDocs(q);
+      const assets = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCustomAssets(assets);
+    } catch (error) {
+      console.error('Error fetching custom assets:', error);
+    }
+  };
+
   const renderContent = () => {
     switch (selectedAsset) {
       case 'auto':
@@ -152,6 +167,8 @@ function LandingPage() {
         return <Property userEmail={userEmail} propertyList={propertyList} propertyTotalPrice={propertyTotalPrice} propertyTotalMonthlyCost={propertyTotalMonthlyCost} fetchPropertyDetails={fetchPropertyDetails} />;
       case 'loan':
         return <Loan userEmail={userEmail} loanList={loanList} loanTotal={loanTotal} fetchLoanDetails={fetchLoanDetails} />;
+      case 'createAsset':
+        return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'home':
         return (
           <div className="summary-container">
@@ -174,7 +191,7 @@ function LandingPage() {
             </div>
             <div className="summary-box">
               <h3>Properties</h3>
-              <p>Total Properties: {propertyList.length}</p> 
+              <p>Total Properties: {propertyList.length}</p>
               <p>Total Property Value: ${propertyTotalPrice.toFixed(2)}</p>
               <p>Total Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</p>
             </div>
@@ -183,9 +200,20 @@ function LandingPage() {
               <p>Total Loans: {loanList.length}</p>
               <p>Total Loan Value: ${loanTotal.toFixed(2)}</p>
             </div>
+            {customAssets.map(asset => (
+              <div key={asset.id} className="summary-box">
+                <h3>{asset.name}</h3>
+                <p>Total Value: ${asset.totalValue.toFixed(2)}</p>
+              </div>
+            ))}
           </div>
         );
       default:
+        if (selectedAsset.startsWith('custom-')) {
+          const assetId = selectedAsset.split('-')[1];
+          const asset = customAssets.find(a => a.id === assetId);
+          return asset ? <CustomAsset userEmail={userEmail} asset={asset} fetchCustomAssets={fetchCustomAssets} /> : null;
+        }
         return <div>Select an asset type from the sidebar</div>;
     }
   };
@@ -200,6 +228,7 @@ function LandingPage() {
         <div className="sidebar-content">
           <div className="sidebar-buttons">
             <button onClick={() => setSelectedAsset('home')}>Home</button>
+            <button className="create-asset-btn" onClick={() => setSelectedAsset('createAsset')}>Create Asset</button>
             <div className="dropdown">
               <button className="dropbtn">Assets</button>
               <div className="dropdown-content">
@@ -209,6 +238,9 @@ function LandingPage() {
                 <button onClick={() => setSelectedAsset('metals')}>Metals</button>
                 <button onClick={() => setSelectedAsset('property')}>Property</button>
                 <button onClick={() => setSelectedAsset('loan')}>Loan</button>
+                {customAssets.map(asset => (
+                  <button key={asset.id} onClick={() => setSelectedAsset(`custom-${asset.id}`)}>{asset.name}</button>
+                ))}
               </div>
             </div>
           </div>
@@ -219,13 +251,7 @@ function LandingPage() {
         </div>
       </div>
       <div className="content">
-        {selectedAsset === 'home' && (
-          <div className="home-summary">
-            <h2 className="summary-heading">Asset Summary</h2>
-            {renderContent()}
-          </div>
-        )}
-        {selectedAsset !== 'home' && renderContent()}
+        {renderContent()}
       </div>
     </div>
   );
