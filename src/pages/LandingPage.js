@@ -218,6 +218,8 @@ function LandingPage() {
         return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'home':
         return (
+        <div className="home-content">
+          <h2 className="summary-title">Asset Summary</h2>
           <div className="summary-container">
             <div className="summary-box">
               <h3>Cash</h3>
@@ -254,6 +256,7 @@ function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
         );
       default:
         if (selectedAsset.startsWith('custom-')) {
