@@ -280,6 +280,37 @@ body {
   background-color: #2980b9;
 }
 
+.field-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.field-input input,
+.field-input select {
+  flex: 1;
+  margin-right: 10px;
+  margin-bottom: 0;
+}
+
+.field-input button {
+  margin-top: 0;
+}
+
+/* Add spacing for the last field */
+.field-input:last-child {
+  margin-bottom: 30px;
+}
+
+/* Style for the Add Field button */
+.add-field-button {
+  margin-top: 10px;
+  width: 100%;
+}
+
 .asset-form table {
   width: 100%;
   border-collapse: collapse;

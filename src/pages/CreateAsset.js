@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import './LandingPage.css';
+import { Trash2 } from 'lucide-react';
 
 function CreateAsset({ userEmail, onAssetCreated }) {
   const [assetDetails, setAssetDetails] = useState({
@@ -110,7 +111,7 @@ function CreateAsset({ userEmail, onAssetCreated }) {
             <option value="number">Number</option>
             <option value="date">Date</option>
           </select>
-          <button onClick={() => removeField(index)}>Remove</button>
+          <button onClick={() => removeField(index)}><Trash2 size={16} /></button>
         </div>
       ))}
       <button onClick={addField}>Add Field</button>
