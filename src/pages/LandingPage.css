@@ -440,3 +440,12 @@ body {
 .create-asset-button:hover {
   background-color: #0056b3;
 }
+
+.clickable {
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.clickable:hover {
+  background-color: #f0f0f0;
+}

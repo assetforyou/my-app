@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
-import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import Auto from './Auto';
 import Cash from './Cash';
 import Stocks from './Stocks';
@@ -29,6 +29,7 @@ function LandingPage() {
   const [loanList, setLoanList] = useState([]);
   const [loanTotal, setLoanTotal] = useState(0);
   const [customAssets, setCustomAssets] = useState([]);
+  const [selectedAssetForAction, setSelectedAssetForAction] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -158,7 +159,6 @@ function LandingPage() {
       const assetRef = doc(db, 'customAssets', assetId);
       await updateDoc(assetRef, { totalValue: newTotal });
       
-      // Update the local state
       setCustomAssets(prevAssets => 
         prevAssets.map(asset => 
           asset.id === assetId ? { ...asset, totalValue: newTotal } : asset
@@ -169,7 +169,38 @@ function LandingPage() {
     }
   };
 
+  const handleAssetClick = (asset) => {
+    setSelectedAssetForAction(asset);
+  };
+
+  const handleAssetAction = async (action) => {
+    if (action === 'view') {
+      setSelectedAsset(`custom-${selectedAssetForAction.id}`);
+    } else if (action === 'delete') {
+      try {
+        await deleteDoc(doc(db, 'customAssets', selectedAssetForAction.id));
+        setCustomAssets(prevAssets => prevAssets.filter(asset => asset.id !== selectedAssetForAction.id));
+        setSelectedAsset('home');
+      } catch (error) {
+        console.error('Error deleting asset:', error);
+        alert('Failed to delete asset.');
+      }
+    }
+    setSelectedAssetForAction(null);
+  };
+
   const renderContent = () => {
+    if (selectedAssetForAction) {
+      return (
+        <div className="asset-form button">
+          <h3>What would you like to do with {selectedAssetForAction.name}?</h3>
+          <button onClick={() => handleAssetAction('view')}>View Asset Page</button>
+          <button onClick={() => handleAssetAction('delete')}>Delete Asset</button>
+          <button onClick={() => setSelectedAssetForAction(null)}>Cancel</button>
+        </div>
+      );
+    }
+
     switch (selectedAsset) {
       case 'auto':
         return <Auto userEmail={userEmail} carList={carList} autoTotal={autoTotal} fetchCarDetails={fetchCarDetails} />;
@@ -217,7 +248,7 @@ function LandingPage() {
               <p>Total Loan Value: ${loanTotal.toFixed(2)}</p>
             </div>
             {customAssets.map(asset => (
-              <div key={asset.id} className="summary-box">
+              <div key={asset.id} className="summary-box clickable" onClick={() => handleAssetClick(asset)}>
                 <h3>{asset.name}</h3>
                 <p>Total Value: ${parseFloat(asset.totalValue || 0).toFixed(2)}</p>
               </div>
