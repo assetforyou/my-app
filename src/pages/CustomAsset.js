@@ -83,7 +83,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
         />
       ))}
       <button onClick={handleAddItem}>{saveButtonText}</button>
-      <h3>Total Value: ${totalValue.toFixed(2)}</h3>
+      <h3>Total Value: {asset.currency} {totalValue.toFixed(2)}</h3>
       <h3>Saved Items</h3>
       <table>
         <thead>
@@ -99,7 +99,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
             <tr key={item.id}>
               {asset.fields.map(field => (
                 <td key={field.name}>
-                  {field.type === 'number' ? parseFloat(item[field.name]).toFixed(2) : item[field.name]}
+                  {field.type === 'number' ? `${asset.currency} ${parseFloat(item[field.name]).toFixed(2)}` : item[field.name]}
                 </td>
               ))}
               <td>

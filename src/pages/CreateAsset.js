@@ -6,9 +6,22 @@ import './LandingPage.css';
 function CreateAsset({ userEmail, onAssetCreated }) {
   const [assetDetails, setAssetDetails] = useState({
     name: '',
-    fields: [{ name: '', type: 'text' }]
+    fields: [{ name: '', type: 'text' }],
+    currency: 'USD'
   });
   const [saveButtonText, setSaveButtonText] = useState('Create Asset');
+
+  const currencies = [
+    { code: 'USD', name: 'US Dollar' },
+    { code: 'EUR', name: 'Euro' },
+    { code: 'JPY', name: 'Japanese Yen' },
+    { code: 'GBP', name: 'British Pound' },
+    { code: 'AUD', name: 'Australian Dollar' },
+    { code: 'CAD', name: 'Canadian Dollar' },
+    { code: 'CHF', name: 'Swiss Franc' },
+    { code: 'CNY', name: 'Chinese Yuan' },
+    { code: 'INR', name: 'Indian Rupee' },
+  ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -46,7 +59,7 @@ function CreateAsset({ userEmail, onAssetCreated }) {
       });
       onAssetCreated(userEmail);
       setSaveButtonText('Created!');
-      setAssetDetails({ name: '', fields: [{ name: '', type: 'text' }] });
+      setAssetDetails({ name: '', fields: [{ name: '', type: 'text' }], currency: 'USD' });
       setTimeout(() => {
         setSaveButtonText('Create Asset');
       }, 2000);
@@ -67,6 +80,17 @@ function CreateAsset({ userEmail, onAssetCreated }) {
         value={assetDetails.name}
         onChange={handleInputChange}
       />
+      <select
+        name="currency"
+        value={assetDetails.currency}
+        onChange={handleInputChange}
+      >
+        {currencies.map((currency) => (
+          <option key={currency.code} value={currency.code}>
+            {currency.name} ({currency.code})
+          </option>
+        ))}
+      </select>
       <h3>Fields</h3>
       {assetDetails.fields.map((field, index) => (
         <div key={index} className="field-input">
