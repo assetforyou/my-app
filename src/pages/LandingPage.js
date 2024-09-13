@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 import Auto from './Auto';
 import Cash from './Cash';
 import Stocks from './Stocks';
@@ -153,6 +153,22 @@ function LandingPage() {
     }
   };
 
+  const updateAssetTotal = async (assetId, newTotal) => {
+    try {
+      const assetRef = doc(db, 'customAssets', assetId);
+      await updateDoc(assetRef, { totalValue: newTotal });
+      
+      // Update the local state
+      setCustomAssets(prevAssets => 
+        prevAssets.map(asset => 
+          asset.id === assetId ? { ...asset, totalValue: newTotal } : asset
+        )
+      );
+    } catch (error) {
+      console.error('Error updating asset total:', error);
+    }
+  };
+
   const renderContent = () => {
     switch (selectedAsset) {
       case 'auto':
@@ -203,7 +219,7 @@ function LandingPage() {
             {customAssets.map(asset => (
               <div key={asset.id} className="summary-box">
                 <h3>{asset.name}</h3>
-                <p>Total Value: ${asset.totalValue.toFixed(2)}</p>
+                <p>Total Value: ${parseFloat(asset.totalValue || 0).toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -212,7 +228,14 @@ function LandingPage() {
         if (selectedAsset.startsWith('custom-')) {
           const assetId = selectedAsset.split('-')[1];
           const asset = customAssets.find(a => a.id === assetId);
-          return asset ? <CustomAsset userEmail={userEmail} asset={asset} fetchCustomAssets={fetchCustomAssets} /> : null;
+          return asset ? (
+            <CustomAsset 
+              userEmail={userEmail} 
+              asset={asset} 
+              fetchCustomAssets={fetchCustomAssets}
+              updateAssetTotal={updateAssetTotal}
+            />
+          ) : null;
         }
         return <div>Select an asset type from the sidebar</div>;
     }

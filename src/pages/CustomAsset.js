@@ -44,7 +44,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
         ...newItem,
         userEmail,
       });
-      await fetchAssetItems();  // This will also update the total
+      await fetchAssetItems(); // This will also update the total
       setNewItem({});
       setSaveButtonText('Added!');
       setTimeout(() => {
@@ -61,7 +61,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
         await deleteDoc(doc(db, `customAssets/${asset.id}/items`, itemId));
-        await fetchAssetItems();  // This will also update the total
+        await fetchAssetItems(); // This will also update the total
       } catch (error) {
         console.error('Error deleting custom asset item:', error);
         alert('Failed to delete item.');
@@ -83,10 +83,8 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
         />
       ))}
       <button onClick={handleAddItem}>{saveButtonText}</button>
-
-      <h2>Total Value: ${totalValue.toFixed(2)}</h2>
-
-      <h2>Saved Items</h2>
+      <h3>Total Value: ${totalValue.toFixed(2)}</h3>
+      <h3>Saved Items</h3>
       <table>
         <thead>
           <tr>
