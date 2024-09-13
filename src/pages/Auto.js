@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { Trash2 } from 'lucide-react';
 
 function Auto({ userEmail, carList, autoTotal, fetchCarDetails }) {
   const [carDetails, setCarDetails] = useState({ make: '', mileage: '', year: '', value: '', currency: 'USD' });
@@ -117,7 +118,7 @@ function Auto({ userEmail, carList, autoTotal, fetchCarDetails }) {
               <td>{car.currency}</td>
               <td>{car.userEmail}</td>
               <td>
-                <button onClick={() => handleDeleteCar(car.id)}>Delete</button>
+                <button onClick={() => handleDeleteCar(car.id)}><Trash2 size={16} /></button>
               </td>
             </tr>
           ))}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { Trash2 } from 'lucide-react';
 
 function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, propertyTotalMonthlyCost, fetchPropertyDetails }) {
   const [propertyDetails, setPropertyDetails] = useState({
@@ -254,7 +255,7 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
               <td>{property.currency}</td>
               <td>{property.userEmail}</td>
               <td>
-                <button onClick={() => handleDeleteProperty(property.id)}>Delete</button>
+                <button onClick={() => handleDeleteProperty(property.id)}><Trash2 size={16} /></button>
               </td>
             </tr>
           ))}

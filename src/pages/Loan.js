@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { Trash2 } from 'lucide-react';
 
 function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
   const [loanDetails, setLoanDetails] = useState({
@@ -125,7 +126,7 @@ function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
               <td>{loan.currency}</td>
               <td>{loan.userEmail}</td>
               <td>
-                <button onClick={() => handleDeleteLoan(loan.id)}>Delete</button>
+                <button onClick={() => handleDeleteLoan(loan.id)}><Trash2 size={16} /></button>
               </td>
             </tr>
           ))}

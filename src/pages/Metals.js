@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { Trash2 } from 'lucide-react';
 
 const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
 
@@ -202,7 +203,7 @@ function Metals({ userEmail, metalList, metalTotal, fetchMetalDetails }) {
               <td>{metal.currency}</td>
               <td>{metal.userEmail}</td>
               <td>
-                <button onClick={() => handleDeleteMetal(metal.id)}>Delete</button>
+                <button onClick={() => handleDeleteMetal(metal.id)}><Trash2 size={16} /></button>
               </td>
             </tr>
           ))}
