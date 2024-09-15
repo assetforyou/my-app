@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, getDocs, query, where, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Trash2 } from 'lucide-react';
 
@@ -19,17 +19,19 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
       const querySnapshot = await getDocs(q);
       const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setAssetItems(items);
-      const newTotal = calculateTotalValue(items);
-      setTotalValue(newTotal);
-      updateAssetTotal(asset.id, newTotal);
+      calculateTotalValue(items);
     } catch (error) {
       console.error('Error fetching custom asset items:', error);
     }
   };
 
   const calculateTotalValue = (items) => {
-    const valueField = asset.fields.find(field => field.type === 'number');
-    return items.reduce((sum, item) => sum + (parseFloat(item[valueField.name]) || 0), 0);
+    const costField = asset.fields.find(field => field.type === 'cost');
+    if (costField) {
+      const total = items.reduce((sum, item) => sum + (parseFloat(item[costField.name]) || 0), 0);
+      setTotalValue(total);
+      updateAssetTotal(asset.id, total);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -44,7 +46,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
         ...newItem,
         userEmail,
       });
-      await fetchAssetItems(); // This will also update the total
+      await fetchAssetItems();
       setNewItem({});
       setSaveButtonText('Added!');
       setTimeout(() => {
@@ -61,7 +63,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
         await deleteDoc(doc(db, `customAssets/${asset.id}/items`, itemId));
-        await fetchAssetItems(); // This will also update the total
+        await fetchAssetItems();
       } catch (error) {
         console.error('Error deleting custom asset item:', error);
         alert('Failed to delete item.');
@@ -72,10 +74,12 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
   return (
     <div className="asset-form">
       <h2>{asset.name}</h2>
+      <h3>Total Value: {asset.currency} {totalValue.toFixed(2)}</h3>
+      <h3>Add New Item</h3>
       {asset.fields.map(field => (
         <input
           key={field.name}
-          type={field.type}
+          type={field.type === 'cost' ? 'number' : field.type}
           name={field.name}
           placeholder={field.name}
           value={newItem[field.name] || ''}
@@ -83,7 +87,6 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
         />
       ))}
       <button onClick={handleAddItem}>{saveButtonText}</button>
-      <h3>Total Value: {asset.currency} {totalValue.toFixed(2)}</h3>
       <h3>Saved Items</h3>
       <table>
         <thead>
@@ -99,7 +102,9 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
             <tr key={item.id}>
               {asset.fields.map(field => (
                 <td key={field.name}>
-                  {field.type === 'number' ? `${asset.currency} ${parseFloat(item[field.name]).toFixed(2)}` : item[field.name]}
+                  {field.type === 'cost' 
+                    ? `${asset.currency} ${parseFloat(item[field.name] || 0).toFixed(2)}`
+                    : item[field.name]}
                 </td>
               ))}
               <td>

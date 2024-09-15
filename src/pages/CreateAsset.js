@@ -110,6 +110,7 @@ function CreateAsset({ userEmail, onAssetCreated }) {
             <option value="text">Text</option>
             <option value="number">Number</option>
             <option value="date">Date</option>
+            <option value="cost">Cost</option>
           </select>
           <button onClick={() => removeField(index)}><Trash2 size={16} /></button>
         </div>
