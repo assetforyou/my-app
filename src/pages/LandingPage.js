@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { Settings } from 'lucide-react';
 import Auto from './Auto';
 import Cash from './Cash';
 import Stocks from './Stocks';
@@ -30,6 +31,7 @@ function LandingPage() {
   const [loanTotal, setLoanTotal] = useState(0);
   const [customAssets, setCustomAssets] = useState([]);
   const [selectedAssetForAction, setSelectedAssetForAction] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,6 +63,22 @@ function LandingPage() {
 
   const handleBackToWebsite = () => {
     navigate('/');
+  };
+
+  const toggleSettings = () => {
+    setIsSettingsOpen(!isSettingsOpen);
+  };
+
+  const handleAccountSettings = () => {
+    // Implement account settings logic
+    console.log("Account settings clicked");
+    setIsSettingsOpen(false);
+  };
+
+  const handlePreferences = () => {
+    // Implement preferences logic
+    console.log("Preferences clicked");
+    setIsSettingsOpen(false);
   };
 
   const fetchCarDetails = async (email) => {
@@ -279,7 +297,19 @@ function LandingPage() {
     <div className="landing-page">
       <div className="top-bar">
         <div className="title">Noble Asset Vault</div>
-        <div className="user-email">{userEmail}</div>
+        <div className="settings-dropdown">
+          <button onClick={toggleSettings} className="settings-icon">
+            <Settings size={24} />
+          </button>
+          {isSettingsOpen && (
+            <div className="settings-menu">
+              <div className="user-email">{userEmail}</div>
+              <button onClick={handleAccountSettings}>Account Settings</button>
+              <button onClick={handlePreferences}>Preferences</button>
+              <button onClick={handleSignOut}>Sign Out</button>
+            </div>
+          )}
+        </div>
       </div>
       <div className="sidebar">
         <div className="sidebar-content">
