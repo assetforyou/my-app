@@ -75,12 +75,6 @@ function LandingPage() {
     setIsSettingsOpen(false);
   };
 
-  const handlePreferences = () => {
-    // Implement preferences logic
-    console.log("Preferences clicked");
-    setIsSettingsOpen(false);
-  };
-
   const fetchCarDetails = async (email) => {
     try {
       const q = query(collection(db, 'autos'), where("userEmail", "==", email));
@@ -307,7 +301,6 @@ function LandingPage() {
             <div className="settings-menu">
               <div className="user-email">{userEmail}</div>
               <button onClick={handleAccountSettings}>Account Settings</button>
-              <button onClick={handlePreferences}>Preferences</button>
               <button onClick={handleSignOut}>Sign Out</button>
             </div>
           )}
