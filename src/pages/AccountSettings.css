@@ -1,0 +1,95 @@
+.account-settings {
+    padding: 20px;
+    background-color: var(--background-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .account-settings h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+  }
+  
+  .user-info {
+    background-color: var(--secondary-color);
+    color: var(--white);
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+  
+  .password-form {
+    background-color: var(--white);
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+  
+  .password-form h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-color);
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  .account-settings button {
+    background-color: var(--accent-color);
+    color: var(--white);
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .account-settings button:hover {
+    background-color: #2980b9;
+  }
+  
+  .message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    color: var(--text-color);
+  }
+  
+  .other-settings {
+    background-color: var(--white);
+    padding: 20px;
+    border-radius: 4px;
+  }
+  
+  .other-settings h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+  }
+  
+  .other-settings button {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: left;
+    background-color: var(--secondary-color);
+  }
+  
+  .other-settings button:hover {
+    background-color: var(--accent-color);
+  }

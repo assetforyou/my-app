@@ -11,6 +11,7 @@ import Property from './Property';
 import Loan from './Loan';
 import CreateAsset from './CreateAsset';
 import CustomAsset from './CustomAsset';
+import AccountSettings from './AccountSettings';
 import './LandingPage.css';
 
 function LandingPage() {
@@ -70,8 +71,7 @@ function LandingPage() {
   };
 
   const handleAccountSettings = () => {
-    // Implement account settings logic
-    console.log("Account settings clicked");
+    setSelectedAsset('accountSettings');
     setIsSettingsOpen(false);
   };
 
@@ -220,6 +220,8 @@ function LandingPage() {
     }
 
     switch (selectedAsset) {
+      case 'accountSettings':
+        return <AccountSettings userEmail={userEmail} />;
       case 'auto':
         return <Auto userEmail={userEmail} carList={carList} autoTotal={autoTotal} fetchCarDetails={fetchCarDetails} />;
       case 'cash':
