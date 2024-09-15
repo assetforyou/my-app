@@ -561,3 +561,57 @@ body {
     width: 100%;
   }
 }
+
+/* Add this to your LandingPage.css file */
+
+.asset-action-container {
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.asset-action-container h3 {
+  color: var(--primary-color);
+  font-size: 20px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.asset-action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.asset-action-buttons button {
+  background-color: var(--accent-color);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.asset-action-buttons button:hover {
+  background-color: #2980b9;
+}
+
+.asset-action-buttons button.cancel {
+  background-color: #95a5a6;
+}
+
+.asset-action-buttons button.cancel:hover {
+  background-color: #7f8c8d;
+}
+
+.asset-action-buttons button.delete {
+  background-color: #e74c3c;
+}
+
+.asset-action-buttons button.delete:hover {
+  background-color: #c0392b;
+}

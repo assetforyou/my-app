@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -33,6 +33,7 @@ function LandingPage() {
   const [customAssets, setCustomAssets] = useState([]);
   const [selectedAssetForAction, setSelectedAssetForAction] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,10 +52,31 @@ function LandingPage() {
       }
     });
 
-    return unsubscribe;
+    const handleClickOutside = (event) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+        setIsSettingsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      unsubscribe();
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [navigate]);
 
+  const toggleSettings = () => {
+    setIsSettingsOpen(!isSettingsOpen);
+  };
+
+  const handleAccountSettings = () => {
+    setSelectedAsset('accountSettings');
+    setIsSettingsOpen(false);
+  };
+
   const handleSignOut = () => {
+    setIsSettingsOpen(false);
     auth.signOut().then(() => {
       navigate('/login');
     }).catch((error) => {
@@ -63,15 +85,12 @@ function LandingPage() {
   };
 
   const handleBackToWebsite = () => {
+    setIsSettingsOpen(false);
     navigate('/');
   };
 
-  const toggleSettings = () => {
-    setIsSettingsOpen(!isSettingsOpen);
-  };
-
-  const handleAccountSettings = () => {
-    setSelectedAsset('accountSettings');
+  const setSelectedAssetAndCloseSettings = (asset) => {
+    setSelectedAsset(asset);
     setIsSettingsOpen(false);
   };
 
@@ -204,11 +223,13 @@ function LandingPage() {
   const renderContent = () => {
     if (selectedAssetForAction) {
       return (
-        <div className="asset-form button">
+        <div className="asset-action-container">
           <h3>What would you like to do with {selectedAssetForAction.name}?</h3>
+          <div className="asset-action-buttons">
           <button onClick={() => handleAssetAction('view')}>View Asset Page</button>
           <button onClick={() => handleAssetAction('delete')}>Delete Asset</button>
           <button onClick={() => setSelectedAssetForAction(null)}>Cancel</button>
+          </div>
         </div>
       );
     }
@@ -293,7 +314,7 @@ function LandingPage() {
     <div className="landing-page">
       <div className="top-bar">
         <div className="title">Noble Asset Vault</div>
-        <div className="settings-dropdown">
+        <div className="settings-dropdown" ref={settingsRef}>
           <button onClick={toggleSettings} className="settings-icon">
             <Settings size={24} />
           </button>
@@ -309,14 +330,14 @@ function LandingPage() {
       <div className="sidebar">
         <div className="sidebar-content">
           <div className="sidebar-buttons">
-            <button onClick={() => setSelectedAsset('home')}>Home</button>
-            <button className="create-asset-btn" onClick={() => setSelectedAsset('createAsset')}>Create Asset</button>
+            <button onClick={() => setSelectedAssetAndCloseSettings('home')}>Home</button>
+            <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('createAsset')}>Create Asset</button>
             <div className="dropdown">
               <button className="dropbtn">Assets</button>
               <div className="dropdown-content">
-                <button onClick={() => setSelectedAsset('auto')}>Auto</button>
-                <button onClick={() => setSelectedAsset('cash')}>Cash</button>
-                <button onClick={() => setSelectedAsset('stocks')}>Stocks</button>
+                <button onClick={() => setSelectedAssetAndCloseSettings('auto')}>Auto</button>
+                <button onClick={() => setSelectedAssetAndCloseSettings('cash')}>Cash</button>
+                <button onClick={() => setSelectedAssetAndCloseSettings('stocks')}>Stocks</button>
                 <button onClick={() => setSelectedAsset('metals')}>Metals</button>
                 <button onClick={() => setSelectedAsset('property')}>Property</button>
                 <button onClick={() => setSelectedAsset('loan')}>Loan</button>
