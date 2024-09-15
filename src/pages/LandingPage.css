@@ -222,10 +222,74 @@ body {
 
 .asset-form-container {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
   padding: 30px;
   background-color: var(--background-color);
+}
+
+.asset-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px;
+  background-color: var(--background-color);
+}
+
+.asset-form {
+  background-color: var(--white);
+  padding: 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%;
+  margin-bottom: 20px;
+  z-index: 2;
+}
+
+.upload-excel-container {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.upload-excel-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--accent-color);
+  color: var(--white);
+  padding: 12px 20px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.upload-excel-button:hover {
+  background-color: #2980b9;
+}
+
+.upload-excel-button svg {
+  margin-right: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .asset-form-wrapper {
+    padding: 20px;
+  }
+
+  .asset-form {
+    padding: 20px;
+  }
+
+  .upload-excel-button {
+    width: 100%;
+  }
 }
 
 .asset-form-card {
