@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { collection, addDoc, deleteDoc, doc, getDocs, query, where, updateDoc } from 'firebase/firestore';
+import React, { useState, useEffect, useRef } from 'react';
+import { collection, addDoc, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Upload } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import * as XLSX from 'xlsx';
 
 function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) {
   const [assetItems, setAssetItems] = useState([]);
   const [newItem, setNewItem] = useState({});
   const [totalValue, setTotalValue] = useState(0);
   const [saveButtonText, setSaveButtonText] = useState('Add Item');
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchAssetItems();
@@ -71,6 +74,46 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
     }
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const bstr = evt.target.result;
+      const wb = XLSX.read(bstr, { type: 'binary' });
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      const data = XLSX.utils.sheet_to_json(ws);
+      if (data.length > 0) {
+        const firstRow = data[0];
+        const newItemData = {};
+        asset.fields.forEach(field => {
+          newItemData[field.name] = firstRow[field.name] || '';
+        });
+        setNewItem(newItemData);
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const getChartData = () => {
+    const dateField = asset.fields.find(field => field.type === 'date');
+    const costField = asset.fields.find(field => field.type === 'cost');
+
+    if (!dateField || !costField) {
+      return [];
+    }
+
+    return assetItems
+      .filter(item => item[dateField.name] && item[costField.name])
+      .map(item => ({
+        date: item[dateField.name],
+        value: parseFloat(item[costField.name])
+      }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  };
+
+  const chartData = getChartData();
+
   return (
     <div className="asset-form">
       <h2>{asset.name}</h2>
@@ -87,6 +130,23 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
         />
       ))}
       <button onClick={handleAddItem}>{saveButtonText}</button>
+
+      <div className="excel-upload">
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileUpload}
+          accept=".xlsx, .xls"
+        />
+        <button
+          onClick={() => fileInputRef.current.click()}
+          className="upload-button"
+        >
+          <Upload size={16} /> Upload Excel
+        </button>
+      </div>
+
       <h3>Saved Items</h3>
       <table>
         <thead>
@@ -116,6 +176,22 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
           ))}
         </tbody>
       </table>
+
+      {chartData.length > 0 && (
+        <>
+          <h3>{asset.name} Value Over Time</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="value" stroke="#8884d8" />
+            </LineChart>
+          </ResponsiveContainer>
+        </>
+      )}
     </div>
   );
 }
