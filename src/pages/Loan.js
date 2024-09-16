@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Upload } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import * as XLSX from 'xlsx';
 
-function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
+function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails }) {
   const [loanDetails, setLoanDetails] = useState({
     type: '',
     loanValue: '',
@@ -12,6 +14,7 @@ function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
     currency: 'USD'
   });
   const [saveButtonText, setSaveButtonText] = useState('Save');
+  const fileInputRef = useRef(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -23,15 +26,25 @@ function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
     try {
       const loanValue = parseFloat(loanDetails.loanValue);
       const repaymentPerMonth = parseFloat(loanDetails.repaymentPerMonth);
-      await addDoc(collection(db, 'loans'), {
+      const newLoanRef = await addDoc(collection(db, 'loans'), {
         ...loanDetails,
         loanValue,
         repaymentPerMonth,
         userEmail,
       });
+
+      // Update local state immediately
+      const newLoan = {
+        id: newLoanRef.id,
+        ...loanDetails,
+        loanValue,
+        repaymentPerMonth,
+        userEmail,
+      };
+      setLoanList(prevList => [...prevList, newLoan]);
+
       setLoanDetails({ type: '', loanValue: '', purchaseYear: '', repaymentPerMonth: '', currency: 'USD' });
       setSaveButtonText('Saved!');
-      fetchLoanDetails(userEmail);
       setTimeout(() => {
         setSaveButtonText('Save');
       }, 2000);
@@ -46,7 +59,8 @@ function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
     if (window.confirm('Are you sure you want to delete this Loan?')) {
       try {
         await deleteDoc(doc(db, 'loans', loanId));
-        fetchLoanDetails(userEmail);
+        // Update local state immediately
+        setLoanList(prevList => prevList.filter(loan => loan.id !== loanId));
         alert('Loan detail deleted successfully.');
       } catch (error) {
         console.error('Error deleting loan detail:', error);
@@ -54,6 +68,34 @@ function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
       }
     }
   };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const bstr = evt.target.result;
+      const wb = XLSX.read(bstr, { type: 'binary' });
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      const data = XLSX.utils.sheet_to_json(ws);
+      if (data.length > 0) {
+        const firstRow = data[0];
+        setLoanDetails({
+          type: firstRow.type || '',
+          loanValue: firstRow.loanValue || '',
+          purchaseYear: firstRow.purchaseYear || '',
+          repaymentPerMonth: firstRow.repaymentPerMonth || '',
+          currency: firstRow.currency || 'USD'
+        });
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const chartData = loanList.map(loan => ({
+    purchaseYear: loan.purchaseYear,
+    loanValue: parseFloat(loan.loanValue)
+  })).sort((a, b) => a.purchaseYear - b.purchaseYear);
 
   return (
     <div className="asset-form">
@@ -102,7 +144,7 @@ function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
         <option value="INR">INR</option>
       </select>
       <button onClick={handleSaveLoanDetails}>{saveButtonText}</button>
-      <h2>Total Value of Loans: ${loanTotal.toFixed(2)}</h2>
+
       <h2>Saved Loan Details</h2>
       <table>
         <thead>
@@ -132,6 +174,36 @@ function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
           ))}
         </tbody>
       </table>
+
+      <h2>Total Value of Loans: ${loanTotal.toFixed(2)}</h2>
+
+      <h2>Loan Value Over Time</h2>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="purchaseYear" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="loanValue" stroke="#8884d8" />
+        </LineChart>
+      </ResponsiveContainer>
+
+      <div className="excel-upload">
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileUpload}
+          accept=".xlsx, .xls"
+        />
+        <button
+          onClick={() => fileInputRef.current.click()}
+          className="upload-button"
+        >
+          <Upload size={16} /> Upload Excel
+        </button>
+      </div>
     </div>
   );
 }
