@@ -69,7 +69,6 @@ function AccountSettings({ userEmail }) {
         <h3>Other Settings</h3>
         <button>Notification Preferences</button>
         <button>Privacy Settings</button>
-        <button>Connected Accounts</button>
       </div>
     </div>
   );

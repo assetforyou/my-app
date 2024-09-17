@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { Trash2, Upload } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
+import { Card, Form, Button, Table } from 'react-bootstrap';
 
 function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails }) {
   const [loanDetails, setLoanDetails] = useState({
@@ -33,7 +34,6 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
         userEmail,
       });
 
-      // Update local state immediately
       const newLoan = {
         id: newLoanRef.id,
         ...loanDetails,
@@ -59,7 +59,6 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
     if (window.confirm('Are you sure you want to delete this Loan?')) {
       try {
         await deleteDoc(doc(db, 'loans', loanId));
-        // Update local state immediately
         setLoanList(prevList => prevList.filter(loan => loan.id !== loanId));
         alert('Loan detail deleted successfully.');
       } catch (error) {
@@ -98,98 +97,128 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
   })).sort((a, b) => a.purchaseYear - b.purchaseYear);
 
   return (
-    <div className="asset-form">
-      <h2>Enter Loan Details</h2>
-      <input
-        type="text"
-        name="type"
-        placeholder="Type of Loan"
-        value={loanDetails.type}
-        onChange={handleInputChange}
-      />
-      <input
-        type="number"
-        name="loanValue"
-        placeholder="Loan Value"
-        value={loanDetails.loanValue}
-        onChange={handleInputChange}
-      />
-      <input
-        type="number"
-        name="purchaseYear"
-        placeholder="Loan Purchase Year"
-        value={loanDetails.purchaseYear}
-        onChange={handleInputChange}
-      />
-      <input
-        type="number"
-        name="repaymentPerMonth"
-        placeholder="Repayment per Month"
-        value={loanDetails.repaymentPerMonth}
-        onChange={handleInputChange}
-      />
-      <select
-        name="currency"
-        value={loanDetails.currency}
-        onChange={handleInputChange}
-      >
-        <option value="USD">USD</option>
-        <option value="EUR">EUR</option>
-        <option value="GBP">GBP</option>
-        <option value="JPY">JPY</option>
-        <option value="AUD">AUD</option>
-        <option value="CAD">CAD</option>
-        <option value="CHF">CHF</option>
-        <option value="CNY">CNY</option>
-        <option value="INR">INR</option>
-      </select>
-      <button onClick={handleSaveLoanDetails}>{saveButtonText}</button>
+    <div className="container mt-4">
+      <Card className="mb-4">
+        <Card.Header as="h5">Enter Loan Details</Card.Header>
+        <Card.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="type"
+                placeholder="Type of Loan"
+                value={loanDetails.type}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="number"
+                name="loanValue"
+                placeholder="Loan Value"
+                value={loanDetails.loanValue}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="number"
+                name="purchaseYear"
+                placeholder="Loan Purchase Year"
+                value={loanDetails.purchaseYear}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="number"
+                name="repaymentPerMonth"
+                placeholder="Repayment per Month"
+                value={loanDetails.repaymentPerMonth}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Select
+                name="currency"
+                value={loanDetails.currency}
+                onChange={handleInputChange}
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="JPY">JPY</option>
+                <option value="AUD">AUD</option>
+                <option value="CAD">CAD</option>
+                <option value="CHF">CHF</option>
+                <option value="CNY">CNY</option>
+                <option value="INR">INR</option>
+              </Form.Select>
+            </Form.Group>
+            <Button variant="primary" onClick={handleSaveLoanDetails}>
+              {saveButtonText}
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
 
-      <h2>Saved Loan Details</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Type of Loan</th>
-            <th>Loan Value</th>
-            <th>Loan Purchase Year</th>
-            <th>Repayment per Month</th>
-            <th>Currency</th>
-            <th>User</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loanList.map(loan => (
-            <tr key={loan.id}>
-              <td>{loan.type}</td>
-              <td>${parseFloat(loan.loanValue).toFixed(2)}</td>
-              <td>{loan.purchaseYear}</td>
-              <td>${parseFloat(loan.repaymentPerMonth).toFixed(2)}</td>
-              <td>{loan.currency}</td>
-              <td>{loan.userEmail}</td>
-              <td>
-                <button onClick={() => handleDeleteLoan(loan.id)}><Trash2 size={16} /></button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Card className="mb-4">
+        <Card.Header as="h5">Saved Loan Details</Card.Header>
+        <Card.Body>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>Type of Loan</th>
+                <th>Loan Value</th>
+                <th>Loan Purchase Year</th>
+                <th>Repayment per Month</th>
+                <th>Currency</th>
+                <th>User</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loanList.map(loan => (
+                <tr key={loan.id}>
+                  <td>{loan.type}</td>
+                  <td>${parseFloat(loan.loanValue).toFixed(2)}</td>
+                  <td>{loan.purchaseYear}</td>
+                  <td>${parseFloat(loan.repaymentPerMonth).toFixed(2)}</td>
+                  <td>{loan.currency}</td>
+                  <td>{loan.userEmail}</td>
+                  <td>
+                    <Button variant="danger" size="sm" onClick={() => handleDeleteLoan(loan.id)}>
+                      <Trash2 size={16} />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
 
-      <h2>Total Value of Loans: ${loanTotal.toFixed(2)}</h2>
+      <Card className="mb-4">
+        <Card.Header as="h5">Total Value of Loans: ${loanTotal.toFixed(2)}</Card.Header>
+      </Card>
 
-      <h2>Loan Value Over Time</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="purchaseYear" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="loanValue" stroke="#8884d8" />
-        </LineChart>
-      </ResponsiveContainer>
+      <Card className="mb-4">
+        <Card.Header as="h5">Loan Value Over Time</Card.Header>
+        <Card.Body>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="purchaseYear" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="loanValue" stroke="#8884d8" />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card.Body>
+      </Card>
 
-      <div className="excel-upload">
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
         <input
           type="file"
           ref={fileInputRef}
@@ -197,12 +226,13 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
           onChange={handleFileUpload}
           accept=".xlsx, .xls"
         />
-        <button
+        <Button
           onClick={() => fileInputRef.current.click()}
-          className="upload-button"
+          variant="primary"
+          className="d-flex align-items-center"
         >
-          <Upload size={16} /> Upload Excel
-        </button>
+          <Upload size={16} className="mr-2" /> Upload Excel
+        </Button>
       </div>
     </div>
   );

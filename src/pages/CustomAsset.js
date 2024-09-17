@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { Trash2, Upload } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
+import { Card, Form, Button, Table } from 'react-bootstrap';
 
 function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) {
   const [assetItems, setAssetItems] = useState([]);
@@ -115,23 +116,83 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
   const chartData = getChartData();
 
   return (
-    <div className="asset-form">
-      <h2>{asset.name}</h2>
-      <h3>Total Value: {asset.currency} {totalValue.toFixed(2)}</h3>
-      <h3>Add New Item</h3>
-      {asset.fields.map(field => (
-        <input
-          key={field.name}
-          type={field.type === 'cost' ? 'number' : field.type}
-          name={field.name}
-          placeholder={field.name}
-          value={newItem[field.name] || ''}
-          onChange={handleInputChange}
-        />
-      ))}
-      <button onClick={handleAddItem}>{saveButtonText}</button>
+    <div className="container mt-4">
+      <Card className="mb-4">
+        <Card.Header as="h5">{asset.name}</Card.Header>
+        <Card.Body>
+          <h5>Total Value: {asset.currency} {totalValue.toFixed(2)}</h5>
+          <Form>
+            {asset.fields.map(field => (
+              <Form.Group className="mb-3" key={field.name}>
+                <Form.Control
+                  type={field.type === 'cost' ? 'number' : field.type}
+                  name={field.name}
+                  placeholder={field.name}
+                  value={newItem[field.name] || ''}
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+            ))}
+            <Button variant="primary" onClick={handleAddItem}>
+              {saveButtonText}
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
 
-      <div className="excel-upload">
+      <Card className="mb-4">
+        <Card.Header as="h5">Saved Items</Card.Header>
+        <Card.Body>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                {asset.fields.map(field => (
+                  <th key={field.name}>{field.name}</th>
+                ))}
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {assetItems.map(item => (
+                <tr key={item.id}>
+                  {asset.fields.map(field => (
+                    <td key={field.name}>
+                      {field.type === 'cost' 
+                        ? `${asset.currency} ${parseFloat(item[field.name] || 0).toFixed(2)}`
+                        : item[field.name]}
+                    </td>
+                  ))}
+                  <td>
+                    <Button variant="danger" size="sm" onClick={() => handleDeleteItem(item.id)}>
+                      <Trash2 size={16} />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
+
+      {chartData.length > 0 && (
+        <Card className="mb-4">
+          <Card.Header as="h5">{asset.name} Value Over Time</Card.Header>
+          <Card.Body>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="value" stroke="#8884d8" />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card.Body>
+        </Card>
+      )}
+
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
         <input
           type="file"
           ref={fileInputRef}
@@ -139,59 +200,14 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
           onChange={handleFileUpload}
           accept=".xlsx, .xls"
         />
-        <button
+        <Button
           onClick={() => fileInputRef.current.click()}
-          className="upload-button"
+          variant="primary"
+          className="d-flex align-items-center"
         >
-          <Upload size={16} /> Upload Excel
-        </button>
+          <Upload size={16} className="mr-2" /> Upload Excel
+        </Button>
       </div>
-
-      <h3>Saved Items</h3>
-      <table>
-        <thead>
-          <tr>
-            {asset.fields.map(field => (
-              <th key={field.name}>{field.name}</th>
-            ))}
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {assetItems.map(item => (
-            <tr key={item.id}>
-              {asset.fields.map(field => (
-                <td key={field.name}>
-                  {field.type === 'cost' 
-                    ? `${asset.currency} ${parseFloat(item[field.name] || 0).toFixed(2)}`
-                    : item[field.name]}
-                </td>
-              ))}
-              <td>
-                <button onClick={() => handleDeleteItem(item.id)}>
-                  <Trash2 size={16} />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {chartData.length > 0 && (
-        <>
-          <h3>{asset.name} Value Over Time</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="value" stroke="#8884d8" />
-            </LineChart>
-          </ResponsiveContainer>
-        </>
-      )}
     </div>
   );
 }

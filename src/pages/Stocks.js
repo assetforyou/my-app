@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Trash2, Upload } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
+import { Card, Form, Button, Table } from 'react-bootstrap';
 
 const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';  // Replace with your actual API key
 
@@ -58,7 +59,6 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
           userEmail,
         });
 
-        // Update local state immediately
         const newStock = {
           id: newStockRef.id,
           ...stockDetails,
@@ -107,16 +107,18 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
 
   const renderStockSearchResults = () => {
     return (
-      <div>
-        <h2>Search Results</h2>
-        <ul>
-          {searchResults.map((result, index) => (
-            <li key={index}>
-              {result['1. symbol']} - {result['2. name']}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <Card className="mb-4">
+        <Card.Header as="h5">Search Results</Card.Header>
+        <Card.Body>
+          <ul>
+            {searchResults.map((result, index) => (
+              <li key={index}>
+                {result['1. symbol']} - {result['2. name']}
+              </li>
+            ))}
+          </ul>
+        </Card.Body>
+      </Card>
     );
   };
   
@@ -124,7 +126,6 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     if (window.confirm('Are you sure you want to delete this Stock?')) {
       try {
         await deleteDoc(doc(db, 'stocks', stockId));
-        // Update local state immediately
         setStockList(prevList => prevList.filter(stock => stock.id !== stockId));
         alert('Stock detail deleted successfully.');
       } catch (error) {
@@ -167,149 +168,180 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
   })).sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
 
   return (
-    <div className="asset-form">
-      <h2>Enter Stock Details</h2>
-      <input
-        type="text"
-        name="name"
-        placeholder="Stock Symbol"
-        value={stockDetails.name}
-        onChange={handleInputChange}
-      />
-      <input
-        type="number"
-        name="number"
-        placeholder="Number of Stocks"
-        value={stockDetails.number}
-        onChange={handleInputChange}
-      />
-      <select
-        name="currency"
-        value={stockDetails.currency}
-        onChange={handleInputChange}
-      >
-        <option value="USD">USD</option>
-        <option value="EUR">EUR</option>
-        <option value="GBP">GBP</option>
-        <option value="JPY">JPY</option>
-        <option value="AUD">AUD</option>
-        <option value="CAD">CAD</option>
-        <option value="CHF">CHF</option>
-        <option value="CNY">CNY</option>
-        <option value="INR">INR</option>
-      </select>
-      <div className="form-group">
-        <label htmlFor="purchaseDate">Purchase Date:</label>
-        <input
-          type="date"
-          id="purchaseDate"
-          name="purchaseDate"
-          value={stockDetails.purchaseDate}
-          onChange={handleInputChange}
-        />
-      </div>
-      <input
-        type="text"
-        name="sector"
-        placeholder="Sector"
-        value={stockDetails.sector}
-        onChange={handleInputChange}
-      />
-      <input
-        type="text"
-        name="dividendYield"
-        placeholder="Dividend Yield"
-        value={stockDetails.dividendYield}
-        onChange={handleInputChange}
-      />
-      <div className="form-group">
-        <label htmlFor="reminderNote">Reminder Note:</label>
-        <input
-          type="text"
-          id="reminderNote"
-          name="reminderNote"
-          placeholder="Reminder Note"
-          value={stockDetails.reminderNote}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="reminderDate">Reminder Date:</label>
-        <input
-          type="date"
-          id="reminderDate"
-          name="reminderDate"
-          value={stockDetails.reminderDate}
-          onChange={handleInputChange}
-        />
-      </div>
-      <button onClick={handleSaveStockDetails}>{saveButtonText}</button>
+    <div className="container mt-4">
+      <Card className="mb-4">
+        <Card.Header as="h5">Enter Stock Details</Card.Header>
+        <Card.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="name"
+                placeholder="Stock Symbol"
+                value={stockDetails.name}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="number"
+                name="number"
+                placeholder="Number of Stocks"
+                value={stockDetails.number}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Select
+                name="currency"
+                value={stockDetails.currency}
+                onChange={handleInputChange}
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="JPY">JPY</option>
+                <option value="AUD">AUD</option>
+                <option value="CAD">CAD</option>
+                <option value="CHF">CHF</option>
+                <option value="CNY">CNY</option>
+                <option value="INR">INR</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="date"
+                name="purchaseDate"
+                value={stockDetails.purchaseDate}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="sector"
+                placeholder="Sector"
+                value={stockDetails.sector}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="dividendYield"
+                placeholder="Dividend Yield"
+                value={stockDetails.dividendYield}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="reminderNote"
+                placeholder="Reminder Note"
+                value={stockDetails.reminderNote}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="date"
+                name="reminderDate"
+                value={stockDetails.reminderDate}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Button variant="primary" onClick={handleSaveStockDetails}>
+              {saveButtonText}
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
 
-      <h2>Search for Stocks</h2>
-      <input
-        type="text"
-        placeholder="Search Stocks"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-      <button onClick={handleSearchStocks}>Search</button>
-      {renderStockSearchResults()}
+      <Card className="mb-4">
+        <Card.Header as="h5">Search for Stocks</Card.Header>
+        <Card.Body>
+          <Form.Group className="mb-3">
+            <Form.Control
+              type="text"
+              placeholder="Search Stocks"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </Form.Group>
+          <Button variant="primary" onClick={handleSearchStocks}>Search</Button>
+        </Card.Body>
+      </Card>
 
-      <h2>Saved Stock Details</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Stock Name</th>
-            <th>Number of Stocks</th>
-            <th>Value per Stock</th>
-            <th>Total Value</th>
-            <th>Currency</th>
-            <th>Purchase Date</th>
-            <th>Sector</th>
-            <th>Dividend Yield</th>
-            <th>Reminder Note</th>
-            <th>Reminder Date</th>
-            <th>User</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {stockList.map(stock => (
-            <tr key={stock.id}>
-              <td>{stock.name}</td>
-              <td>{stock.number}</td>
-              <td>{stock.value}</td>
-              <td>{stock.total}</td>
-              <td>{stock.currency}</td>
-              <td>{stock.purchaseDate}</td>
-              <td>{stock.sector}</td>
-              <td>{stock.dividendYield}</td>
-              <td>{stock.reminderNote}</td>
-              <td>{stock.reminderDate}</td>
-              <td>{stock.userEmail}</td>
-              <td>
-                <button onClick={() => handleDeleteStock(stock.id)}><Trash2 size={16} /></button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {searchResults.length > 0 && renderStockSearchResults()}
 
-      <h2>Total Value of Stocks: {stockTotal}</h2>
+      <Card className="mb-4">
+        <Card.Header as="h5">Saved Stock Details</Card.Header>
+        <Card.Body>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>Stock Name</th>
+                <th>Number of Stocks</th>
+                <th>Value per Stock</th>
+                <th>Total Value</th>
+                <th>Currency</th>
+                <th>Purchase Date</th>
+                <th>Sector</th>
+                <th>Dividend Yield</th>
+                <th>Reminder Note</th>
+                <th>Reminder Date</th>
+                <th>User</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stockList.map(stock => (
+                <tr key={stock.id}>
+                  <td>{stock.name}</td>
+                  <td>{stock.number}</td>
+                  <td>{stock.value}</td>
+                  <td>{stock.total}</td>
+                  <td>{stock.currency}</td>
+                  <td>{stock.purchaseDate}</td>
+                  <td>{stock.sector}</td>
+                  <td>{stock.dividendYield}</td>
+                  <td>{stock.reminderNote}</td>
+                  <td>{stock.reminderDate}</td>
+                  <td>{stock.userEmail}</td>
+                  <td>
+                    <Button variant="danger" size="sm" onClick={() => handleDeleteStock(stock.id)}>
+                      <Trash2 size={16} />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
 
-      <h2>Stock Value Over Time</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="purchaseDate" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="value" stroke="#8884d8" />
-        </LineChart>
-      </ResponsiveContainer>
+      <Card className="mb-4">
+        <Card.Header as="h5">Total Value of Stocks: {stockTotal}</Card.Header>
+      </Card>
 
-      <div className="excel-upload">
+      <Card className="mb-4">
+        <Card.Header as="h5">Stock Value Over Time</Card.Header>
+        <Card.Body>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="purchaseDate" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="value" stroke="#8884d8" />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card.Body>
+      </Card>
+
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
         <input
           type="file"
           ref={fileInputRef}
@@ -317,12 +349,13 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
           onChange={handleFileUpload}
           accept=".xlsx, .xls"
         />
-        <button
+        <Button
           onClick={() => fileInputRef.current.click()}
-          className="upload-button"
+          variant="primary"
+          className="d-flex align-items-center"
         >
-          <Upload size={16} /> Upload Excel
-        </button>
+          <Upload size={16} className="mr-2" /> Upload Excel
+        </Button>
       </div>
     </div>
   );

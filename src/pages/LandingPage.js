@@ -253,45 +253,57 @@ function LandingPage() {
         return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'home':
         return (
-        <div className="home-content">
-          <h2 className="summary-title">Asset Summary</h2>
-          <div className="summary-container">
-            <div className="summary-box">
-              <h3>Cash</h3>
-              <p>Total Cash: ${cashTotal.toFixed(2)}</p>
-            </div>
-            <div className="summary-box">
-              <h3>Stocks</h3>
-              <p>Total Value of Stocks: ${stockTotal.toFixed(2)}</p>
-            </div>
-            <div className="summary-box">
-              <h3>Metals</h3>
-              <p>Total Value of Metals: ${metalTotal.toFixed(2)}</p>
-            </div>
-            <div className="summary-box">
-              <h3>Autos</h3>
-              <p>Total Autos: {carList.length}</p>
-              <p>Total Value of Autos: ${autoTotal.toFixed(2)}</p>
-            </div>
-            <div className="summary-box">
-              <h3>Properties</h3>
-              <p>Total Properties: {propertyList.length}</p>
-              <p>Total Property Value: ${propertyTotalPrice.toFixed(2)}</p>
-              <p>Total Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</p>
-            </div>
-            <div className="summary-box">
-              <h3>Loans</h3>
-              <p>Total Loans: {loanList.length}</p>
-              <p>Total Loan Value: ${loanTotal.toFixed(2)}</p>
-            </div>
-            {customAssets.map(asset => (
-              <div key={asset.id} className="summary-box clickable" onClick={() => handleAssetClick(asset)}>
-                <h3>{asset.name}</h3>
-                <p>Total Value: ${parseFloat(asset.totalValue || 0).toFixed(2)}</p>
+          <div className="home-content">
+            <h2 className="summary-title">Asset Summary</h2>
+            <div className="summary-container">
+              <div className="summary-section">
+                <h2>Built-in Assets</h2>
+                <div className="built-in-assets">
+                  <div className="summary-box">
+                    <h3>Cash</h3>
+                    <p>Total Cash: ${cashTotal.toFixed(2)}</p>
+                  </div>
+                  <div className="summary-box">
+                    <h3>Stocks</h3>
+                    <p>Total Value: ${stockTotal.toFixed(2)}</p>
+                  </div>
+                  <div className="summary-box">
+                    <h3>Metals</h3>
+                    <p>Total Value: ${metalTotal.toFixed(2)}</p>
+                  </div>
+                  <div className="summary-box">
+                    <h3>Autos</h3>
+                    <p>Total: {carList.length}</p>
+                    <p>Value: ${autoTotal.toFixed(2)}</p>
+                  </div>
+                  <div className="summary-box">
+                    <h3>Properties</h3>
+                    <p>Total: {propertyList.length}</p>
+                    <p>Value: ${propertyTotalPrice.toFixed(2)}</p>
+                    <p>Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</p>
+                  </div>
+                  <div className="summary-box">
+                    <h3>Loans</h3>
+                    <p>Total: {loanList.length}</p>
+                    <p>Value: ${loanTotal.toFixed(2)}</p>
+                  </div>
+                </div>
               </div>
-            ))}
+              {customAssets.length > 0 && (
+                <div className="summary-section">
+                  <h2>Custom Assets</h2>
+                  <div className="custom-assets">
+                    {customAssets.map(asset => (
+                      <div key={asset.id} className="summary-box clickable" onClick={() => handleAssetClick(asset)}>
+                        <h3>{asset.name}</h3>
+                        <p>Total Value: ${parseFloat(asset.totalValue || 0).toFixed(2)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
         );
       default:
         if (selectedAsset.startsWith('custom-')) {

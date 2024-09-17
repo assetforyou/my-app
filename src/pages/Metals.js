@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { Trash2, Upload } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
+import { Card, Form, Button, Table, InputGroup } from 'react-bootstrap';
 
 const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
 
@@ -188,137 +189,162 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="asset-form">
-      <h2>Enter Metal Details</h2>
-      <div>
-        <input
-          type="text"
-          placeholder="Search for metals"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <button onClick={handleSearch}>Search</button>
-      </div>
-      <ul>
-        {filteredMetals.map(metal => (
-          <li key={metal.symbol} onClick={() => handleMetalSelection(metal)}>
-            {metal.name}: {metal.price ? `$${metal.price.toFixed(2)} per oz` : 'Price unavailable'}
-          </li>
-        ))}
-      </ul>
-      <input
-        type="text"
-        name="type"
-        placeholder="Type of Metal"
-        value={metalDetails.type}
-        onChange={handleInputChange}
-      />
-      <input
-        type="number"
-        name="grams"
-        placeholder="Grams"
-        value={metalDetails.grams}
-        onChange={handleInputChange}
-      />
-      <select
-        name="currency"
-        value={metalDetails.currency}
-        onChange={handleInputChange}
-      >
-        <option value="USD">USD</option>
-        <option value="EUR">EUR</option>
-        <option value="GBP">GBP</option>
-        <option value="JPY">JPY</option>
-        <option value="AUD">AUD</option>
-        <option value="CAD">CAD</option>
-        <option value="CHF">CHF</option>
-        <option value="CNY">CNY</option>
-        <option value="INR">INR</option>
-      </select>
-      <div className="form-group">
-        <label htmlFor="purchaseDate">Purchase Date:</label>
-        <input
-          type="date"
-          id="purchaseDate"
-          name="purchaseDate"
-          value={metalDetails.purchaseDate}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="reminderNote">Reminder Note:</label>
-        <input
-          type="text"
-          id="reminderNote"
-          name="reminderNote"
-          placeholder="Reminder Note"
-          value={metalDetails.reminderNote}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="reminderDate">Reminder Date:</label>
-        <input
-          type="date"
-          id="reminderDate"
-          name="reminderDate"
-          value={metalDetails.reminderDate}
-          onChange={handleInputChange}
-        />
-      </div>
-      <button onClick={handleSaveMetalDetails}>{saveButtonText}</button>
+    <div className="container mt-4">
+      <Card className="mb-4">
+        <Card.Header as="h5">Enter Metal Details</Card.Header>
+        <Card.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <InputGroup>
+                <Form.Control
+                  type="text"
+                  placeholder="Search for metals"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <Button variant="outline-secondary" onClick={handleSearch}>Search</Button>
+              </InputGroup>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Select onChange={(e) => handleMetalSelection({ name: e.target.value })}>
+                <option value="">Select a metal</option>
+                {filteredMetals.map(metal => (
+                  <option key={metal.symbol} value={metal.name}>
+                    {metal.name}: {metal.price ? `$${metal.price.toFixed(2)} per oz` : 'Price unavailable'}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="type"
+                placeholder="Type of Metal"
+                value={metalDetails.type}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="number"
+                name="grams"
+                placeholder="Grams"
+                value={metalDetails.grams}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Select
+                name="currency"
+                value={metalDetails.currency}
+                onChange={handleInputChange}
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="JPY">JPY</option>
+                <option value="AUD">AUD</option>
+                <option value="CAD">CAD</option>
+                <option value="CHF">CHF</option>
+                <option value="CNY">CNY</option>
+                <option value="INR">INR</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="date"
+                name="purchaseDate"
+                value={metalDetails.purchaseDate}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="reminderNote"
+                placeholder="Reminder Note"
+                value={metalDetails.reminderNote}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="date"
+                name="reminderDate"
+                value={metalDetails.reminderDate}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Button variant="primary" onClick={handleSaveMetalDetails}>
+              {saveButtonText}
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
 
-      <h2>Saved Metal Details</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Type of Metal</th>
-            <th>Grams</th>
-            <th>Value per Gram</th>
-            <th>Total Value</th>
-            <th>Currency</th>
-            <th>Purchase Date</th>
-            <th>Reminder Note</th>
-            <th>Reminder Date</th>
-            <th>User</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {metalList.map(metal => (
-            <tr key={metal.id}>
-              <td>{metal.type}</td>
-              <td>{metal.grams}</td>
-              <td>${metal.valuePerGram.toFixed(2)}</td>
-              <td>${metal.total.toFixed(2)}</td>
-              <td>{metal.currency}</td>
-              <td>{metal.purchaseDate}</td>
-              <td>{metal.reminderNote}</td>
-              <td>{metal.reminderDate}</td>
-              <td>{metal.userEmail}</td>
-              <td>
-                <button onClick={() => handleDeleteMetal(metal.id)}><Trash2 size={16} /></button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Card className="mb-4">
+        <Card.Header as="h5">Saved Metal Details</Card.Header>
+        <Card.Body>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>Type of Metal</th>
+                <th>Grams</th>
+                <th>Value per Gram</th>
+                <th>Total Value</th>
+                <th>Currency</th>
+                <th>Purchase Date</th>
+                <th>Reminder Note</th>
+                <th>Reminder Date</th>
+                <th>User</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {metalList.map(metal => (
+                <tr key={metal.id}>
+                  <td>{metal.type}</td>
+                  <td>{metal.grams}</td>
+                  <td>${metal.valuePerGram.toFixed(2)}</td>
+                  <td>${metal.total.toFixed(2)}</td>
+                  <td>{metal.currency}</td>
+                  <td>{metal.purchaseDate}</td>
+                  <td>{metal.reminderNote}</td>
+                  <td>{metal.reminderDate}</td>
+                  <td>{metal.userEmail}</td>
+                  <td>
+                    <Button variant="danger" size="sm" onClick={() => handleDeleteMetal(metal.id)}>
+                      <Trash2 size={16} />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
 
-      <h2>Total Value of Metals: ${metalTotal.toFixed(2)}</h2>
+      <Card className="mb-4">
+        <Card.Header as="h5">Total Value of Metals: ${metalTotal.toFixed(2)}</Card.Header>
+      </Card>
 
-      <h2>Metal Value Over Time</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="purchaseDate" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="value" stroke="#8884d8" />
-        </LineChart>
-      </ResponsiveContainer>
+      <Card className="mb-4">
+        <Card.Header as="h5">Metal Value Over Time</Card.Header>
+        <Card.Body>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="purchaseDate" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="value" stroke="#8884d8" />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card.Body>
+      </Card>
 
-      <div className="excel-upload">
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
         <input
           type="file"
           ref={fileInputRef}
@@ -326,15 +352,16 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
           onChange={handleFileUpload}
           accept=".xlsx, .xls"
         />
-        <button
+        <Button
           onClick={() => fileInputRef.current.click()}
-          className="upload-button"
+          variant="primary"
+          className="d-flex align-items-center"
         >
-          <Upload size={16} /> Upload Excel
-        </button>
+          <Upload size={16} className="mr-2" /> Upload Excel
+        </Button>
       </div>
     </div>
   );
 }
-
+    
 export default Metals;

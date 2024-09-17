@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import './LandingPage.css';
 import { Trash2, Upload } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { Card, Form, Button, Table } from 'react-bootstrap';
 
 function CreateAsset({ userEmail, onAssetCreated }) {
   const [assetDetails, setAssetDetails] = useState({
@@ -104,56 +104,73 @@ function CreateAsset({ userEmail, onAssetCreated }) {
   };
 
   return (
-    <div className="asset-form-wrapper">
-      <div className="asset-form">
-        <h2>Create Custom Asset</h2>
-        <input
-          type="text"
-          name="name"
-          placeholder="Asset Name"
-          value={assetDetails.name}
-          onChange={handleInputChange}
-        />
-        <select
-          name="currency"
-          value={assetDetails.currency}
-          onChange={handleInputChange}
-        >
-          {currencies.map((currency) => (
-            <option key={currency.code} value={currency.code}>
-              {currency.name} ({currency.code})
-            </option>
-          ))}
-        </select>
-        <h3>Fields</h3>
-        {assetDetails.fields.map((field, index) => (
-          <div key={index} className="field-input">
-            <input
-              type="text"
-              name="name"
-              placeholder="Field Name"
-              value={field.name}
-              onChange={(e) => handleFieldChange(index, e)}
-            />
-            <select
-              name="type"
-              value={field.type}
-              onChange={(e) => handleFieldChange(index, e)}
-            >
-              <option value="text">Text</option>
-              <option value="number">Number</option>
-              <option value="date">Date</option>
-              <option value="cost">Cost</option>
-            </select>
-            <button onClick={() => removeField(index)}><Trash2 size={16} /></button>
-          </div>
-        ))}
-        <button onClick={addField}>Add Field</button>
-        <button className="create-asset-button" onClick={handleCreateAsset}>
-          {saveButtonText}
-        </button>
-      </div>
-      <div className="upload-excel-container">
+    <div className="container mt-4">
+      <Card className="mb-4">
+        <Card.Header as="h5">Create Custom Asset</Card.Header>
+        <Card.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="name"
+                placeholder="Asset Name"
+                value={assetDetails.name}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Select
+                name="currency"
+                value={assetDetails.currency}
+                onChange={handleInputChange}
+              >
+                {currencies.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.name} ({currency.code})
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+            <h6>Fields</h6>
+            {assetDetails.fields.map((field, index) => (
+              <div key={index} className="d-flex mb-2">
+                <Form.Control
+                  type="text"
+                  name="name"
+                  placeholder="Field Name"
+                  value={field.name}
+                  onChange={(e) => handleFieldChange(index, e)}
+                  className="me-2"
+                />
+                <Form.Select
+                  name="type"
+                  value={field.type}
+                  onChange={(e) => handleFieldChange(index, e)}
+                  className="me-2"
+                >
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                  <option value="date">Date</option>
+                  <option value="cost">Cost</option>
+                </Form.Select>
+                <Button variant="danger" size="sm" onClick={() => removeField(index)}>
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            ))}
+            <Button variant="secondary" size="sm" onClick={addField} className="mb-3">
+              Add Field
+            </Button>
+            <div>
+              <Button variant="primary" onClick={handleCreateAsset}>
+                {saveButtonText}
+              </Button>
+            </div>
+          </Form>
+        </Card.Body>
+      </Card>
+
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
         <input
           type="file"
           ref={fileInputRef}
@@ -161,12 +178,13 @@ function CreateAsset({ userEmail, onAssetCreated }) {
           onChange={handleFileUpload}
           accept=".xlsx, .xls"
         />
-        <button 
-          className="upload-excel-button" 
+        <Button
           onClick={() => fileInputRef.current.click()}
+          variant="primary"
+          className="d-flex align-items-center"
         >
-          <Upload size={16} /> Upload Excel
-        </button>
+          <Upload size={16} className="mr-2" /> Upload Excel
+        </Button>
       </div>
     </div>
   );

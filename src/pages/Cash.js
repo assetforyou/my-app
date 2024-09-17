@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { Trash2, Upload } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
+import { Card, Form, Button, Table } from 'react-bootstrap';
 
 function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails }) {
   const [cashDetails, setCashDetails] = useState({
@@ -34,7 +35,6 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
         amount: amountInSelectedCurrency,
       });
 
-      // Update local state immediately
       const newCash = {
         id: newCashRef.id,
         ...cashDetails,
@@ -68,7 +68,6 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
     if (window.confirm('Are you sure you want to delete this cash entry?')) {
       try {
         await deleteDoc(doc(db, 'cash', cashId));
-        // Update local state immediately
         setCashList(prevList => prevList.filter(cash => cash.id !== cashId));
         alert('Cash entry deleted successfully.');
       } catch (error) {
@@ -110,135 +109,159 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
   })).sort((a, b) => new Date(a.transactionDate) - new Date(b.transactionDate));
 
   return (
-    <div className="asset-form">
-      <h2>Enter Cash Details</h2>
-      <input
-        type="number"
-        name="amount"
-        placeholder="Amount"
-        value={cashDetails.amount}
-        onChange={handleInputChange}
-      />
-      <select
-        name="currency"
-        value={cashDetails.currency}
-        onChange={handleInputChange}
-      >
-        <option value="USD">USD</option>
-        <option value="EUR">EUR</option>
-        <option value="GBP">GBP</option>
-        <option value="JPY">JPY</option>
-        <option value="AUD">AUD</option>
-        <option value="CAD">CAD</option>
-        <option value="CHF">CHF</option>
-        <option value="CNY">CNY</option>
-        <option value="INR">INR</option>
-      </select>
-      <input
-        type="text"
-        name="description"
-        placeholder="Description"
-        value={cashDetails.description}
-        onChange={handleInputChange}
-      />
-      <div className="form-group">
-        <label htmlFor="transactionDate">Transaction Date:</label>
-        <input
-          type="date"
-          id="transactionDate"
-          name="transactionDate"
-          value={cashDetails.transactionDate}
-          onChange={handleInputChange}
-        />
-      </div>
-      <input
-        type="text"
-        name="category"
-        placeholder="Category"
-        value={cashDetails.category}
-        onChange={handleInputChange}
-      />
-      <input
-        type="text"
-        name="accountType"
-        placeholder="Account Type"
-        value={cashDetails.accountType}
-        onChange={handleInputChange}
-      />
-      <div className="form-group">
-        <label htmlFor="reminderNote">Reminder Note:</label>
-        <input
-          type="text"
-          id="reminderNote"
-          name="reminderNote"
-          placeholder="Reminder Note"
-          value={cashDetails.reminderNote}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="reminderDate">Reminder Date:</label>
-        <input
-          type="date"
-          id="reminderDate"
-          name="reminderDate"
-          value={cashDetails.reminderDate}
-          onChange={handleInputChange}
-        />
-      </div>
-      <button onClick={handleSaveCashDetails}>{saveButtonText}</button>
+    <div className="container mt-4">
+      <Card className="mb-4">
+        <Card.Header as="h5">Enter Cash Details</Card.Header>
+        <Card.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="number"
+                name="amount"
+                placeholder="Amount"
+                value={cashDetails.amount}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Select
+                name="currency"
+                value={cashDetails.currency}
+                onChange={handleInputChange}
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="JPY">JPY</option>
+                <option value="AUD">AUD</option>
+                <option value="CAD">CAD</option>
+                <option value="CHF">CHF</option>
+                <option value="CNY">CNY</option>
+                <option value="INR">INR</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="description"
+                placeholder="Description"
+                value={cashDetails.description}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="date"
+                name="transactionDate"
+                value={cashDetails.transactionDate}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="category"
+                placeholder="Category"
+                value={cashDetails.category}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="accountType"
+                placeholder="Account Type"
+                value={cashDetails.accountType}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                name="reminderNote"
+                placeholder="Reminder Note"
+                value={cashDetails.reminderNote}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="date"
+                name="reminderDate"
+                value={cashDetails.reminderDate}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Button variant="primary" onClick={handleSaveCashDetails}>
+              {saveButtonText}
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
 
-      <h2>Saved Cash Details</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Amount</th>
-            <th>Currency</th>
-            <th>Description</th>
-            <th>Transaction Date</th>
-            <th>Category</th>
-            <th>Account Type</th>
-            <th>Reminder Note</th>
-            <th>Reminder Date</th>
-            <th>User</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cashList.map(cash => (
-            <tr key={cash.id}>
-              <td>{cash.amount}</td>
-              <td>{cash.currency}</td>
-              <td>{cash.description}</td>
-              <td>{cash.transactionDate}</td>
-              <td>{cash.category}</td>
-              <td>{cash.accountType}</td>
-              <td>{cash.reminderNote}</td>
-              <td>{cash.reminderDate}</td>
-              <td>{cash.userEmail}</td>
-              <td>
-                <button onClick={() => handleDeleteCash(cash.id)}><Trash2 size={16} /></button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Card className="mb-4">
+        <Card.Header as="h5">Saved Cash Details</Card.Header>
+        <Card.Body>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>Amount</th>
+                <th>Currency</th>
+                <th>Description</th>
+                <th>Transaction Date</th>
+                <th>Category</th>
+                <th>Account Type</th>
+                <th>Reminder Note</th>
+                <th>Reminder Date</th>
+                <th>User</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cashList.map(cash => (
+                <tr key={cash.id}>
+                  <td>{cash.amount}</td>
+                  <td>{cash.currency}</td>
+                  <td>{cash.description}</td>
+                  <td>{cash.transactionDate}</td>
+                  <td>{cash.category}</td>
+                  <td>{cash.accountType}</td>
+                  <td>{cash.reminderNote}</td>
+                  <td>{cash.reminderDate}</td>
+                  <td>{cash.userEmail}</td>
+                  <td>
+                    <Button variant="danger" size="sm" onClick={() => handleDeleteCash(cash.id)}>
+                      <Trash2 size={16} />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
 
-      <h2>Total Cash: {cashTotal}</h2>
+      <Card className="mb-4">
+        <Card.Header as="h5">Total Cash: {cashTotal}</Card.Header>
+      </Card>
 
-      <h2>Cash Transactions Over Time</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="transactionDate" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="amount" stroke="#8884d8" />
-        </LineChart>
-      </ResponsiveContainer>
+      <Card className="mb-4">
+        <Card.Header as="h5">Cash Transactions Over Time</Card.Header>
+        <Card.Body>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="transactionDate" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="amount" stroke="#8884d8" />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card.Body>
+      </Card>
 
-      <div className="excel-upload">
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
         <input
           type="file"
           ref={fileInputRef}
@@ -246,12 +269,13 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
           onChange={handleFileUpload}
           accept=".xlsx, .xls"
         />
-        <button
+        <Button
           onClick={() => fileInputRef.current.click()}
-          className="upload-button"
+          variant="primary"
+          className="d-flex align-items-center"
         >
-          <Upload size={16} /> Upload Excel
-        </button>
+          <Upload size={16} className="mr-2" /> Upload Excel
+        </Button>
       </div>
     </div>
   );
