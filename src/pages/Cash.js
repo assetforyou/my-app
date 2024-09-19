@@ -57,6 +57,9 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
       setTimeout(() => {
         setSaveButtonText('Save');
       }, 2000);
+      
+      // Fetch updated cash details
+      fetchCashDetails(userEmail);
     } catch (error) {
       console.error('Error saving cash details:', error);
       setSaveButtonText('Save');
@@ -69,7 +72,9 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
       try {
         await deleteDoc(doc(db, 'cash', cashId));
         setCashList(prevList => prevList.filter(cash => cash.id !== cashId));
-        alert('Cash entry deleted successfully.');
+        alert('Cash entry deleted successfully.'); 
+        // Fetch updated cash details
+        fetchCashDetails(userEmail);
       } catch (error) {
         console.error('Error deleting cash entry:', error);
         alert('Failed to delete cash entry.');

@@ -52,21 +52,15 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
       const totalValue = numberOfStocks * livePrice;
 
       try {
-        const newStockRef = await addDoc(collection(db, 'stocks'), {
+        await addDoc(collection(db, 'stocks'), {
           ...stockDetails,
           value: livePrice,
           total: totalValue,
           userEmail,
         });
 
-        const newStock = {
-          id: newStockRef.id,
-          ...stockDetails,
-          value: livePrice,
-          total: totalValue,
-          userEmail,
-        };
-        setStockList(prevList => [...prevList, newStock]);
+        // Fetch updated stock details
+        fetchStockDetails(userEmail);
 
         setStockDetails({
           name: '',
@@ -126,7 +120,10 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     if (window.confirm('Are you sure you want to delete this Stock?')) {
       try {
         await deleteDoc(doc(db, 'stocks', stockId));
+        // Remove the stock from the local state
         setStockList(prevList => prevList.filter(stock => stock.id !== stockId));
+        // Fetch updated stock details
+        fetchStockDetails(userEmail);
         alert('Stock detail deleted successfully.');
       } catch (error) {
         console.error('Error deleting Stock detail:', error);

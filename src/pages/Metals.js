@@ -112,7 +112,6 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
         userEmail,
       });
 
-      // Update local state immediately
       const newMetal = {
         id: newMetalRef.id,
         ...metalDetails,
@@ -135,6 +134,9 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
       setTimeout(() => {
         setSaveButtonText('Save');
       }, 2000);
+
+      // Fetch updated metal details
+      await fetchMetalDetails(userEmail);
     } catch (error) {
       console.error('Error saving metal details:', error);
       setSaveButtonText('Save');
@@ -146,9 +148,11 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
     if (window.confirm('Are you sure you want to delete this Metal?')) {
       try {
         await deleteDoc(doc(db, 'metals', metalId));
-        // Update local state immediately
         setMetalList(prevList => prevList.filter(metal => metal.id !== metalId));
         alert('Metal detail deleted successfully.');
+        
+        // Fetch updated metal details
+        await fetchMetalDetails(userEmail);
       } catch (error) {
         console.error('Error deleting metal detail:', error);
         alert('Failed to delete Metal.');

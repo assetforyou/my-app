@@ -82,13 +82,15 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
         price,
       });
 
-      setPropertyList([...propertyList, {
+      const newProperty = {
         id: docRef.id,
         ...propertyDetails,
         userEmail,
         totalMonthlyCost,
         price,
-      }]);
+      };
+
+      setPropertyList([...propertyList, newProperty]);
 
       setPropertyDetails({
         address: '',
@@ -119,7 +121,8 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
     if (window.confirm('Are you sure you want to delete this Property?')) {
       try {
         await deleteDoc(doc(db, 'properties', propertyId));
-        setPropertyList(propertyList.filter(property => property.id !== propertyId));
+        const updatedPropertyList = propertyList.filter(property => property.id !== propertyId);
+        setPropertyList(updatedPropertyList);
         alert('Property detail deleted successfully.');
       } catch (error) {
         console.error('Error deleting property detail:', error);

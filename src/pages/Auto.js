@@ -6,7 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Table } from 'react-bootstrap';
 
-function Auto({ userEmail, carList, setCarList, autoTotal }) {
+function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
   const [carDetails, setCarDetails] = useState({
     make: '',
     mileage: '',
@@ -42,6 +42,7 @@ function Auto({ userEmail, carList, setCarList, autoTotal }) {
         value: carValue,
       };
       setCarList(prevList => [...prevList, newCar]);
+      setAutoTotal(prevTotal => prevTotal + carValue);
 
       setCarDetails({
         make: '',
@@ -60,7 +61,6 @@ function Auto({ userEmail, carList, setCarList, autoTotal }) {
     } catch (error) {
       console.error('Error saving car details:', error);
       setSaveButtonText('Save');
-      alert('Failed to save car details.');
     }
   };
 
@@ -68,11 +68,12 @@ function Auto({ userEmail, carList, setCarList, autoTotal }) {
     if (window.confirm('Are you sure you want to delete this car?')) {
       try {
         await deleteDoc(doc(db, 'autos', carId));
+        const deletedCar = carList.find(car => car.id === carId);
         setCarList(prevList => prevList.filter(car => car.id !== carId));
+        setAutoTotal(prevTotal => prevTotal - parseFloat(deletedCar.value));
         alert('Car deleted successfully.');
       } catch (error) {
         console.error('Error deleting car:', error);
-        alert('Failed to delete car.');
       }
     }
   };

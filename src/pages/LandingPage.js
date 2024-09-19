@@ -161,6 +161,15 @@ function LandingPage() {
     }
   };
 
+  const updatePropertyList = (newPropertyList) => {
+    setPropertyList(newPropertyList);
+    const totalPrice = newPropertyList.reduce((sum, property) => sum + parseFloat(property.price || 0), 0);
+    const totalMonthlyCost = newPropertyList.reduce((sum, property) => sum + parseFloat(property.totalMonthlyCost || 0), 0);
+    setPropertyTotalPrice(totalPrice);
+    setPropertyTotalMonthlyCost(totalMonthlyCost);
+  };
+
+
   const fetchLoanDetails = async (email) => {
     try {
       const q = query(collection(db, 'loans'), where("userEmail", "==", email));
@@ -238,17 +247,17 @@ function LandingPage() {
       case 'accountSettings':
         return <AccountSettings userEmail={userEmail} />;
       case 'auto':
-        return <Auto userEmail={userEmail} carList={carList} autoTotal={autoTotal} fetchCarDetails={fetchCarDetails} />;
+        return <Auto userEmail={userEmail} carList={carList} setCarList={setCarList} autoTotal={autoTotal} fetchCarDetails={fetchCarDetails} />;
       case 'cash':
-        return <Cash userEmail={userEmail} cashList={cashList} cashTotal={cashTotal} fetchCashDetails={fetchCashDetails} />;
+        return <Cash userEmail={userEmail} cashList={cashList} setCashList={setCashList} cashTotal={cashTotal} fetchCashDetails={fetchCashDetails} />;
       case 'stocks':
         return <Stocks userEmail={userEmail} stockList={stockList} stockTotal={stockTotal} fetchStockDetails={fetchStockDetails} />;
       case 'metals':
-        return <Metals userEmail={userEmail} metalList={metalList} metalTotal={metalTotal} fetchMetalDetails={fetchMetalDetails} />;
+        return <Metals userEmail={userEmail} metalList={metalList} setMetalList={setMetalList}  metalTotal={metalTotal} fetchMetalDetails={fetchMetalDetails} />;
       case 'property':
-        return <Property userEmail={userEmail} propertyList={propertyList} propertyTotalPrice={propertyTotalPrice} propertyTotalMonthlyCost={propertyTotalMonthlyCost} fetchPropertyDetails={fetchPropertyDetails} />;
+        return <Property userEmail={userEmail} propertyList={propertyList} setPropertyList={updatePropertyList} propertyTotalPrice={propertyTotalPrice} propertyTotalMonthlyCost={propertyTotalMonthlyCost} fetchPropertyDetails={fetchPropertyDetails} />;
       case 'loan':
-        return <Loan userEmail={userEmail} loanList={loanList} loanTotal={loanTotal} fetchLoanDetails={fetchLoanDetails} />;
+        return <Loan userEmail={userEmail} loanList={loanList} loanTotal={loanTotal} fetchLoanDetails={() => fetchLoanDetails(userEmail)}  />;
       case 'createAsset':
         return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'home':

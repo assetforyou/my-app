@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Trash2, Upload } from 'lucide-react';
@@ -6,7 +6,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Table } from 'react-bootstrap';
 
-function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails }) {
+function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
+  const [localLoanList, setLocalLoanList] = useState(loanList);
   const [loanDetails, setLoanDetails] = useState({
     type: '',
     loanValue: '',
@@ -16,6 +17,10 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
   });
   const [saveButtonText, setSaveButtonText] = useState('Save');
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setLocalLoanList(loanList);
+  }, [loanList]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -41,13 +46,14 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
         repaymentPerMonth,
         userEmail,
       };
-      setLoanList(prevList => [...prevList, newLoan]);
+      setLocalLoanList(prevList => [...prevList, newLoan]);
 
       setLoanDetails({ type: '', loanValue: '', purchaseYear: '', repaymentPerMonth: '', currency: 'USD' });
       setSaveButtonText('Saved!');
       setTimeout(() => {
         setSaveButtonText('Save');
       }, 2000);
+      fetchLoanDetails(userEmail);
     } catch (error) {
       console.error('Error saving loan details:', error);
       setSaveButtonText('Save');
@@ -59,7 +65,8 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
     if (window.confirm('Are you sure you want to delete this Loan?')) {
       try {
         await deleteDoc(doc(db, 'loans', loanId));
-        setLoanList(prevList => prevList.filter(loan => loan.id !== loanId));
+        setLocalLoanList(prevList => prevList.filter(loan => loan.id !== loanId));
+        fetchLoanDetails(userEmail);
         alert('Loan detail deleted successfully.');
       } catch (error) {
         console.error('Error deleting loan detail:', error);
@@ -91,7 +98,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
     reader.readAsBinaryString(file);
   };
 
-  const chartData = loanList.map(loan => ({
+  const chartData = localLoanList.map(loan => ({
     purchaseYear: loan.purchaseYear,
     loanValue: parseFloat(loan.loanValue)
   })).sort((a, b) => a.purchaseYear - b.purchaseYear);
@@ -178,7 +185,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
               </tr>
             </thead>
             <tbody>
-              {loanList.map(loan => (
+              {localLoanList.map(loan => (
                 <tr key={loan.id}>
                   <td>{loan.type}</td>
                   <td>${parseFloat(loan.loanValue).toFixed(2)}</td>
