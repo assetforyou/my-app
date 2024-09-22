@@ -1,10 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Trash2, Upload } from 'lucide-react';
+import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
-import { Card, Form, Button, Table } from 'react-bootstrap';
+import { Card, Form, Button, Table, Dropdown } from 'react-bootstrap';
 
 function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, propertyTotalMonthlyCost, fetchPropertyDetails }) {
   const [propertyDetails, setPropertyDetails] = useState({
@@ -160,6 +160,13 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
     reader.readAsBinaryString(file);
   };
 
+  const handleDownloadData = () => {
+    const ws = XLSX.utils.json_to_sheet(propertyList);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "PropertyList");
+    XLSX.writeFile(wb, "property_data.xlsx");
+  };
+
   const chartData = propertyList.map(property => ({
     purchaseDate: property.purchaseDate,
     value: parseFloat(property.price)
@@ -168,7 +175,22 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
   return (
     <div className="container mt-4">
       <Card className="mb-4">
-        <Card.Header as="h5">Enter Property Details</Card.Header>
+        <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
+          Enter Property Details
+          <Dropdown>
+            <Dropdown.Toggle variant="secondary" id="dropdown-advanced">
+              <MoreVertical size={16} />
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              <Dropdown.Item onClick={() => fileInputRef.current.click()}>
+                <Upload size={16} className="mr-2" /> Upload Excel
+              </Dropdown.Item>
+              <Dropdown.Item onClick={handleDownloadData}>
+                <Download size={16} className="mr-2" /> Download Data
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </Card.Header>
         <Card.Body>
           <Form>
             <Form.Group className="mb-3">
@@ -371,22 +393,13 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
         </Card.Body>
       </Card>
 
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileUpload}
-          accept=".xlsx, .xls"
-        />
-        <Button
-          onClick={() => fileInputRef.current.click()}
-          variant="primary"
-          className="d-flex align-items-center"
-        >
-          <Upload size={16} className="mr-2" /> Upload Excel
-        </Button>
-      </div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileUpload}
+        accept=".xlsx, .xls"
+      />
     </div>
   );
 }

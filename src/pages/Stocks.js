@@ -2,10 +2,10 @@ import React, { useState, useRef } from 'react';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import axios from 'axios';
-import { Trash2, Upload } from 'lucide-react';
+import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
-import { Card, Form, Button, Table } from 'react-bootstrap';
+import { Card, Form, Button, Table, Dropdown } from 'react-bootstrap';
 
 const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';  // Replace with your actual API key
 
@@ -59,7 +59,6 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
           userEmail,
         });
 
-        // Fetch updated stock details
         fetchStockDetails(userEmail);
 
         setStockDetails({
@@ -120,9 +119,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     if (window.confirm('Are you sure you want to delete this Stock?')) {
       try {
         await deleteDoc(doc(db, 'stocks', stockId));
-        // Remove the stock from the local state
         setStockList(prevList => prevList.filter(stock => stock.id !== stockId));
-        // Fetch updated stock details
         fetchStockDetails(userEmail);
         alert('Stock detail deleted successfully.');
       } catch (error) {
@@ -159,6 +156,13 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     reader.readAsBinaryString(file);
   };
 
+  const handleDownloadData = () => {
+    const ws = XLSX.utils.json_to_sheet(stockList);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "StockList");
+    XLSX.writeFile(wb, "stock_data.xlsx");
+  };
+
   const chartData = stockList.map(stock => ({
     purchaseDate: stock.purchaseDate,
     value: parseFloat(stock.total)
@@ -167,7 +171,22 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
   return (
     <div className="container mt-4">
       <Card className="mb-4">
-        <Card.Header as="h5">Enter Stock Details</Card.Header>
+        <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
+          Enter Stock Details
+          <Dropdown>
+            <Dropdown.Toggle variant="secondary" id="dropdown-advanced">
+              <MoreVertical size={16} />
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              <Dropdown.Item onClick={() => fileInputRef.current.click()}>
+                <Upload size={16} className="mr-2" /> Upload Excel
+              </Dropdown.Item>
+              <Dropdown.Item onClick={handleDownloadData}>
+                <Download size={16} className="mr-2" /> Download Data
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </Card.Header>
         <Card.Body>
           <Form>
             <Form.Group className="mb-3">
@@ -338,22 +357,13 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
         </Card.Body>
       </Card>
 
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileUpload}
-          accept=".xlsx, .xls"
-        />
-        <Button
-          onClick={() => fileInputRef.current.click()}
-          variant="primary"
-          className="d-flex align-items-center"
-        >
-          <Upload size={16} className="mr-2" /> Upload Excel
-        </Button>
-      </div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileUpload}
+        accept=".xlsx, .xls"
+      />
     </div>
   );
 }

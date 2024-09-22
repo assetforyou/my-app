@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Trash2, Upload } from 'lucide-react';
+import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
-import { Card, Form, Button, Table } from 'react-bootstrap';
+import { Card, Form, Button, Table, Dropdown } from 'react-bootstrap';
 
 function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) {
   const [assetItems, setAssetItems] = useState([]);
@@ -96,6 +96,13 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
     reader.readAsBinaryString(file);
   };
 
+  const handleDownloadData = () => {
+    const ws = XLSX.utils.json_to_sheet(assetItems);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "AssetItems");
+    XLSX.writeFile(wb, `${asset.name}_data.xlsx`);
+  };
+
   const getChartData = () => {
     const dateField = asset.fields.find(field => field.type === 'date');
     const costField = asset.fields.find(field => field.type === 'cost');
@@ -118,7 +125,22 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
   return (
     <div className="container mt-4">
       <Card className="mb-4">
-        <Card.Header as="h5">{asset.name}</Card.Header>
+        <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
+          {asset.name}
+          <Dropdown>
+            <Dropdown.Toggle variant="secondary" id="dropdown-advanced">
+              <MoreVertical size={16} />
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              <Dropdown.Item onClick={() => fileInputRef.current.click()}>
+                <Upload size={16} className="mr-2" /> Upload Excel
+              </Dropdown.Item>
+              <Dropdown.Item onClick={handleDownloadData}>
+                <Download size={16} className="mr-2" /> Download Data
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </Card.Header>
         <Card.Body>
           <h5>Total Value: {asset.currency} {totalValue.toFixed(2)}</h5>
           <Form>
@@ -192,22 +214,13 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
         </Card>
       )}
 
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileUpload}
-          accept=".xlsx, .xls"
-        />
-        <Button
-          onClick={() => fileInputRef.current.click()}
-          variant="primary"
-          className="d-flex align-items-center"
-        >
-          <Upload size={16} className="mr-2" /> Upload Excel
-        </Button>
-      </div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileUpload}
+        accept=".xlsx, .xls"
+      />
     </div>
   );
 }
