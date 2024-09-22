@@ -1,43 +1,46 @@
-require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const { sendMail } = require('./emailService');
+const nodemailer = require('nodemailer');
+const bodyParser = require('body-parser');
 
 const app = express();
+app.use(bodyParser.json());
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Create a transporter using SMTP
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // Use TLS
+  auth: {
+    user: 'assetforryou@gmail.com', // Your Gmail address
+    pass: 'oyua igsj yypq wton' // Replace with your generated app password
+  }
+});
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, 'client/build')));
-
-// API Routes
 app.post('/api/send-email', async (req, res) => {
-  try {
-    const { fullName, email, inquiryType, message } = req.body;
-    
-    const subject = `New ${inquiryType} inquiry from ${fullName}`;
-    const text = `
+  const { fullName, email, inquiryType, message, recipientEmail } = req.body;
+
+  const mailOptions = {
+    from: 'assetforryou@gmail.com', // Your Gmail address
+    to: recipientEmail,
+    subject: `New Inquiry from ${fullName}: ${inquiryType}`,
+    text: `
       Name: ${fullName}
       Email: ${email}
       Inquiry Type: ${inquiryType}
       Message: ${message}
-    `;
+    `
+  };
 
-    await sendMail('assetforryou@gmail.com', subject, text);
-    res.status(200).json({ message: 'Email sent successfully' });
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).send('Email sent successfully');
   } catch (error) {
-    console.error('Error in /api/send-email:', error);
-    res.status(500).json({ message: 'Failed to send email' });
+    console.error('Error sending email:', error);
+    res.status(500).send('Error sending email');
   }
 });
 
-// Handle React routing, return all requests to React app
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
-});
-
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

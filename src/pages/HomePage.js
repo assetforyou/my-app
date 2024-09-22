@@ -41,7 +41,10 @@ function HomePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          recipientEmail: 'assetforryou@gmail.com'
+        }),
       });
   
       if (!response.ok) {
