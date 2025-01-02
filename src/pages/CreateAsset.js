@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import Layout from '../pages/AdLayout';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
@@ -111,6 +112,7 @@ function CreateAsset({ userEmail, onAssetCreated }) {
   };
 
   return (
+    <Layout>
     <div className="container mt-4">
       <Card className="mb-4">
         <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
@@ -200,6 +202,7 @@ function CreateAsset({ userEmail, onAssetCreated }) {
         accept=".xlsx, .xls"
       />
     </div>
+    </Layout>
   );
 }
 

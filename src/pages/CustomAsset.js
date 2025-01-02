@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Layout from '../pages/AdLayout';
 import { collection, addDoc, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
@@ -123,6 +124,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
   const chartData = getChartData();
 
   return (
+    <Layout>
     <div className="container mt-4">
       <Card className="mb-4">
         <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
@@ -222,6 +224,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
         accept=".xlsx, .xls"
       />
     </div>
+    </Layout>
   );
 }
 

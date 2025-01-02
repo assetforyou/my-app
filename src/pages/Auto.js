@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import Layout from '../pages/AdLayout';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
@@ -117,181 +118,183 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
   })).sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
 
   return (
-    <div className="container mt-4">
-      <Card className="mb-4">
-        <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
-          Enter Car Details
-          <Dropdown>
-            <Dropdown.Toggle variant="secondary" id="dropdown-advanced">
-              <MoreVertical size={16} />
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item onClick={() => fileInputRef.current.click()}>
-                <Upload size={16} className="mr-2" /> Upload Excel
-              </Dropdown.Item>
-              <Dropdown.Item onClick={handleDownloadData}>
-                <Download size={16} className="mr-2" /> Download Data
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-        </Card.Header>
-        <Card.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="make"
-                placeholder="Make"
-                value={carDetails.make}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="mileage"
-                placeholder="Mileage"
-                value={carDetails.mileage}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="year"
-                placeholder="Year of Build"
-                value={carDetails.year}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="number"
-                name="value"
-                placeholder="Value"
-                value={carDetails.value}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Select
-                name="currency"
-                value={carDetails.currency}
-                onChange={handleInputChange}
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="JPY">JPY</option>
-                <option value="AUD">AUD</option>
-                <option value="CAD">CAD</option>
-                <option value="CHF">CHF</option>
-                <option value="CNY">CNY</option>
-                <option value="INR">INR</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="date"
-                name="purchaseDate"
-                value={carDetails.purchaseDate}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="reminderNote"
-                placeholder="Reminder Note"
-                value={carDetails.reminderNote}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="date"
-                name="reminderDate"
-                value={carDetails.reminderDate}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Button variant="primary" onClick={handleSaveCarDetails}>
-              {saveButtonText}
-            </Button>
-          </Form>
-        </Card.Body>
-      </Card>
+      <Layout>
+      <div className="container mt-4">
+        <Card className="mb-4">
+          <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
+            Enter Car Details
+            <Dropdown>
+              <Dropdown.Toggle variant="secondary" id="dropdown-advanced">
+                <MoreVertical size={16} />
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <Dropdown.Item onClick={() => fileInputRef.current.click()}>
+                  <Upload size={16} className="mr-2" /> Upload Excel
+                </Dropdown.Item>
+                <Dropdown.Item onClick={handleDownloadData}>
+                  <Download size={16} className="mr-2" /> Download Data
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
+          </Card.Header>
+          <Card.Body>
+            <Form>
+              <Form.Group className="mb-3">
+                <Form.Control
+                  type="text"
+                  name="make"
+                  placeholder="Make"
+                  value={carDetails.make}
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Control
+                  type="text"
+                  name="mileage"
+                  placeholder="Mileage"
+                  value={carDetails.mileage}
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Control
+                  type="text"
+                  name="year"
+                  placeholder="Year of Build"
+                  value={carDetails.year}
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Control
+                  type="number"
+                  name="value"
+                  placeholder="Value"
+                  value={carDetails.value}
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Select
+                  name="currency"
+                  value={carDetails.currency}
+                  onChange={handleInputChange}
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="JPY">JPY</option>
+                  <option value="AUD">AUD</option>
+                  <option value="CAD">CAD</option>
+                  <option value="CHF">CHF</option>
+                  <option value="CNY">CNY</option>
+                  <option value="INR">INR</option>
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Control
+                  type="date"
+                  name="purchaseDate"
+                  value={carDetails.purchaseDate}
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Control
+                  type="text"
+                  name="reminderNote"
+                  placeholder="Reminder Note"
+                  value={carDetails.reminderNote}
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Control
+                  type="date"
+                  name="reminderDate"
+                  value={carDetails.reminderDate}
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+              <Button variant="primary" onClick={handleSaveCarDetails}>
+                {saveButtonText}
+              </Button>
+            </Form>
+          </Card.Body>
+        </Card>
 
-      <Card className="mb-4">
-        <Card.Header as="h5">Saved Car Details</Card.Header>
-        <Card.Body>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>Make</th>
-                <th>Mileage</th>
-                <th>Year</th>
-                <th>Value</th>
-                <th>Currency</th>
-                <th>Purchase Date</th>
-                <th>Reminder Note</th>
-                <th>Reminder Date</th>
-                <th>User</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {carList.map(car => (
-                <tr key={car.id}>
-                  <td>{car.make}</td>
-                  <td>{car.mileage}</td>
-                  <td>{car.year}</td>
-                  <td>{car.value}</td>
-                  <td>{car.currency}</td>
-                  <td>{car.purchaseDate}</td>
-                  <td>{car.reminderNote}</td>
-                  <td>{car.reminderDate}</td>
-                  <td>{car.userEmail}</td>
-                  <td>
-                    <Button variant="danger" size="sm" onClick={() => handleDeleteCar(car.id)}>
-                      <Trash2 size={16} />
-                    </Button>
-                  </td>
+        <Card className="mb-4">
+          <Card.Header as="h5">Saved Car Details</Card.Header>
+          <Card.Body>
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th>Make</th>
+                  <th>Mileage</th>
+                  <th>Year</th>
+                  <th>Value</th>
+                  <th>Currency</th>
+                  <th>Purchase Date</th>
+                  <th>Reminder Note</th>
+                  <th>Reminder Date</th>
+                  <th>User</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Card.Body>
-      </Card>
+              </thead>
+              <tbody>
+                {carList.map(car => (
+                  <tr key={car.id}>
+                    <td>{car.make}</td>
+                    <td>{car.mileage}</td>
+                    <td>{car.year}</td>
+                    <td>{car.value}</td>
+                    <td>{car.currency}</td>
+                    <td>{car.purchaseDate}</td>
+                    <td>{car.reminderNote}</td>
+                    <td>{car.reminderDate}</td>
+                    <td>{car.userEmail}</td>
+                    <td>
+                      <Button variant="danger" size="sm" onClick={() => handleDeleteCar(car.id)}>
+                        <Trash2 size={16} />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
 
-      <Card className="mb-4">
-        <Card.Header as="h5">Total Value of Autos: {autoTotal}</Card.Header>
-      </Card>
+        <Card className="mb-4">
+          <Card.Header as="h5">Total Value of Autos: {autoTotal}</Card.Header>
+        </Card>
 
-      <Card className="mb-4">
-        <Card.Header as="h5">Car Value Over Time</Card.Header>
-        <Card.Body>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="purchaseDate" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="value" stroke="#8884d8" />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card.Body>
-      </Card>
+        <Card className="mb-4">
+          <Card.Header as="h5">Car Value Over Time</Card.Header>
+          <Card.Body>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="purchaseDate" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="value" stroke="#8884d8" />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card.Body>
+        </Card>
 
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleFileUpload}
-        accept=".xlsx, .xls"
-      />
-    </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileUpload}
+          accept=".xlsx, .xls"
+        />
+      </div>
+      </Layout>
   );
 }
 

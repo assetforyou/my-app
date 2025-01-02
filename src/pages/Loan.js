@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Layout from '../pages/AdLayout';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
@@ -111,6 +112,7 @@ function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
   })).sort((a, b) => a.purchaseYear - b.purchaseYear);
 
   return (
+    <Layout>
     <div className="container mt-4">
       <Card className="mb-4">
         <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
@@ -255,6 +257,7 @@ function Loan({ userEmail, loanList, loanTotal, fetchLoanDetails }) {
         accept=".xlsx, .xls"
       />
     </div>
+    </Layout>
   );
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Layout from '../pages/AdLayout';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -262,6 +263,7 @@ function LandingPage() {
         return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'home':
         return (
+          <Layout>
           <div className="home-content">
             <h2 className="summary-title">Asset Summary</h2>
             <div className="summary-container">
@@ -313,6 +315,7 @@ function LandingPage() {
               )}
             </div>
           </div>
+          </Layout>
         );
       default:
         if (selectedAsset.startsWith('custom-')) {
