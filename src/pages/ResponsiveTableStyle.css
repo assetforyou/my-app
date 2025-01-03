@@ -1,0 +1,70 @@
+/* Table Styles */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+  
+  .table {
+    margin-bottom: 0;
+    width: 100%;
+  }
+  
+  .table th {
+    white-space: nowrap;
+    background-color: #f8f9fa;
+    min-width: 120px;
+    padding: 0.75rem;
+    font-weight: 500;
+    border-bottom-width: 2px;
+  }
+  
+  .table td {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.75rem;
+    vertical-align: middle;
+  }
+  
+  /* Card Styles */
+  .card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+  }
+  
+  .card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  /* Form Styles */
+  .form-control {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+  }
+  
+  /* Container Styles */
+  @media (max-width: 1199px) {
+    .container-fluid {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+  
+  /* Chart Container */
+  .chart-container {
+    height: 300px;
+    width: 100%;
+  }
