@@ -132,10 +132,7 @@ function HomePage() {
             {[
               'Asset Tracking & Management',
               'Portfolio Analysis',
-              'Risk Assessment',
-              'Tax Reporting',
-              'Estate Planning',
-              'Secure Document Storage'
+              'Secure Information Storage'
             ].map((service, index) => (
               <motion.div key={index} className="service-card" whileHover={{ scale: 1.05 }}>
                 <h3>{service}</h3>
@@ -155,7 +152,6 @@ function HomePage() {
               <ul>
                 <li>Personal Asset Dashboard</li>
                 <li>Goal-based Planning</li>
-                <li>Mobile App Access</li>
               </ul>
             </motion.div>
             <motion.div className="solution-card" whileHover={{ scale: 1.05 }}>
@@ -163,7 +159,6 @@ function HomePage() {
               <h3>For Institutions</h3>
               <ul>
                 <li>Multi-User Access Control</li>
-                <li>API Integration</li>
                 <li>Customized Reporting</li>
               </ul>
             </motion.div>
@@ -200,7 +195,6 @@ function HomePage() {
               <option value="">Select Inquiry Type</option>
               <option value="demo">Request Demo</option>
               <option value="support">Technical Support</option>
-              <option value="partnership">Partnership Opportunities</option>
             </select>
             <textarea
               name="message"
