@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Layout from '../pages/AdLayout';
+import Layout from './AdLayout';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
+import { Upload, Download, MoreVertical } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
-import { Card, Form, Button, Table, InputGroup, Dropdown } from 'react-bootstrap';
+import { Card, Form, Button, Dropdown } from 'react-bootstrap';
+import ResponsiveTable from './ResponsiveTable';
 
 const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
 
@@ -15,6 +16,8 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
     grams: '',
     currency: 'USD',
     purchaseDate: '',
+    valuePerGram: '',
+    total: '',
     reminderNote: '',
     reminderDate: ''
   });
@@ -36,10 +39,8 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
       const data = await response.json();
       if (data['Global Quote'] && data['Global Quote']['05. price']) {
         return parseFloat(data['Global Quote']['05. price']);
-      } else {
-        console.error('Unexpected API response structure:', data);
-        throw new Error('Unexpected API response structure');
       }
+      throw new Error('Unexpected API response structure');
     } catch (error) {
       console.error(`Error fetching price for ${symbol}:`, error);
       throw error;
@@ -63,16 +64,13 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
             const price = await fetchMetalPrice(metal.symbol);
             return { ...metal, price };
           } catch (error) {
-            console.error(`Failed to fetch price for ${metal.name}:`, error);
             return { ...metal, price: null };
           }
         })
       );
-      console.log('Fetched metals:', fetchedMetals);
       setAvailableMetals(fetchedMetals);
       setFilteredMetals(fetchedMetals);
     } catch (error) {
-      console.error('Error fetching metal prices:', error);
       setError('Failed to fetch metal prices. Please try again later.');
     } finally {
       setIsLoading(false);
@@ -81,62 +79,53 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setMetalDetails(prevDetails => ({ ...prevDetails, [name]: value }));
-  };
-
-  const handleSearch = () => {
-    const filtered = availableMetals.filter(metal => 
-      metal.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredMetals(filtered);
+    setMetalDetails(prev => ({ ...prev, [name]: value }));
   };
 
   const handleMetalSelection = (metal) => {
-    setMetalDetails(prevDetails => ({
-      ...prevDetails,
-      type: metal.name,
-    }));
+    const selectedMetal = availableMetals.find(m => m.name === metal);
+    if (selectedMetal && selectedMetal.price) {
+      const valuePerGram = selectedMetal.price / 31.1035; // Convert from oz to gram
+      setMetalDetails(prev => ({
+        ...prev,
+        type: selectedMetal.name,
+        valuePerGram,
+        total: prev.grams ? prev.grams * valuePerGram : 0
+      }));
+    }
   };
 
   const handleSaveMetalDetails = async () => {
     setSaveButtonText('Saving...');
     try {
-      const grams = parseFloat(metalDetails.grams);
-      const selectedMetal = availableMetals.find(metal => metal.name.toLowerCase() === metalDetails.type.toLowerCase());
-      const valuePerGram = selectedMetal && selectedMetal.price ? (selectedMetal.price / 31.1035) : 0;
-      const total = grams * valuePerGram;
       const newMetalRef = await addDoc(collection(db, 'metals'), {
         ...metalDetails,
-        grams,
-        valuePerGram,
-        total,
         userEmail,
+        grams: parseFloat(metalDetails.grams),
+        valuePerGram: parseFloat(metalDetails.valuePerGram),
+        total: parseFloat(metalDetails.total)
       });
 
       const newMetal = {
         id: newMetalRef.id,
         ...metalDetails,
-        grams,
-        valuePerGram,
-        total,
         userEmail,
       };
-      setMetalList(prevList => [...prevList, newMetal]);
+      setMetalList(prev => [...prev, newMetal]);
 
       setMetalDetails({
         type: '',
         grams: '',
         currency: 'USD',
         purchaseDate: '',
+        valuePerGram: '',
+        total: '',
         reminderNote: '',
         reminderDate: ''
       });
       setSaveButtonText('Saved!');
-      setTimeout(() => {
-        setSaveButtonText('Save');
-      }, 2000);
-
-      await fetchMetalDetails(userEmail);
+      setTimeout(() => setSaveButtonText('Save'), 2000);
+      fetchMetalDetails(userEmail);
     } catch (error) {
       console.error('Error saving metal details:', error);
       setSaveButtonText('Save');
@@ -145,16 +134,15 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
   };
 
   const handleDeleteMetal = async (metalId) => {
-    if (window.confirm('Are you sure you want to delete this Metal?')) {
+    if (window.confirm('Are you sure you want to delete this metal entry?')) {
       try {
         await deleteDoc(doc(db, 'metals', metalId));
-        setMetalList(prevList => prevList.filter(metal => metal.id !== metalId));
-        alert('Metal detail deleted successfully.');
-        
-        await fetchMetalDetails(userEmail);
+        setMetalList(prev => prev.filter(metal => metal.id !== metalId));
+        alert('Metal entry deleted successfully.');
+        fetchMetalDetails(userEmail);
       } catch (error) {
-        console.error('Error deleting metal detail:', error);
-        alert('Failed to delete Metal.');
+        console.error('Error deleting metal entry:', error);
+        alert('Failed to delete metal entry.');
       }
     }
   };
@@ -169,14 +157,15 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
       const ws = wb.Sheets[wsname];
       const data = XLSX.utils.sheet_to_json(ws);
       if (data.length > 0) {
-        const firstRow = data[0];
         setMetalDetails({
-          type: firstRow.type || '',
-          grams: firstRow.grams || '',
-          currency: firstRow.currency || 'USD',
-          purchaseDate: firstRow.purchaseDate || '',
-          reminderNote: firstRow.reminderNote || '',
-          reminderDate: firstRow.reminderDate || ''
+          type: data[0].type || '',
+          grams: data[0].grams || '',
+          currency: data[0].currency || 'USD',
+          purchaseDate: data[0].purchaseDate || '',
+          valuePerGram: data[0].valuePerGram || '',
+          total: data[0].total || '',
+          reminderNote: data[0].reminderNote || '',
+          reminderDate: data[0].reminderDate || ''
         });
       }
     };
@@ -190,196 +179,141 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
     XLSX.writeFile(wb, "metal_data.xlsx");
   };
 
-  const chartData = metalList.map(metal => ({
-    purchaseDate: metal.purchaseDate,
-    value: parseFloat(metal.total)
-  })).sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
+  const chartData = metalList
+    .map(metal => ({
+      purchaseDate: metal.purchaseDate,
+      value: parseFloat(metal.total)
+    }))
+    .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
 
-  if (isLoading) return <div>Loading metal prices...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (isLoading) return <Layout><div className="container-fluid px-4">Loading metal prices...</div></Layout>;
+  if (error) return <Layout><div className="container-fluid px-4">Error: {error}</div></Layout>;
 
   return (
     <Layout>
-    <div className="container mt-4">
-      <Card className="mb-4">
-        <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
-          Enter Metal Details
-          <Dropdown>
-            <Dropdown.Toggle variant="secondary" id="dropdown-advanced">
-              <MoreVertical size={16} />
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item onClick={() => fileInputRef.current.click()}>
-                <Upload size={16} className="mr-2" /> Upload Excel
-              </Dropdown.Item>
-              <Dropdown.Item onClick={handleDownloadData}>
-                <Download size={16} className="mr-2" /> Download Data
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-        </Card.Header>
-        <Card.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <InputGroup>
-                <Form.Control
-                  type="text"
-                  placeholder="Search for metals"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Button variant="outline-secondary" onClick={handleSearch}>Search</Button>
-              </InputGroup>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Select onChange={(e) => handleMetalSelection({ name: e.target.value })}>
-                <option value="">Select a metal</option>
-                {filteredMetals.map(metal => (
-                  <option key={metal.symbol} value={metal.name}>
-                    {metal.name}: {metal.price ? `$${metal.price.toFixed(2)} per oz` : 'Price unavailable'}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="type"
-                placeholder="Type of Metal"
-                value={metalDetails.type}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="number"
-                name="grams"
-                placeholder="Grams"
-                value={metalDetails.grams}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Select
-                name="currency"
-                value={metalDetails.currency}
-                onChange={handleInputChange}
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="JPY">JPY</option>
-                <option value="AUD">AUD</option>
-                <option value="CAD">CAD</option>
-                <option value="CHF">CHF</option>
-                <option value="CNY">CNY</option>
-                <option value="INR">INR</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="date"
-                name="purchaseDate"
-                value={metalDetails.purchaseDate}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="reminderNote"
-                placeholder="Reminder Note"
-                value={metalDetails.reminderNote}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="date"
-                name="reminderDate"
-                value={metalDetails.reminderDate}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Button variant="primary" onClick={handleSaveMetalDetails}>
-              {saveButtonText}
-            </Button>
-          </Form>
-        </Card.Body>
-      </Card>
-
-      <Card className="mb-4">
-        <Card.Header as="h5">Saved Metal Details</Card.Header>
-        <Card.Body>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>Type of Metal</th>
-                <th>Grams</th>
-                <th>Value per Gram</th>
-                <th>Total Value</th>
-                <th>Currency</th>
-                <th>Purchase Date</th>
-                <th>Reminder Note</th>
-                <th>Reminder Date</th>
-                <th>User</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {metalList.map(metal => (
-                <tr key={metal.id}>
-                  <td>{metal.type}</td>
-                  <td>{metal.grams}</td>
-                  <td>${metal.valuePerGram.toFixed(2)}</td>
-                  <td>${metal.total.toFixed(2)}</td>
-                  <td>{metal.currency}</td>
-                  <td>{metal.purchaseDate}</td>
-                  <td>{metal.reminderNote}</td>
-                  <td>{metal.reminderDate}</td>
-                  <td>{metal.userEmail}</td>
-                  <td>
-                    <Button variant="danger" size="sm" onClick={() => handleDeleteMetal(metal.id)}>
-                      <Trash2 size={16} />
+      <div className="container-fluid px-4">
+        <div className="row g-4">
+          {/* Form Column */}
+          <div className="col-12 col-xl-4">
+            <Card className="h-100">
+              <Card.Header className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">Enter Metal Details</h5>
+                <Dropdown>
+                  <Dropdown.Toggle variant="secondary" size="sm">
+                    <MoreVertical size={16} />
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu>
+                    <Dropdown.Item onClick={() => fileInputRef.current.click()}>
+                      <Upload size={16} className="me-2" /> Upload Excel
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={handleDownloadData}>
+                      <Download size={16} className="me-2" /> Download Data
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
+              </Card.Header>
+              <Card.Body>
+                <Form className="row g-3">
+                  <div className="col-12">
+                    <Form.Select
+                      value={metalDetails.type}
+                      onChange={(e) => handleMetalSelection(e.target.value)}
+                    >
+                      <option value="">Select a metal</option>
+                      {filteredMetals.map(metal => (
+                        <option key={metal.symbol} value={metal.name}>
+                          {metal.name}: {metal.price ? `$${metal.price.toFixed(2)} per oz` : 'Price unavailable'}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </div>
+                  {Object.entries(metalDetails).map(([key, value]) => (
+                    key !== 'type' && (
+                      <div className="col-12" key={key}>
+                        {key === 'currency' ? (
+                          <Form.Select
+                            name={key}
+                            value={value}
+                            onChange={handleInputChange}
+                          >
+                            {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
+                              <option key={currency} value={currency}>{currency}</option>
+                            ))}
+                          </Form.Select>
+                        ) : (
+                          <Form.Control
+                            type={key.includes('Date') ? 'date' : ['grams', 'valuePerGram', 'total'].includes(key) ? 'number' : 'text'}
+                            name={key}
+                            placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                            value={value}
+                            onChange={handleInputChange}
+                            readOnly={['valuePerGram', 'total'].includes(key)}
+                          />
+                        )}
+                      </div>
+                    )
+                  ))}
+                  <div className="col-12">
+                    <Button 
+                      variant="primary" 
+                      onClick={handleSaveMetalDetails} 
+                      className="w-100"
+                    >
+                      {saveButtonText}
                     </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Card.Body>
-      </Card>
+                  </div>
+                </Form>
+              </Card.Body>
+            </Card>
+          </div>
 
-      <Card className="mb-4">
-        <Card.Header as="h5">Total Value of Metals: ${metalTotal.toFixed(2)}</Card.Header>
-      </Card>
+          {/* Table and Charts Column */}
+          <div className="col-12 col-xl-8">
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Total Metal Value: ${metalTotal.toFixed(2)}</h5>
+              </Card.Header>
+            </Card>
 
-      <Card className="mb-4">
-        <Card.Header as="h5">Metal Value Over Time</Card.Header>
-        <Card.Body>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="purchaseDate" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="value" stroke="#8884d8" />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card.Body>
-      </Card>
+            <Card className="mb-4">
+              <ResponsiveTable 
+                data={metalList}
+                onDelete={handleDeleteMetal}
+              />
+            </Card>
 
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleFileUpload}
-        accept=".xlsx, .xls"
-      />
-    </div>
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Metal Value Over Time</h5>
+              </Card.Header>
+              <Card.Body>
+                <div style={{ height: '400px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="purchaseDate" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="value" stroke="#8884d8" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card.Body>
+            </Card>
+          </div>
+        </div>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileUpload}
+          accept=".xlsx, .xls"
+        />
+      </div>
     </Layout>
   );
 }
-    
+
 export default Metals;

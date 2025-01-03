@@ -1,14 +1,15 @@
 import React, { useState, useRef } from 'react';
-import Layout from '../pages/AdLayout';
+import Layout from './AdLayout';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import axios from 'axios';
-import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
+import { Upload, Download, MoreVertical } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
-import { Card, Form, Button, Table, Dropdown } from 'react-bootstrap';
+import { Card, Form, Button, Dropdown } from 'react-bootstrap';
+import ResponsiveTable from './ResponsiveTable';
 
-const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';  // Replace with your actual API key
+const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
 
 function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDetails }) {
   const [stockDetails, setStockDetails] = useState({
@@ -29,7 +30,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setStockDetails({ ...stockDetails, [name]: value });
+    setStockDetails(prev => ({ ...prev, [name]: value }));
   };
 
   const fetchLiveStockPrice = async (symbol) => {
@@ -53,14 +54,21 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
       const totalValue = numberOfStocks * livePrice;
 
       try {
-        await addDoc(collection(db, 'stocks'), {
+        const newStockRef = await addDoc(collection(db, 'stocks'), {
           ...stockDetails,
           value: livePrice,
           total: totalValue,
           userEmail,
         });
 
-        fetchStockDetails(userEmail);
+        const newStock = {
+          id: newStockRef.id,
+          ...stockDetails,
+          value: livePrice,
+          total: totalValue,
+          userEmail,
+        };
+        setStockList(prev => [...prev, newStock]);
 
         setStockDetails({
           name: '',
@@ -74,9 +82,8 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
           reminderDate: ''
         });
         setSaveButtonText('Saved!');
-        setTimeout(() => {
-          setSaveButtonText('Save');
-        }, 2000);
+        setTimeout(() => setSaveButtonText('Save'), 2000);
+        fetchStockDetails(userEmail);
       } catch (error) {
         console.error('Error saving stock details:', error);
         setSaveButtonText('Save');
@@ -99,33 +106,16 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     }
   };
 
-  const renderStockSearchResults = () => {
-    return (
-      <Card className="mb-4">
-        <Card.Header as="h5">Search Results</Card.Header>
-        <Card.Body>
-          <ul>
-            {searchResults.map((result, index) => (
-              <li key={index}>
-                {result['1. symbol']} - {result['2. name']}
-              </li>
-            ))}
-          </ul>
-        </Card.Body>
-      </Card>
-    );
-  };
-  
   const handleDeleteStock = async (stockId) => {
-    if (window.confirm('Are you sure you want to delete this Stock?')) {
+    if (window.confirm('Are you sure you want to delete this stock entry?')) {
       try {
         await deleteDoc(doc(db, 'stocks', stockId));
-        setStockList(prevList => prevList.filter(stock => stock.id !== stockId));
+        setStockList(prev => prev.filter(stock => stock.id !== stockId));
+        alert('Stock entry deleted successfully.');
         fetchStockDetails(userEmail);
-        alert('Stock detail deleted successfully.');
       } catch (error) {
-        console.error('Error deleting Stock detail:', error);
-        alert('Failed to delete Stock.');
+        console.error('Error deleting stock entry:', error);
+        alert('Failed to delete stock entry.');
       }
     }
   };
@@ -140,17 +130,16 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
       const ws = wb.Sheets[wsname];
       const data = XLSX.utils.sheet_to_json(ws);
       if (data.length > 0) {
-        const firstRow = data[0];
         setStockDetails({
-          name: firstRow.name || '',
-          number: firstRow.number || '',
-          value: firstRow.value || '',
-          currency: firstRow.currency || 'USD',
-          purchaseDate: firstRow.purchaseDate || '',
-          sector: firstRow.sector || '',
-          dividendYield: firstRow.dividendYield || '',
-          reminderNote: firstRow.reminderNote || '',
-          reminderDate: firstRow.reminderDate || ''
+          name: data[0].name || '',
+          number: data[0].number || '',
+          value: data[0].value || '',
+          currency: data[0].currency || 'USD',
+          purchaseDate: data[0].purchaseDate || '',
+          sector: data[0].sector || '',
+          dividendYield: data[0].dividendYield || '',
+          reminderNote: data[0].reminderNote || '',
+          reminderDate: data[0].reminderDate || ''
         });
       }
     };
@@ -164,209 +153,158 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     XLSX.writeFile(wb, "stock_data.xlsx");
   };
 
-  const chartData = stockList.map(stock => ({
-    purchaseDate: stock.purchaseDate,
-    value: parseFloat(stock.total)
-  })).sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
+  const chartData = stockList
+    .map(stock => ({
+      purchaseDate: stock.purchaseDate,
+      value: parseFloat(stock.total)
+    }))
+    .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
 
   return (
     <Layout>
-    <div className="container mt-4">
-      <Card className="mb-4">
-        <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
-          Enter Stock Details
-          <Dropdown>
-            <Dropdown.Toggle variant="secondary" id="dropdown-advanced">
-              <MoreVertical size={16} />
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item onClick={() => fileInputRef.current.click()}>
-                <Upload size={16} className="mr-2" /> Upload Excel
-              </Dropdown.Item>
-              <Dropdown.Item onClick={handleDownloadData}>
-                <Download size={16} className="mr-2" /> Download Data
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-        </Card.Header>
-        <Card.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="name"
-                placeholder="Stock Symbol"
-                value={stockDetails.name}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="number"
-                name="number"
-                placeholder="Number of Stocks"
-                value={stockDetails.number}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Select
-                name="currency"
-                value={stockDetails.currency}
-                onChange={handleInputChange}
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="JPY">JPY</option>
-                <option value="AUD">AUD</option>
-                <option value="CAD">CAD</option>
-                <option value="CHF">CHF</option>
-                <option value="CNY">CNY</option>
-                <option value="INR">INR</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="date"
-                name="purchaseDate"
-                value={stockDetails.purchaseDate}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="sector"
-                placeholder="Sector"
-                value={stockDetails.sector}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="dividendYield"
-                placeholder="Dividend Yield"
-                value={stockDetails.dividendYield}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="reminderNote"
-                placeholder="Reminder Note"
-                value={stockDetails.reminderNote}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="date"
-                name="reminderDate"
-                value={stockDetails.reminderDate}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Button variant="primary" onClick={handleSaveStockDetails}>
-              {saveButtonText}
-            </Button>
-          </Form>
-        </Card.Body>
-      </Card>
-
-      <Card className="mb-4">
-        <Card.Header as="h5">Search for Stocks</Card.Header>
-        <Card.Body>
-          <Form.Group className="mb-3">
-            <Form.Control
-              type="text"
-              placeholder="Search Stocks"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </Form.Group>
-          <Button variant="primary" onClick={handleSearchStocks}>Search</Button>
-        </Card.Body>
-      </Card>
-
-      {searchResults.length > 0 && renderStockSearchResults()}
-
-      <Card className="mb-4">
-        <Card.Header as="h5">Saved Stock Details</Card.Header>
-        <Card.Body>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>Stock Name</th>
-                <th>Number of Stocks</th>
-                <th>Value per Stock</th>
-                <th>Total Value</th>
-                <th>Currency</th>
-                <th>Purchase Date</th>
-                <th>Sector</th>
-                <th>Dividend Yield</th>
-                <th>Reminder Note</th>
-                <th>Reminder Date</th>
-                <th>User</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stockList.map(stock => (
-                <tr key={stock.id}>
-                  <td>{stock.name}</td>
-                  <td>{stock.number}</td>
-                  <td>{stock.value}</td>
-                  <td>{stock.total}</td>
-                  <td>{stock.currency}</td>
-                  <td>{stock.purchaseDate}</td>
-                  <td>{stock.sector}</td>
-                  <td>{stock.dividendYield}</td>
-                  <td>{stock.reminderNote}</td>
-                  <td>{stock.reminderDate}</td>
-                  <td>{stock.userEmail}</td>
-                  <td>
-                    <Button variant="danger" size="sm" onClick={() => handleDeleteStock(stock.id)}>
-                      <Trash2 size={16} />
+      <div className="container-fluid px-4">
+        <div className="row g-4">
+          {/* Form Column */}
+          <div className="col-12 col-xl-4">
+            <Card className="h-100">
+              <Card.Header className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">Enter Stock Details</h5>
+                <Dropdown>
+                  <Dropdown.Toggle variant="secondary" size="sm">
+                    <MoreVertical size={16} />
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu>
+                    <Dropdown.Item onClick={() => fileInputRef.current.click()}>
+                      <Upload size={16} className="me-2" /> Upload Excel
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={handleDownloadData}>
+                      <Download size={16} className="me-2" /> Download Data
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
+              </Card.Header>
+              <Card.Body>
+                <Form className="row g-3">
+                  {/* Stock Symbol Search */}
+                  <div className="col-12">
+                    <Form.Control
+                      type="text"
+                      placeholder="Search Stock Symbol"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <Button 
+                      variant="secondary" 
+                      onClick={handleSearchStocks}
+                      className="mt-2 w-100"
+                    >
+                      Search
                     </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Card.Body>
-      </Card>
+                    {searchResults.length > 0 && (
+                      <div className="mt-2 border rounded p-2">
+                        {searchResults.map((result, index) => (
+                          <div 
+                            key={index}
+                            className="cursor-pointer p-1 hover:bg-gray-100"
+                            onClick={() => {
+                              setStockDetails(prev => ({
+                                ...prev,
+                                name: result['1. symbol']
+                              }));
+                              setSearchResults([]);
+                              setSearchQuery('');
+                            }}
+                          >
+                            {result['1. symbol']} - {result['2. name']}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-      <Card className="mb-4">
-        <Card.Header as="h5">Total Value of Stocks: {stockTotal}</Card.Header>
-      </Card>
+                  {Object.entries(stockDetails).map(([key, value]) => (
+                    <div className="col-12" key={key}>
+                      {key === 'currency' ? (
+                        <Form.Select
+                          name={key}
+                          value={value}
+                          onChange={handleInputChange}
+                        >
+                          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
+                            <option key={currency} value={currency}>{currency}</option>
+                          ))}
+                        </Form.Select>
+                      ) : (
+                        <Form.Control
+                          type={key.includes('Date') ? 'date' : key === 'number' ? 'number' : 'text'}
+                          name={key}
+                          placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                          value={value}
+                          onChange={handleInputChange}
+                          disabled={key === 'value'}
+                        />
+                      )}
+                    </div>
+                  ))}
+                  <div className="col-12">
+                    <Button 
+                      variant="primary" 
+                      onClick={handleSaveStockDetails} 
+                      className="w-100"
+                    >
+                      {saveButtonText}
+                    </Button>
+                  </div>
+                </Form>
+              </Card.Body>
+            </Card>
+          </div>
 
-      <Card className="mb-4">
-        <Card.Header as="h5">Stock Value Over Time</Card.Header>
-        <Card.Body>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="purchaseDate" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="value" stroke="#8884d8" />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card.Body>
-      </Card>
+          {/* Table and Charts Column */}
+          <div className="col-12 col-xl-8">
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Total Stock Value: {stockTotal}</h5>
+              </Card.Header>
+            </Card>
 
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleFileUpload}
-        accept=".xlsx, .xls"
-      />
-    </div>
+            <Card className="mb-4">
+              <ResponsiveTable 
+                data={stockList}
+                onDelete={handleDeleteStock}
+              />
+            </Card>
+
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Stock Value Over Time</h5>
+              </Card.Header>
+              <Card.Body>
+                <div style={{ height: '400px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="purchaseDate" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="value" stroke="#8884d8" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card.Body>
+            </Card>
+          </div>
+        </div>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileUpload}
+          accept=".xlsx, .xls"
+        />
+      </div>
     </Layout>
   );
 }

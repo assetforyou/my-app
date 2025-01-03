@@ -1,11 +1,12 @@
 import React, { useState, useRef, useCallback } from 'react';
-import Layout from '../pages/AdLayout';
+import Layout from './AdLayout';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
+import { Upload, Download, MoreVertical } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
-import { Card, Form, Button, Table, Dropdown } from 'react-bootstrap';
+import { Card, Form, Button, Dropdown } from 'react-bootstrap';
+import ResponsiveTable from './ResponsiveTable';
 
 function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, propertyTotalMonthlyCost, fetchPropertyDetails }) {
   const [propertyDetails, setPropertyDetails] = useState({
@@ -73,7 +74,6 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
       const utilities = parseFloat(propertyDetails.utilities);
       const otherExpenses = parseFloat(propertyDetails.otherExpenses);
       const totalMonthlyCost = mortgagePayment + utilities + otherExpenses;
-
       const price = parseFloat(propertyDetails.price);
 
       const docRef = await addDoc(collection(db, 'properties'), {
@@ -92,7 +92,6 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
       };
 
       setPropertyList([...propertyList, newProperty]);
-
       setPropertyDetails({
         address: '',
         bedrooms: '',
@@ -107,27 +106,25 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
         purchaseDate: ''
       });
       setSaveButtonText('Saved!');
-
-      setTimeout(() => {
-        setSaveButtonText('Save');
-      }, 2000);
+      setTimeout(() => setSaveButtonText('Save'), 2000);
+      fetchPropertyDetails(userEmail);
     } catch (error) {
       console.error('Error saving property details:', error);
       setSaveButtonText('Save');
       alert('Failed to save property details.');
     }
   };
-  
+
   const handleDeleteProperty = async (propertyId) => {
-    if (window.confirm('Are you sure you want to delete this Property?')) {
+    if (window.confirm('Are you sure you want to delete this property?')) {
       try {
         await deleteDoc(doc(db, 'properties', propertyId));
-        const updatedPropertyList = propertyList.filter(property => property.id !== propertyId);
-        setPropertyList(updatedPropertyList);
-        alert('Property detail deleted successfully.');
+        setPropertyList(prev => prev.filter(property => property.id !== propertyId));
+        alert('Property deleted successfully.');
+        fetchPropertyDetails(userEmail);
       } catch (error) {
-        console.error('Error deleting property detail:', error);
-        alert('Failed to delete Property.');
+        console.error('Error deleting property:', error);
+        alert('Failed to delete property.');
       }
     }
   };
@@ -168,241 +165,156 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
     XLSX.writeFile(wb, "property_data.xlsx");
   };
 
-  const chartData = propertyList.map(property => ({
-    purchaseDate: property.purchaseDate,
-    value: parseFloat(property.price)
-  })).sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
+  const chartData = propertyList
+    .map(property => ({
+      purchaseDate: property.purchaseDate,
+      value: parseFloat(property.price)
+    }))
+    .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
 
   return (
     <Layout>
-    <div className="container mt-4">
-      <Card className="mb-4">
-        <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
-          Enter Property Details
-          <Dropdown>
-            <Dropdown.Toggle variant="secondary" id="dropdown-advanced">
-              <MoreVertical size={16} />
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item onClick={() => fileInputRef.current.click()}>
-                <Upload size={16} className="mr-2" /> Upload Excel
-              </Dropdown.Item>
-              <Dropdown.Item onClick={handleDownloadData}>
-                <Download size={16} className="mr-2" /> Download Data
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-        </Card.Header>
-        <Card.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="address"
-                placeholder="Address"
-                value={propertyDetails.address}
-                onChange={handleAddressInputChange}
-              />
-              {suggestions.length > 0 && (
-                <ul className="list-group mt-2">
-                  {suggestions.map((suggestion, index) => (
-                    <li
-                      key={index}
-                      className="list-group-item list-group-item-action"
-                      onClick={() => handleSuggestionSelect(suggestion)}
+      <div className="container-fluid px-4">
+        <div className="row g-4">
+          {/* Form Column */}
+          <div className="col-12 col-xl-4">
+            <Card className="h-100">
+              <Card.Header className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">Enter Property Details</h5>
+                <Dropdown>
+                  <Dropdown.Toggle variant="secondary" size="sm">
+                    <MoreVertical size={16} />
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu>
+                    <Dropdown.Item onClick={() => fileInputRef.current.click()}>
+                      <Upload size={16} className="me-2" /> Upload Excel
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={handleDownloadData}>
+                      <Download size={16} className="me-2" /> Download Data
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
+              </Card.Header>
+              <Card.Body>
+                <Form className="row g-3">
+                  <div className="col-12">
+                    <Form.Control
+                      type="text"
+                      name="address"
+                      placeholder="Address"
+                      value={propertyDetails.address}
+                      onChange={handleAddressInputChange}
+                    />
+                    {suggestions.length > 0 && (
+                      <ul className="list-group mt-2">
+                        {suggestions.map((suggestion, index) => (
+                          <li
+                            key={index}
+                            className="list-group-item list-group-item-action"
+                            onClick={() => handleSuggestionSelect(suggestion)}
+                          >
+                            {suggestion}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  {Object.entries(propertyDetails)
+                    .filter(([key]) => key !== 'address')
+                    .map(([key, value]) => (
+                      <div className="col-12" key={key}>
+                        {key === 'currency' ? (
+                          <Form.Select
+                            name={key}
+                            value={value}
+                            onChange={handleInputChange}
+                          >
+                            {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
+                              <option key={currency} value={currency}>{currency}</option>
+                            ))}
+                          </Form.Select>
+                        ) : (
+                          <Form.Control
+                            type={key.includes('Date') ? 'date' : 
+                                  ['price', 'mortgagePayment', 'interestRate', 'utilities', 'otherExpenses', 'bedrooms', 'bathrooms'].includes(key) ? 'number' : 'text'}
+                            name={key}
+                            placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                            value={value}
+                            onChange={handleInputChange}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  <div className="col-12">
+                    <Button 
+                      variant="primary" 
+                      onClick={handleSavePropertyDetails} 
+                      className="w-100"
                     >
-                      {suggestion}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="number"
-                name="bedrooms"
-                placeholder="Number of Bedrooms"
-                value={propertyDetails.bedrooms}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="number"
-                name="bathrooms"
-                placeholder="Number of Bathrooms"
-                value={propertyDetails.bathrooms}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="basement"
-                placeholder="Basement Type"
-                value={propertyDetails.basement}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="number"
-                name="price"
-                placeholder="Price"
-                value={propertyDetails.price}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="number"
-                name="mortgagePayment"
-                placeholder="Mortgage Payment"
-                value={propertyDetails.mortgagePayment}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="number"
-                name="interestRate"
-                placeholder="Interest Rate"
-                value={propertyDetails.interestRate}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="number"
-                name="utilities"
-                placeholder="Utilities"
-                value={propertyDetails.utilities}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="number"
-                name="otherExpenses"
-                placeholder="Other Expenses"
-                value={propertyDetails.otherExpenses}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Select
-                name="currency"
-                value={propertyDetails.currency}
-                onChange={handleInputChange}
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="JPY">JPY</option>
-                <option value="AUD">AUD</option>
-                <option value="CAD">CAD</option>
-                <option value="CHF">CHF</option>
-                <option value="CNY">CNY</option>
-                <option value="INR">INR</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Control
-                type="date"
-                name="purchaseDate"
-                value={propertyDetails.purchaseDate}
-                onChange={handleInputChange}
-              />
-            </Form.Group>
-            <Button variant="primary" onClick={handleSavePropertyDetails}>
-              {saveButtonText}
-            </Button>
-          </Form>
-        </Card.Body>
-      </Card>
-
-      <Card className="mb-4">
-        <Card.Header as="h5">Saved Property Details</Card.Header>
-        <Card.Body>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>Address</th>
-                <th>Bedrooms</th>
-                <th>Bathrooms</th>
-                <th>Basement Type</th>
-                <th>Price</th>
-                <th>Mortgage Payment</th>
-                <th>Interest Rate</th>
-                <th>Utilities</th>
-                <th>Other Expenses</th>
-                <th>Total Monthly Cost</th>
-                <th>Currency</th>
-                <th>Purchase Date</th>
-                <th>User</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {propertyList.map(property => (
-                <tr key={property.id}>
-                  <td>{property.address}</td>
-                  <td>{property.bedrooms}</td>
-                  <td>{property.bathrooms}</td>
-                  <td>{property.basement}</td>
-                  <td>{property.price}</td>
-                  <td>{property.mortgagePayment}</td>
-                  <td>{property.interestRate}</td>
-                  <td>{property.utilities}</td>
-                  <td>{property.otherExpenses}</td>
-                  <td>{property.totalMonthlyCost}</td>
-                  <td>{property.currency}</td>
-                  <td>{property.purchaseDate}</td>
-                  <td>{property.userEmail}</td>
-                  <td>
-                    <Button variant="danger" size="sm" onClick={() => handleDeleteProperty(property.id)}>
-                      <Trash2 size={16} />
+                      {saveButtonText}
                     </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Card.Body>
-      </Card>
+                  </div>
+                </Form>
+              </Card.Body>
+            </Card>
+          </div>
 
-      <Card className="mb-4">
-        <Card.Header as="h5">Total Property Value: {propertyTotalPrice}</Card.Header>
-      </Card>
+          {/* Table and Charts Column */}
+          <div className="col-12 col-xl-8">
+            <div className="row g-4">
+              <div className="col-12 col-md-6">
+                <Card className="h-100">
+                  <Card.Header>
+                    <h5 className="mb-0">Total Property Value: {propertyTotalPrice}</h5>
+                  </Card.Header>
+                </Card>
+              </div>
+              <div className="col-12 col-md-6">
+                <Card className="h-100">
+                  <Card.Header>
+                    <h5 className="mb-0">Total Monthly Cost: {propertyTotalMonthlyCost}</h5>
+                  </Card.Header>
+                </Card>
+              </div>
+            </div>
 
-      <Card className="mb-4">
-        <Card.Header as="h5">Total Monthly Cost: {propertyTotalMonthlyCost}</Card.Header>
-      </Card>
+            <Card className="my-4">
+              <ResponsiveTable 
+                data={propertyList}
+                onDelete={handleDeleteProperty}
+              />
+            </Card>
 
-      <Card className="mb-4">
-        <Card.Header as="h5">Property Value Over Time</Card.Header>
-        <Card.Body>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="purchaseDate" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="value" stroke="#8884d8" />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card.Body>
-      </Card>
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Property Value Over Time</h5>
+              </Card.Header>
+              <Card.Body>
+                <div style={{ height: '400px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="purchaseDate" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="value" stroke="#8884d8" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card.Body>
+            </Card>
+          </div>
+        </div>
 
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleFileUpload}
-        accept=".xlsx, .xls"
-      />
-    </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileUpload}
+          accept=".xlsx, .xls"
+        />
+      </div>
     </Layout>
   );
 }
