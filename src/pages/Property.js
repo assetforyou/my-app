@@ -323,51 +323,60 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
 
       <Card className="mb-4">
         <Card.Header as="h5">Saved Property Details</Card.Header>
-        <Card.Body>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>Address</th>
-                <th>Bedrooms</th>
-                <th>Bathrooms</th>
-                <th>Basement Type</th>
-                <th>Price</th>
-                <th>Mortgage Payment</th>
-                <th>Interest Rate</th>
-                <th>Utilities</th>
-                <th>Other Expenses</th>
-                <th>Total Monthly Cost</th>
-                <th>Currency</th>
-                <th>Purchase Date</th>
-                <th>User</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {propertyList.map(property => (
-                <tr key={property.id}>
-                  <td>{property.address}</td>
-                  <td>{property.bedrooms}</td>
-                  <td>{property.bathrooms}</td>
-                  <td>{property.basement}</td>
-                  <td>{property.price}</td>
-                  <td>{property.mortgagePayment}</td>
-                  <td>{property.interestRate}</td>
-                  <td>{property.utilities}</td>
-                  <td>{property.otherExpenses}</td>
-                  <td>{property.totalMonthlyCost}</td>
-                  <td>{property.currency}</td>
-                  <td>{property.purchaseDate}</td>
-                  <td>{property.userEmail}</td>
-                  <td>
-                    <Button variant="danger" size="sm" onClick={() => handleDeleteProperty(property.id)}>
-                      <Trash2 size={16} />
-                    </Button>
-                  </td>
+        <Card.Body className="p-0"> {/* Removed padding for full-width table */}
+          <div className="table-responsive">
+            <Table bordered hover className="property-table mb-0">
+              <thead>
+                <tr>
+                  <th>Basic Info</th>
+                  <th>Property Details</th>
+                  <th>Financial Info</th>
+                  <th>Monthly Costs</th>
+                  <th>Other Info</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {propertyList.map(property => (
+                  <tr key={property.id}>
+                    <td>
+                      <div><strong>Address:</strong> {property.address}</div>
+                      <div><strong>Purchase Date:</strong> {property.purchaseDate}</div>
+                      <div><strong>User:</strong> {property.userEmail}</div>
+                    </td>
+                    <td>
+                      <div><strong>Bedrooms:</strong> {property.bedrooms}</div>
+                      <div><strong>Bathrooms:</strong> {property.bathrooms}</div>
+                      <div><strong>Basement:</strong> {property.basement}</div>
+                    </td>
+                    <td>
+                      <div><strong>Price:</strong> {property.price} {property.currency}</div>
+                      <div><strong>Interest Rate:</strong> {property.interestRate}%</div>
+                      <div><strong>Mortgage:</strong> {property.mortgagePayment}</div>
+                    </td>
+                    <td>
+                      <div><strong>Utilities:</strong> {property.utilities}</div>
+                      <div><strong>Other Expenses:</strong> {property.otherExpenses}</div>
+                      <div><strong>Total Monthly:</strong> {property.totalMonthlyCost}</div>
+                    </td>
+                    <td>
+                      <div><strong>Currency:</strong> {property.currency}</div>
+                      <div><strong>Total Cost:</strong> {property.totalMonthlyCost}</div>
+                    </td>
+                    <td>
+                      <Button 
+                        variant="danger" 
+                        size="sm" 
+                        onClick={() => handleDeleteProperty(property.id)}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
         </Card.Body>
       </Card>
 
