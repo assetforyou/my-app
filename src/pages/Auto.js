@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from './ResponsiveTable';
+import AutoDepreciation from './AutoDepreciation';
 
 function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
   const [carDetails, setCarDetails] = useState({
@@ -26,7 +27,13 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
     const { name, value } = e.target;
     setCarDetails(prev => ({ ...prev, [name]: value }));
   };
+  
+  const [selectedCarIds, setSelectedCarIds] = useState([]);
 
+  // Add the handler function
+  const handleCarSelection = (selectedIds) => {
+    setSelectedCarIds(selectedIds);
+  };
   const handleSaveCarDetails = async () => {
     setSaveButtonText('Saving...');
     try {
@@ -187,12 +194,17 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
               <Card.Header>
                 <h5 className="mb-0">Total Value: {autoTotal}</h5>
               </Card.Header>
+              <AutoDepreciation 
+                carList={carList} 
+                selectedCarIds={selectedCarIds}
+              />
             </Card>
 
             <Card className="mb-4">
               <ResponsiveTable 
                 data={carList}
                 onDelete={handleDeleteCar}
+                onSelectionChange={handleCarSelection}
               />
             </Card>
 
