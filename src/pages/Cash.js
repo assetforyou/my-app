@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from './ResponsiveTable';
+import CashGrowth from './CashGrowth';
 
 function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails }) {
   const [cashDetails, setCashDetails] = useState({
@@ -112,11 +113,58 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
   };
 
   const chartData = cashList
-    .map(cash => ({
-      transactionDate: cash.transactionDate,
-      amount: parseFloat(cash.amount)
-    }))
+    .map(cash => {
+      // Get the date without timezone offset
+      const date = new Date(cash.transactionDate);
+      const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+      return {
+        transactionDate: localDate.toISOString().split('T')[0],
+        amount: parseFloat(cash.amount)
+      };
+    })
     .sort((a, b) => new Date(a.transactionDate) - new Date(b.transactionDate));
+
+  const renderFormControl = (key, value) => {
+    if (key === 'currency') {
+      return (
+        <Form.Select
+          name={key}
+          value={value}
+          onChange={handleInputChange}
+        >
+          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
+            <option key={currency} value={currency}>{currency}</option>
+          ))}
+        </Form.Select>
+      );
+    }
+
+    if (key === 'transactionDate' || key === 'reminderDate') {
+      return (
+        <Form.Control
+          type="text"
+          onFocus={(e) => e.target.type = 'date'}
+          onBlur={(e) => {
+            if (!e.target.value) e.target.type = 'text';
+          }}
+          name={key}
+          placeholder={key === 'transactionDate' ? 'Select transaction date' : 'Select reminder date'}
+          value={value}
+          onChange={handleInputChange}
+        />
+      );
+    }
+
+    return (
+      <Form.Control
+        type={key === 'amount' ? 'number' : 'text'}
+        name={key}
+        placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+        value={value}
+        onChange={handleInputChange}
+      />
+    );
+  };
 
   return (
     <Layout>
@@ -145,25 +193,7 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
                 <Form className="row g-3">
                   {Object.entries(cashDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
-                      {key === 'currency' ? (
-                        <Form.Select
-                          name={key}
-                          value={value}
-                          onChange={handleInputChange}
-                        >
-                          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
-                            <option key={currency} value={currency}>{currency}</option>
-                          ))}
-                        </Form.Select>
-                      ) : (
-                        <Form.Control
-                          type={key.includes('Date') ? 'date' : key === 'amount' ? 'number' : 'text'}
-                          name={key}
-                          placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                          value={value}
-                          onChange={handleInputChange}
-                        />
-                      )}
+                      {renderFormControl(key, value)}
                     </div>
                   ))}
                   <div className="col-12">
@@ -186,6 +216,8 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
               <Card.Header>
                 <h5 className="mb-0">Total Cash: {cashTotal}</h5>
               </Card.Header>
+              {/* Add CashGrowth component here */}
+              <CashGrowth cashList={cashList} />
             </Card>
 
             <Card className="mb-4">
