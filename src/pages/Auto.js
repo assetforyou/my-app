@@ -30,10 +30,10 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
   
   const [selectedCarIds, setSelectedCarIds] = useState([]);
 
-  // Add the handler function
   const handleCarSelection = (selectedIds) => {
     setSelectedCarIds(selectedIds);
   };
+
   const handleSaveCarDetails = async () => {
     setSaveButtonText('Saving...');
     try {
@@ -126,6 +126,48 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
     }))
     .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
 
+  const renderFormControl = (key, value) => {
+    if (key === 'currency') {
+      return (
+        <Form.Select
+          name={key}
+          value={value}
+          onChange={handleInputChange}
+        >
+          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
+            <option key={currency} value={currency}>{currency}</option>
+          ))}
+        </Form.Select>
+      );
+    }
+
+    if (key === 'purchaseDate' || key === 'reminderDate') {
+      return (
+        <Form.Control
+          type="text"
+          onFocus={(e) => e.target.type = 'date'}
+          onBlur={(e) => {
+            if (!e.target.value) e.target.type = 'text';
+          }}
+          name={key}
+          placeholder={key === 'purchaseDate' ? 'Select purchase date' : 'Select reminder date'}
+          value={value}
+          onChange={handleInputChange}
+        />
+      );
+    }
+
+    return (
+      <Form.Control
+        type={key === 'value' ? 'number' : 'text'}
+        name={key}
+        placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+        value={value}
+        onChange={handleInputChange}
+      />
+    );
+  };
+
   return (
     <Layout>
       <div className="container-fluid px-4">
@@ -153,25 +195,7 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
                 <Form className="row g-3">
                   {Object.entries(carDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
-                      {key === 'currency' ? (
-                        <Form.Select
-                          name={key}
-                          value={value}
-                          onChange={handleInputChange}
-                        >
-                          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
-                            <option key={currency} value={currency}>{currency}</option>
-                          ))}
-                        </Form.Select>
-                      ) : (
-                        <Form.Control
-                          type={key.includes('Date') ? 'date' : key === 'value' ? 'number' : 'text'}
-                          name={key}
-                          placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                          value={value}
-                          onChange={handleInputChange}
-                        />
-                      )}
+                      {renderFormControl(key, value)}
                     </div>
                   ))}
                   <div className="col-12">
@@ -206,26 +230,6 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
                 onDelete={handleDeleteCar}
                 onSelectionChange={handleCarSelection}
               />
-            </Card>
-
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Car Value Over Time</h5>
-              </Card.Header>
-              <Card.Body>
-                <div style={{ height: '400px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="purchaseDate" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="value" stroke="#8884d8" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card.Body>
             </Card>
           </div>
         </div>
