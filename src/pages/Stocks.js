@@ -4,12 +4,11 @@ import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import axios from 'axios';
 import { Upload, Download, MoreVertical } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from './ResponsiveTable';
-
-const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
+import StockProjection from './StockProjection';
+const ALPHA_VANTAGE_API_KEY = 'YOUR_API_KEY'; // Replace with your API key
 
 function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDetails }) {
   const [stockDetails, setStockDetails] = useState({
@@ -23,6 +22,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     reminderNote: '',
     reminderDate: ''
   });
+  const [selectedStockIds, setSelectedStockIds] = useState([]);
   const [saveButtonText, setSaveButtonText] = useState('Save');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -106,11 +106,24 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     }
   };
 
+  const handleStockSelect = (stockId) => {
+    setSelectedStockIds(prev => {
+      if (prev.includes(stockId)) {
+        return prev.filter(id => id !== stockId);
+      } else {
+        return [...prev, stockId];
+      }
+    });
+  };
+
   const handleDeleteStock = async (stockId) => {
     if (window.confirm('Are you sure you want to delete this stock entry?')) {
       try {
         await deleteDoc(doc(db, 'stocks', stockId));
         setStockList(prev => prev.filter(stock => stock.id !== stockId));
+        if (selectedStockIds === stockId) {
+          setSelectedStockIds(null);
+        }
         alert('Stock entry deleted successfully.');
         fetchStockDetails(userEmail);
       } catch (error) {
@@ -153,12 +166,70 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     XLSX.writeFile(wb, "stock_data.xlsx");
   };
 
-  const chartData = stockList
-    .map(stock => ({
-      purchaseDate: stock.purchaseDate,
-      value: parseFloat(stock.total)
-    }))
-    .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
+  const renderFormControl = (key, value) => {
+    if (key === 'currency') {
+      return (
+        <Form.Select
+          name={key}
+          value={value}
+          onChange={handleInputChange}
+        >
+          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
+            <option key={currency} value={currency}>{currency}</option>
+          ))}
+        </Form.Select>
+      );
+    }
+
+    if (key === 'purchaseDate' || key === 'reminderDate') {
+      return (
+        <Form.Control
+          type="text"
+          onFocus={(e) => e.target.type = 'date'}
+          onBlur={(e) => {
+            if (!e.target.value) e.target.type = 'text';
+          }}
+          name={key}
+          placeholder={key === 'purchaseDate' ? 'Select purchase date' : 'Select reminder date'}
+          value={value}
+          onChange={handleInputChange}
+        />
+      );
+    }
+
+    if (key === 'sector') {
+      return (
+        <Form.Select
+          name={key}
+          value={value}
+          onChange={handleInputChange}
+        >
+          <option value="">Select Sector</option>
+          <option value="Technology">Technology</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Finance">Finance</option>
+          <option value="Consumer">Consumer</option>
+          <option value="Industrial">Industrial</option>
+          <option value="Energy">Energy</option>
+          <option value="Materials">Materials</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Real Estate">Real Estate</option>
+          <option value="Communication">Communication</option>
+        </Form.Select>
+      );
+    }
+
+    return (
+      <Form.Control
+        type={key === 'number' ? 'number' : 'text'}
+        name={key}
+        placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+        value={value}
+        onChange={handleInputChange}
+        disabled={key === 'value'}
+      />
+    );
+  };
 
   return (
     <Layout>
@@ -224,26 +295,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
 
                   {Object.entries(stockDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
-                      {key === 'currency' ? (
-                        <Form.Select
-                          name={key}
-                          value={value}
-                          onChange={handleInputChange}
-                        >
-                          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
-                            <option key={currency} value={currency}>{currency}</option>
-                          ))}
-                        </Form.Select>
-                      ) : (
-                        <Form.Control
-                          type={key.includes('Date') ? 'date' : key === 'number' ? 'number' : 'text'}
-                          name={key}
-                          placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                          value={value}
-                          onChange={handleInputChange}
-                          disabled={key === 'value'}
-                        />
-                      )}
+                      {renderFormControl(key, value)}
                     </div>
                   ))}
                   <div className="col-12">
@@ -262,37 +314,34 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
 
           {/* Table and Charts Column */}
           <div className="col-12 col-xl-8">
-            <Card className="mb-4">
+          <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Total Stock Value: {stockTotal}</h5>
+                <h5 className="mb-0">
+                  {selectedStockIds.length > 0 
+                    ? `Selected Stock Value: $${stockList
+                        .filter(s => selectedStockIds.includes(s.id))
+                        .reduce((sum, stock) => sum + stock.total, 0)
+                        .toLocaleString()}`
+                    : `Total Portfolio Value: ${stockTotal}`
+                  }
+                </h5>
               </Card.Header>
             </Card>
 
+            {/* Stock Growth Component */}
+            <StockProjection 
+              stockList={stockList} 
+              selectedStockIds={selectedStockIds}
+            />
+
+            {/* Responsive Table */}
             <Card className="mb-4">
               <ResponsiveTable 
                 data={stockList}
                 onDelete={handleDeleteStock}
+                onSelect={handleStockSelect}
+                selectedStockIds={selectedStockIds}
               />
-            </Card>
-
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Stock Value Over Time</h5>
-              </Card.Header>
-              <Card.Body>
-                <div style={{ height: '400px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="purchaseDate" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="value" stroke="#8884d8" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card.Body>
             </Card>
           </div>
         </div>
