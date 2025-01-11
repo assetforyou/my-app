@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaShieldAlt, FaChartLine, FaLock, FaUser, FaBuilding } from 'react-icons/fa';
-import './HomePage.css';
+import '../style/HomePage.css';
 
 function HomePage() {
   const navigate = useNavigate();

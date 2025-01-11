@@ -1,6 +1,6 @@
 // src/components/Layout.jsx
 import React, { useEffect } from 'react';
-import './AdStyle.css';
+import '../style/AdStyle.css';
 
 const AdSidebar = () => {
     useEffect(() => {

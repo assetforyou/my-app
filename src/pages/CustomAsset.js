@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Layout from './AdLayout';
+import Layout from '../components/AdLayout';
 import { collection, addDoc, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Upload, Download, MoreVertical } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
-import ResponsiveTable from './ResponsiveTable';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) {
   const [assetItems, setAssetItems] = useState([]);

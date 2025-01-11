@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { updatePassword, updateProfile, linkWithPopup, GoogleAuthProvider, GithubAuthProvider } from 'firebase/auth';
 import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
-import './AccountSettings.css';
+import '../style/AccountSettings.css';
 
 function AccountSettings({ userEmail }) {
   const [newPassword, setNewPassword] = useState('');

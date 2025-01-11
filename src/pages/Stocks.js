@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
-import Layout from './AdLayout';
+import Layout from '../components/AdLayout';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import axios from 'axios';
 import { Upload, Download, MoreVertical } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
-import ResponsiveTable from './ResponsiveTable';
+import ResponsiveTable from '../components/ResponsiveTable';
 import StockProjection from '../components/StockProjection';
 const ALPHA_VANTAGE_API_KEY = 'YOUR_API_KEY'; // Replace with your API key
 

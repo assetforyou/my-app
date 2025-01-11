@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
-import Layout from './AdLayout';
+import Layout from '../components/AdLayout';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Upload, Download, MoreVertical } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
-import ResponsiveTable from './ResponsiveTable';
+import ResponsiveTable from '../components/ResponsiveTable';
 import LongTermGrowthChart from '../components/CashGrowth';
 
 function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails }) {

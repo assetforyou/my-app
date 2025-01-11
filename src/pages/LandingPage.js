@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Layout from '../pages/AdLayout';
+import Layout from '../components/AdLayout';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -12,8 +12,8 @@ import Property from './Property';
 import Loan from './Loan';
 import CreateAsset from './CreateAsset';
 import CustomAsset from './CustomAsset';
-import AccountSettings from './AccountSettings';
-import './LandingPage.css';
+import AccountSettings from '../components/AccountSettings';
+import '../style/LandingPage.css';
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');

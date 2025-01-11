@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import Layout from '../pages/AdLayout';
+import Layout from '../components/AdLayout';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
