@@ -23,7 +23,6 @@ ChartJS.register(
 );
 
 const StockProjection = ({ stockList, selectedStockIds }) => {
-  // Filter selected stocks
   const selectedStocks = selectedStockIds?.length > 0
     ? stockList.filter(stock => selectedStockIds.includes(stock.id))
     : stockList;
@@ -33,24 +32,22 @@ const StockProjection = ({ stockList, selectedStockIds }) => {
     const currentYear = new Date().getFullYear();
     const yearLabels = Array.from({ length: years + 1 }, (_, i) => currentYear + i);
 
-    // Generate projections for each selected stock
     const datasets = selectedStocks.map((stock, stockIndex) => {
       const initialValue = parseFloat(stock.total);
-      
-      // Calculate growth
       const growthData = Array.from({ length: years + 1 }, (_, year) => 
         Math.round(initialValue * Math.pow(1.08, year))
       );
 
-      // Assign a unique color based on index
-      const hue = (stockIndex * 137.5) % 360; // Golden ratio hue spacing
+      const hue = (stockIndex * 137.5) % 360;
+      const color = `hsl(${hue}, 70%, 50%)`;
 
       return {
         label: stock.name,
         data: growthData,
-        fill: false,
-        borderColor: `hsl(${hue}, 70%, 50%)`,
-        tension: 0.1,
+        fill: true,
+        backgroundColor: `hsla(${hue}, 70%, 50%, 0.1)`,
+        borderColor: color,
+        tension: 0.4,
         borderWidth: 2,
         pointRadius: 0
       };
@@ -68,17 +65,23 @@ const StockProjection = ({ stockList, selectedStockIds }) => {
     scales: {
       y: {
         beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+          borderDash: [3, 3]
+        },
         ticks: {
           callback: (value) => {
-            return new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'USD',
-              maximumFractionDigits: 0,
-            }).format(value);
+            if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
+            if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
+            if (value >= 1e3) return `$${(value / 1e3).toFixed(1)}K`;
+            return `$${value}`;
           }
         }
       },
       x: {
+        grid: {
+          display: false
+        },
         title: {
           display: true,
           text: 'Year'
@@ -99,17 +102,18 @@ const StockProjection = ({ stockList, selectedStockIds }) => {
         }
       },
       legend: {
-        position: 'bottom'
+        position: 'top'
       }
     }
   };
 
-  // Show message if no stocks are selected
   if (!selectedStocks.length) {
     return (
-      <Card className="mb-4">
+      <Card>
+        <Card.Header>
+          <h5 className="mb-0">Stock Growth Projection</h5>
+        </Card.Header>
         <Card.Body>
-          <h4 className="mb-4">Stock Growth Projection</h4>
           <div className="text-center py-4">
             Select one or more stocks to see growth projections
           </div>
@@ -119,20 +123,25 @@ const StockProjection = ({ stockList, selectedStockIds }) => {
   }
 
   return (
-    <Card className="mb-4">
-      <Card.Body>
-        <h4 className="mb-4">
+    <Card>
+      <Card.Header>
+        <h5 className="mb-0">
           {selectedStocks.length === 1 
             ? `30-Year Projection for ${selectedStocks[0].name}`
             : `30-Year Projection for Selected Stocks`}
-        </h4>
-
-        <div style={{ height: '400px', width: '100%' }}>
-          <Line data={generateProjectionData()} options={chartOptions} />
+        </h5>
+      </Card.Header>
+      <Card.Body>
+        <div className="mb-3">
+          <strong>Projection Details:</strong>
+          <ul>
+            <li>Annual Growth Rate: 8%</li>
+            <li>Time Period: 30 years</li>
+            <li>Starting Value: Individual stock totals</li>
+          </ul>
         </div>
-
-        <div className="mt-3 small text-muted">
-          * Based on 8% average annual growth rate
+        <div style={{ height: '400px' }}>
+          <Line data={generateProjectionData()} options={chartOptions} />
         </div>
       </Card.Body>
     </Card>

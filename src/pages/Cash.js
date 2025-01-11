@@ -7,7 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from './ResponsiveTable';
-import CashGrowth from './CashGrowth';
+import LongTermGrowthChart from './CashGrowth';
 
 function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails }) {
   const [cashDetails, setCashDetails] = useState({
@@ -212,39 +212,20 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
 
           {/* Table and Charts Column */}
           <div className="col-12 col-xl-8">
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Total Cash: {cashTotal}</h5>
-              </Card.Header>
-              {/* Add CashGrowth component here */}
-              <CashGrowth cashList={cashList} />
-            </Card>
+          <Card className="mb-4">
+            <Card.Header>
+              <h5 className="mb-0">Cash Transactions by Account Type</h5>
+            </Card.Header>
+            <Card.Body>
+              <LongTermGrowthChart cashList={cashList} />
+            </Card.Body>
+          </Card>
 
             <Card className="mb-4">
               <ResponsiveTable 
                 data={cashList}
                 onDelete={handleDeleteCash}
               />
-            </Card>
-
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Cash Transactions Over Time</h5>
-              </Card.Header>
-              <Card.Body>
-                <div style={{ height: '400px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="transactionDate" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="amount" stroke="#8884d8" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card.Body>
             </Card>
           </div>
         </div>

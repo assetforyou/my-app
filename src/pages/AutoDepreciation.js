@@ -12,7 +12,6 @@ import {
   Legend
 } from 'chart.js';
 
-// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -39,39 +38,39 @@ const AutoDepreciation = ({ carList, selectedCarIds }) => {
     return values;
   };
 
-  // Find the maximum number of years among all cars
   const maxYears = carList.reduce((max, car) => {
-    return Math.max(max, car.years || 5); // Default to 5 years if not specified
+    return Math.max(max, car.years || 5);
   }, 0);
 
-  // Generate year labels from 0 to maxYears
   const yearLabels = Array.from({ length: maxYears + 1 }, (_, i) => i);
 
-  // Filter cars based on selection or show all if none selected
   const carsToShow = selectedCarIds?.length > 0 
     ? carList.filter(car => selectedCarIds.includes(car.id))
     : carList;
 
-  // Calculate depreciation for each car
   const allDepreciationData = carsToShow.map(car => {
     const initialValue = parseFloat(car.value);
-    const years = car.years || maxYears; // Use car-specific years or maxYears
+    const years = car.years || maxYears;
     return {
       make: car.make,
       values: calculateDepreciation(initialValue, years)
     };
   });
 
-  // Prepare data for the chart
   const chartData = {
     labels: yearLabels,
-    datasets: allDepreciationData.map((data, index) => ({
-      label: data.make,
-      data: data.values.map(v => v.value),
-      fill: false,
-      borderColor: `hsl(${index * 137.5}, 70%, 50%)`,
-      tension: 0.1
-    }))
+    datasets: allDepreciationData.map((data, index) => {
+      const hue = (index * 137.5) % 360;
+      return {
+        label: data.make,
+        data: data.values.map(v => v.value),
+        fill: true,
+        backgroundColor: `hsla(${hue}, 70%, 50%, 0.1)`,
+        borderColor: `hsl(${hue}, 70%, 50%)`,
+        tension: 0.4,
+        borderWidth: 2
+      };
+    })
   };
 
   const chartOptions = {
@@ -80,17 +79,22 @@ const AutoDepreciation = ({ carList, selectedCarIds }) => {
     scales: {
       y: {
         beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+          borderDash: [3, 3]
+        },
         ticks: {
           callback: (value) => {
-            return new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'USD',
-              maximumFractionDigits: 0,
-            }).format(value);
+            if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
+            if (value >= 1e3) return `$${(value / 1e3).toFixed(1)}K`;
+            return `$${value}`;
           }
         }
       },
       x: {
+        grid: {
+          display: false
+        },
         title: {
           display: true,
           text: 'Years'
@@ -111,19 +115,27 @@ const AutoDepreciation = ({ carList, selectedCarIds }) => {
         }
       },
       legend: {
-        position: 'bottom'
+        position: 'top'
       }
     }
   };
 
   return (
-    <Card className="h-100">
+    <Card>
+      <Card.Header>
+        <h5 className="mb-0">Vehicle Depreciation Projection</h5>
+      </Card.Header>
       <Card.Body>
-        <div style={{ height: '400px', width: '100%' }}>
-          <Line data={chartData} options={chartOptions} />
+        <div className="mb-3">
+          <strong>Depreciation Details:</strong>
+          <ul>
+            <li>Annual Depreciation Rate: 15%</li>
+            <li>Time Period: {maxYears} years</li>
+            <li>Starting Values: Individual vehicle values</li>
+          </ul>
         </div>
-        <div className="mt-3 text-muted small">
-          * Based on estimated 15% annual depreciation rate
+        <div style={{ height: '400px' }}>
+          <Line data={chartData} options={chartOptions} />
         </div>
       </Card.Body>
     </Card>
