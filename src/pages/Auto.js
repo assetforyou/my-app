@@ -7,7 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from './ResponsiveTable';
-import AutoDepreciation from './AutoDepreciation';
+import AutoDepreciation from '../components/AutoDepreciation';
 
 function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
   const [carDetails, setCarDetails] = useState({
@@ -218,10 +218,17 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
               <Card.Header>
                 <h5 className="mb-0">Total Value: {autoTotal}</h5>
               </Card.Header>
-              <AutoDepreciation 
-                carList={carList} 
-                selectedCarIds={selectedCarIds}
-              />
+            </Card>
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Auto Depreciation Analysis</h5>
+              </Card.Header>
+              <Card.Body>
+                <AutoDepreciation 
+                  carList={carList} 
+                  selectedCarIds={selectedCarIds}
+                />
+              </Card.Body>
             </Card>
 
             <Card className="mb-4">

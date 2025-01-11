@@ -7,7 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from './ResponsiveTable';
-
+import PropertyGrowthChart from '../components/PropertyGrowth';
 function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, propertyTotalMonthlyCost, fetchPropertyDetails }) {
   const [propertyDetails, setPropertyDetails] = useState({
     address: '',
@@ -262,21 +262,22 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
           {/* Table and Charts Column */}
           <div className="col-12 col-xl-8">
             <div className="row g-4">
-              <div className="col-12 col-md-6">
-                <Card className="h-100">
+                <Card className="mb-4">
                   <Card.Header>
                     <h5 className="mb-0">Total Property Value: {propertyTotalPrice}</h5>
-                  </Card.Header>
-                </Card>
-              </div>
-              <div className="col-12 col-md-6">
-                <Card className="h-100">
-                  <Card.Header>
                     <h5 className="mb-0">Total Monthly Cost: {propertyTotalMonthlyCost}</h5>
                   </Card.Header>
                 </Card>
-              </div>
             </div>
+            
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Property Value Projection</h5>
+              </Card.Header>
+              <Card.Body>
+                <PropertyGrowthChart propertyList={propertyList} />
+              </Card.Body>
+            </Card>
 
             <Card className="my-4">
               <ResponsiveTable 

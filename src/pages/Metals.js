@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from './ResponsiveTable';
+import MetalsGrowthChart from '../components/MetalsGrowth';
 
 const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
 
@@ -273,6 +274,15 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
               <Card.Header>
                 <h5 className="mb-0">Total Metal Value: ${metalTotal.toFixed(2)}</h5>
               </Card.Header>
+            </Card>
+            
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Metals Value Projection</h5>
+              </Card.Header>
+              <Card.Body>
+                <MetalsGrowthChart metalList={metalList} />
+              </Card.Body>
             </Card>
 
             <Card className="mb-4">

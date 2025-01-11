@@ -7,7 +7,7 @@ import { Upload, Download, MoreVertical } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from './ResponsiveTable';
-import StockProjection from './StockProjection';
+import StockProjection from '../components/StockProjection';
 const ALPHA_VANTAGE_API_KEY = 'YOUR_API_KEY'; // Replace with your API key
 
 function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDetails }) {

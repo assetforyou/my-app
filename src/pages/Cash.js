@@ -7,7 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from './ResponsiveTable';
-import LongTermGrowthChart from './CashGrowth';
+import LongTermGrowthChart from '../components/CashGrowth';
 
 function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails }) {
   const [cashDetails, setCashDetails] = useState({
@@ -212,6 +212,11 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
 
           {/* Table and Charts Column */}
           <div className="col-12 col-xl-8">
+          <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Total Cash: {cashTotal}</h5>
+              </Card.Header>
+            </Card>
           <Card className="mb-4">
             <Card.Header>
               <h5 className="mb-0">Cash Transactions by Account Type</h5>

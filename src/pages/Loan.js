@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from './ResponsiveTable';
+import LoanGrowthChart from '../components/LoanGrowth';
 
 function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails }) {
   const [loanDetails, setLoanDetails] = useState({
@@ -194,6 +195,15 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
               <Card.Header>
                 <h5 className="mb-0">Total Loans: {loanTotal}</h5>
               </Card.Header>
+            </Card>
+
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Loan Projection Analysis</h5>
+              </Card.Header>
+              <Card.Body>
+                <LoanGrowthChart loanList={loanList} />
+              </Card.Body>
             </Card>
 
             <Card className="mb-4">
