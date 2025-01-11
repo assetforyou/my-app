@@ -235,10 +235,15 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
                           </Form.Select>
                         ) : (
                           <Form.Control
-                            type={key.includes('Date') ? 'date' : 
+                            type={key.includes('Date') ? 'text' : 
                                   ['price', 'mortgagePayment', 'interestRate', 'utilities', 'otherExpenses', 'bedrooms', 'bathrooms'].includes(key) ? 'number' : 'text'}
+                            onFocus={(e) => key.includes('Date') ? e.target.type = 'date' : null}
+                            onBlur={(e) => {
+                              if (key.includes('Date') && !e.target.value) e.target.type = 'text';
+                            }}
                             name={key}
-                            placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                            placeholder={key === 'purchaseDate' ? 'Select purchase date' :
+                                       key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                             value={value}
                             onChange={handleInputChange}
                           />

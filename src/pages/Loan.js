@@ -164,11 +164,17 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
                         </Form.Select>
                       ) : (
                         <Form.Control
-                          type={key.includes('Date') ? 'date' : 
+                          type={key.includes('Date') ? 'text' : 
                                 key === 'loanValue' || key === 'repaymentPerMonth' ? 'number' : 
                                 key === 'purchaseYear' ? 'number' : 'text'}
+                          onFocus={(e) => key.includes('Date') ? e.target.type = 'date' : null}
+                          onBlur={(e) => {
+                            if (key.includes('Date') && !e.target.value) e.target.type = 'text';
+                          }}
                           name={key}
-                          placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                          placeholder={key === 'reminderDate' ? 'Select reminder date' :
+                                     key === 'purchaseYear' ? 'Enter purchase year' :
+                                     key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                           value={value}
                           onChange={handleInputChange}
                         />

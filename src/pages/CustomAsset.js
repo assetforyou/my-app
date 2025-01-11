@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
+import CustomAssetVisualization from '../components/CustomAssetVisualization';
 
 function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) {
   const [assetItems, setAssetItems] = useState([]);
@@ -96,14 +97,14 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
     };
     reader.readAsBinaryString(file);
   };
-
+  
   const handleDownloadData = () => {
     const ws = XLSX.utils.json_to_sheet(assetItems);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "AssetItems");
     XLSX.writeFile(wb, `${asset.name}_data.xlsx`);
   };
-
+  
   const chartData = assetItems
     .filter(item => {
       const dateField = asset.fields.find(field => field.type === 'date');
@@ -120,6 +121,34 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
     })
     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
+  const renderFormControl = (field) => {
+    if (field.type === 'date') {
+      return (
+        <Form.Control
+          type="text"
+          onFocus={(e) => e.target.type = 'date'}
+          onBlur={(e) => {
+            if (!e.target.value) e.target.type = 'text';
+          }}
+          name={field.name}
+          placeholder={`Select ${field.name.toLowerCase()}`}
+          value={newItem[field.name] || ''}
+          onChange={handleInputChange}
+        />
+      );
+    }
+
+    return (
+      <Form.Control
+        type={field.type === 'cost' ? 'number' : field.type}
+        name={field.name}
+        placeholder={field.name}
+        value={newItem[field.name] || ''}
+        onChange={handleInputChange}
+      />
+    );
+  };
+    
   return (
     <Layout>
       <div className="container-fluid px-4">
@@ -147,13 +176,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
                 <Form className="row g-3">
                   {asset.fields.map(field => (
                     <div className="col-12" key={field.name}>
-                      <Form.Control
-                        type={field.type === 'cost' ? 'number' : field.type}
-                        name={field.name}
-                        placeholder={field.name}
-                        value={newItem[field.name] || ''}
-                        onChange={handleInputChange}
-                      />
+                      {renderFormControl(field)}
                     </div>
                   ))}
                   <div className="col-12">
@@ -177,6 +200,15 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
                 <h5 className="mb-0">Total Value: {asset.currency} {totalValue.toFixed(2)}</h5>
               </Card.Header>
             </Card>
+            
+            {chartData.length > 0 && (
+              <CustomAssetVisualization 
+                assetItems={assetItems}
+                assetFields={asset.fields}
+                assetName={asset.name}
+                currency={asset.currency}
+              />
+            )}
 
             <Card className="mb-4">
               <ResponsiveTable 
@@ -186,28 +218,6 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
                 currency={asset.currency}
               />
             </Card>
-
-            {chartData.length > 0 && (
-              <Card className="mb-4">
-                <Card.Header>
-                  <h5 className="mb-0">{asset.name} Value Over Time</h5>
-                </Card.Header>
-                <Card.Body>
-                  <div style={{ height: '400px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="value" stroke="#8884d8" />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </Card.Body>
-              </Card>
-            )}
           </div>
         </div>
 

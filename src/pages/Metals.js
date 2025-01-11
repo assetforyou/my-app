@@ -243,9 +243,15 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
                           </Form.Select>
                         ) : (
                           <Form.Control
-                            type={key.includes('Date') ? 'date' : ['grams', 'valuePerGram', 'total'].includes(key) ? 'number' : 'text'}
+                            type={key.includes('Date') ? 'text' : ['grams', 'valuePerGram', 'total'].includes(key) ? 'number' : 'text'}
+                            onFocus={(e) => key.includes('Date') ? e.target.type = 'date' : null}
+                            onBlur={(e) => {
+                              if (key.includes('Date') && !e.target.value) e.target.type = 'text';
+                            }}
                             name={key}
-                            placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                            placeholder={key === 'reminderDate' ? 'Select reminder date' :
+                                       key === 'purchaseDate' ? 'Select purchase date' :
+                                       key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                             value={value}
                             onChange={handleInputChange}
                             readOnly={['valuePerGram', 'total'].includes(key)}
