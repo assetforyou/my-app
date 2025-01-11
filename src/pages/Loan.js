@@ -212,26 +212,6 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
                 onDelete={handleDeleteLoan}
               />
             </Card>
-
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Loan Values Over Time</h5>
-              </Card.Header>
-              <Card.Body>
-                <div style={{ height: '400px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="purchaseYear" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="loanValue" stroke="#8884d8" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card.Body>
-            </Card>
           </div>
         </div>
 
