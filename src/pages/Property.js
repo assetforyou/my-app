@@ -282,9 +282,6 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
               <Card.Body>
                 <PropertyGrowthChart propertyList={propertyList} />
               </Card.Body>
-            </Card>
-
-            <Card className="my-4">
               <ResponsiveTable 
                 data={propertyList}
                 onDelete={handleDeleteProperty}

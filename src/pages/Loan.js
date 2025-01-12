@@ -271,14 +271,11 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
 
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Loan Projection Analysis</h5>
+                <h5 className="mb-0">Loan Value Analysis</h5>
               </Card.Header>
               <Card.Body>
                 <LoanGrowthChart loanList={loanList} />
               </Card.Body>
-            </Card>
-
-            <Card className="mb-4">
               <ResponsiveTable 
                 data={loanList}
                 onDelete={handleDeleteLoan}

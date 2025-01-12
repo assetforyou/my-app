@@ -201,23 +201,27 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
               </Card.Header>
             </Card>
             
-            {chartData.length > 0 && (
-              <CustomAssetVisualization 
-                assetItems={assetItems}
-                assetFields={asset.fields}
-                assetName={asset.name}
-                currency={asset.currency}
-              />
-            )}
-
             <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Property Value Projection</h5>
+              </Card.Header>
+              <Card.Body>
+              {chartData.length > 0 && (
+                <CustomAssetVisualization 
+                  assetItems={assetItems}
+                  assetFields={asset.fields}
+                  assetName={asset.name}
+                  currency={asset.currency}
+                />
+              )}
+              </Card.Body>
               <ResponsiveTable 
                 data={assetItems}
                 onDelete={handleDeleteItem}
                 fields={asset.fields}
                 currency={asset.currency}
               />
-            </Card>
+             </Card>
           </div>
         </div>
 

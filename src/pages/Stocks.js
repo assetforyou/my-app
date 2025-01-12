@@ -329,13 +329,16 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
             </Card>
 
             {/* Stock Growth Component */}
-            <StockProjection 
-              stockList={stockList} 
-              selectedStockIds={selectedStockIds}
-            />
-
-            {/* Responsive Table */}
             <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Stocks Value Analysis</h5>
+              </Card.Header>
+              <Card.Body>
+              <StockProjection 
+                stockList={stockList} 
+                selectedStockIds={selectedStockIds}
+              />
+              </Card.Body>
               <ResponsiveTable 
                 data={stockList}
                 onDelete={handleDeleteStock}

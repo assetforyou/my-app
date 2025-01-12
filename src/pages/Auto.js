@@ -240,7 +240,7 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
             </Card>
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Auto Depreciation Analysis</h5>
+                <h5 className="mb-0">Auto Value Analysis</h5>
               </Card.Header>
               <Card.Body>
                 <AutoDepreciation 
@@ -248,9 +248,6 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
                   selectedCarIds={selectedCarIds}
                 />
               </Card.Body>
-            </Card>
-
-            <Card className="mb-4">
               <ResponsiveTable 
                 data={carList}
                 onDelete={handleDeleteCar}

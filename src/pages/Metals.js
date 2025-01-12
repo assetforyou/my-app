@@ -284,14 +284,11 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
             
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Metals Value Projection</h5>
+                <h5 className="mb-0">Metals Value Analysis</h5>
               </Card.Header>
               <Card.Body>
                 <MetalsGrowthChart metalList={metalList} />
               </Card.Body>
-            </Card>
-
-            <Card className="mb-4">
               <ResponsiveTable 
                 data={metalList}
                 onDelete={handleDeleteMetal}

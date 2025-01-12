@@ -219,19 +219,16 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
             </Card>
           <Card className="mb-4">
             <Card.Header>
-              <h5 className="mb-0">Cash Transactions by Account Type</h5>
+              <h5 className="mb-0">Cash Value Analysis</h5>
             </Card.Header>
             <Card.Body>
               <LongTermGrowthChart cashList={cashList} />
             </Card.Body>
-          </Card>
-
-            <Card className="mb-4">
-              <ResponsiveTable 
+            <ResponsiveTable 
                 data={cashList}
                 onDelete={handleDeleteCash}
               />
-            </Card>
+          </Card>
           </div>
         </div>
 
