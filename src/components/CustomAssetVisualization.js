@@ -1,29 +1,89 @@
-import React, { useState } from 'react';
-import { Card } from 'react-bootstrap';
+import React, { useState, useRef } from 'react';
+import { Card, Button } from 'react-bootstrap';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { Sliders } from 'lucide-react';
+import AdvancedVisualizationSettings, { useAdvancedSettings } from './AdvancedVisualizationSettings';
 
 const CustomAssetVisualization = ({ assetItems, assetFields, assetName, currency }) => {
-  const [timeRange, setTimeRange] = useState('all'); // Future enhancement: add time range filter
+  const [timeRange, setTimeRange] = useState('all');
+  const [smoothing, setSmoothing] = useState(0);
+  const [showTrendline, setShowTrendline] = useState(true);
+  const { SettingsButton, showSettings, setShowSettings, settingsButtonRef } = useAdvancedSettings();
+
+  // Settings configuration
+  const settings = [
+    {
+      label: 'Time Range',
+      value: timeRange,
+      onChange: setTimeRange,
+      type: 'select',
+      options: [
+        { value: 'all', label: 'All Time' },
+        { value: 'year', label: 'Last Year' },
+        { value: 'month6', label: 'Last 6 Months' },
+        { value: 'month3', label: 'Last 3 Months' }
+      ]
+    },
+    {
+      label: 'Line Smoothing',
+      value: smoothing,
+      onChange: setSmoothing,
+      type: 'range',
+      min: 0,
+      max: 1,
+      step: 0.1,
+      unit: ''
+    },
+    {
+      label: 'Show Trendline',
+      value: showTrendline,
+      onChange: setShowTrendline,
+      type: 'checkbox'
+    }
+  ];
 
   // Find the date and cost fields from the asset configuration
   const dateField = assetFields.find(field => field.type === 'date')?.name;
   const costField = assetFields.find(field => field.type === 'cost')?.name;
 
+  // Filter data based on time range
+  const filterDataByTimeRange = (data) => {
+    const now = new Date();
+    const filterDate = new Date();
+    
+    switch (timeRange) {
+      case 'year':
+        filterDate.setFullYear(now.getFullYear() - 1);
+        break;
+      case 'month6':
+        filterDate.setMonth(now.getMonth() - 6);
+        break;
+      case 'month3':
+        filterDate.setMonth(now.getMonth() - 3);
+        break;
+      default:
+        return data;
+    }
+    
+    return data.filter(item => new Date(item.date) >= filterDate);
+  };
+
   // Process data for visualization
-  const processedData = assetItems
-    .filter(item => item[dateField] && item[costField]) // Ensure required fields exist
-    .map(item => ({
-      date: item[dateField],
-      value: parseFloat(item[costField]) || 0,
-      // Add additional fields for tooltip
-      ...assetFields.reduce((acc, field) => {
-        if (field.name !== dateField && field.name !== costField) {
-          acc[field.name] = item[field.name];
-        }
-        return acc;
-      }, {})
-    }))
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  const processedData = filterDataByTimeRange(
+    assetItems
+      .filter(item => item[dateField] && item[costField])
+      .map(item => ({
+        date: item[dateField],
+        value: parseFloat(item[costField]) || 0,
+        ...assetFields.reduce((acc, field) => {
+          if (field.name !== dateField && field.name !== costField) {
+            acc[field.name] = item[field.name];
+          }
+          return acc;
+        }, {})
+      }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+  );
 
   // Calculate trend line data
   const calculateTrendLine = () => {
@@ -32,7 +92,6 @@ const CustomAssetVisualization = ({ assetItems, assetFields, assetName, currency
     const xValues = processedData.map((_, i) => i);
     const yValues = processedData.map(d => d.value);
     
-    // Calculate linear regression
     const n = processedData.length;
     const sumX = xValues.reduce((a, b) => a + b, 0);
     const sumY = yValues.reduce((a, b) => a + b, 0);
@@ -72,7 +131,18 @@ const CustomAssetVisualization = ({ assetItems, assetFields, assetName, currency
   return (
     <Card>
       <Card.Header>
-        <h5 className="mb-0">{assetName} Value Analysis</h5>
+        <div className="d-flex justify-content-between align-items-center">
+          <h5 className="mb-0">{assetName} Value Analysis</h5>
+          <Button
+            ref={settingsButtonRef}
+            variant="light"
+            size="sm"
+            className="p-1"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Sliders size={16} />
+          </Button>
+        </div>
       </Card.Header>
       <Card.Body>
         <div className="mb-3">
@@ -110,8 +180,9 @@ const CustomAssetVisualization = ({ assetItems, assetFields, assetName, currency
                 stroke="#8884d8" 
                 name="Value"
                 strokeWidth={2}
+                tension={smoothing}
               />
-              {chartData.length > 1 && (
+              {showTrendline && chartData.length > 1 && (
                 <Line 
                   type="monotone" 
                   dataKey="trend" 
@@ -124,6 +195,14 @@ const CustomAssetVisualization = ({ assetItems, assetFields, assetName, currency
             </LineChart>
           </ResponsiveContainer>
         </div>
+
+        <AdvancedVisualizationSettings
+          title={`${assetName} Visualization Settings`}
+          settings={settings}
+          target={settingsButtonRef}
+          show={showSettings}
+          onHide={() => setShowSettings(false)}
+        />
       </Card.Body>
     </Card>
   );
