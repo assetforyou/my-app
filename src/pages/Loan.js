@@ -13,7 +13,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
   const [loanDetails, setLoanDetails] = useState({
     type: '',
     loanValue: '',
-    purchaseYear: '',
+    purchaseDate: '', // Changed from purchaseYear to purchaseDate
     repaymentPerMonth: '',
     currency: 'USD',
     description: '',
@@ -53,7 +53,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
       setLoanDetails({
         type: '',
         loanValue: '',
-        purchaseYear: '',
+        purchaseDate: '',
         repaymentPerMonth: '',
         currency: 'USD',
         description: '',
@@ -98,7 +98,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
         setLoanDetails({
           type: data[0].type || '',
           loanValue: data[0].loanValue || '',
-          purchaseYear: data[0].purchaseYear || '',
+          purchaseDate: data[0].purchaseDate || '',
           repaymentPerMonth: data[0].repaymentPerMonth || '',
           currency: data[0].currency || 'USD',
           description: data[0].description || '',
@@ -118,12 +118,104 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
     XLSX.writeFile(wb, "loan_data.xlsx");
   };
 
+  const renderFormControl = (key, value) => {
+    if (key === 'currency') {
+      return (
+        <Form.Select
+          name={key}
+          value={value}
+          onChange={handleInputChange}
+        >
+          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
+            <option key={currency} value={currency}>{currency}</option>
+          ))}
+        </Form.Select>
+      );
+    }
+
+    if (key === 'type') {
+      return (
+        <Form.Select
+          name={key}
+          value={value}
+          onChange={handleInputChange}
+          className="form-select"
+        >
+          <option value="">Select Loan Type</option>
+          <option value="Personal">Personal Loan</option>
+          <option value="Business">Business Loan</option>
+          <option value="Mortgage">Mortgage</option>
+          <option value="Auto">Auto Loan</option>
+          <option value="Student">Student Loan</option>
+          <option value="Other">Other</option>
+        </Form.Select>
+      );
+    }
+
+    if (key === 'category') {
+      return (
+        <Form.Select
+          name={key}
+          value={value}
+          onChange={handleInputChange}
+          className="form-select"
+        >
+          <option value="">Select Category</option>
+          <option value="ShortTerm">Short Term</option>
+          <option value="LongTerm">Long Term</option>
+          <option value="Secured">Secured</option>
+          <option value="Unsecured">Unsecured</option>
+        </Form.Select>
+      );
+    }
+
+    if (key === 'purchaseDate' || key.includes('Date')) {
+      return (
+        <Form.Control
+          type="text"
+          onFocus={(e) => e.target.type = 'date'}
+          onBlur={(e) => {
+            if (!e.target.value) e.target.type = 'text';
+          }}
+          name={key}
+          placeholder={key === 'purchaseDate' ? 'Select Purchase Date' : 'Select Reminder Date'}
+          value={value}
+          onChange={handleInputChange}
+        />
+      );
+    }
+
+    if (key === 'description' || key === 'reminderNote') {
+      return (
+        <Form.Control
+          as="textarea"
+          rows={3}
+          name={key}
+          placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+          value={value}
+          onChange={handleInputChange}
+        />
+      );
+    }
+
+    return (
+      <Form.Control
+        type={key === 'loanValue' || key === 'repaymentPerMonth' ? 'number' : 'text'}
+        name={key}
+        placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+        value={value}
+        onChange={handleInputChange}
+      />
+    );
+  };
+
+  // Updated chartData to use purchaseDate instead of purchaseYear
   const chartData = loanList
     .map(loan => ({
-      purchaseYear: loan.purchaseYear,
+      purchaseDate: loan.purchaseDate,
       loanValue: parseFloat(loan.loanValue)
     }))
-    .sort((a, b) => a.purchaseYear - b.purchaseYear);
+    .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
 
   return (
     <Layout>
@@ -152,33 +244,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
                 <Form className="row g-3">
                   {Object.entries(loanDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
-                      {key === 'currency' ? (
-                        <Form.Select
-                          name={key}
-                          value={value}
-                          onChange={handleInputChange}
-                        >
-                          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
-                            <option key={currency} value={currency}>{currency}</option>
-                          ))}
-                        </Form.Select>
-                      ) : (
-                        <Form.Control
-                          type={key.includes('Date') ? 'text' : 
-                                key === 'loanValue' || key === 'repaymentPerMonth' ? 'number' : 
-                                key === 'purchaseYear' ? 'number' : 'text'}
-                          onFocus={(e) => key.includes('Date') ? e.target.type = 'date' : null}
-                          onBlur={(e) => {
-                            if (key.includes('Date') && !e.target.value) e.target.type = 'text';
-                          }}
-                          name={key}
-                          placeholder={key === 'reminderDate' ? 'Select reminder date' :
-                                     key === 'purchaseYear' ? 'Enter purchase year' :
-                                     key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                          value={value}
-                          onChange={handleInputChange}
-                        />
-                      )}
+                      {renderFormControl(key, value)}
                     </div>
                   ))}
                   <div className="col-12">

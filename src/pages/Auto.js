@@ -125,7 +125,10 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
       value: parseFloat(car.value)
     }))
     .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
-
+  
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1990 + 2 }, (_, i) => currentYear + 1 - i);
+  
   const renderFormControl = (key, value) => {
     if (key === 'currency') {
       return (
@@ -136,6 +139,22 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
         >
           {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
             <option key={currency} value={currency}>{currency}</option>
+          ))}
+        </Form.Select>
+      );
+    }
+
+    if (key === 'year') {
+      return (
+        <Form.Select
+          name={key}
+          value={value}
+          onChange={handleInputChange}
+          className="form-select"
+        >
+          <option value="">Select Year</option>
+          {years.map(year => (
+            <option key={year} value={year}>{year}</option>
           ))}
         </Form.Select>
       );
