@@ -203,7 +203,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
             
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Property Value Projection</h5>
+                <h5 className="mb-0"> Value Analysis</h5>
               </Card.Header>
               <Card.Body>
               {chartData.length > 0 && (
