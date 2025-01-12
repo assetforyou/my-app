@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Line } from 'react-chartjs-2';
-import { Card } from 'react-bootstrap';
+import { Card, Button } from 'react-bootstrap';
+import { Sliders } from 'lucide-react';
+import AdvancedVisualizationSettings, { useAdvancedSettings } from './AdvancedVisualizationSettings';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,10 +23,34 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-
 const AutoDepreciation = ({ carList, selectedCarIds }) => {
+  const [depreciationRate, setDepreciationRate] = useState(15);
+  const [timePeriod, setTimePeriod] = useState(5);
+  const { SettingsButton, showSettings, setShowSettings, settingsButtonRef } = useAdvancedSettings();
+
+  const settings = [
+    {
+      label: 'Depreciation Rate',
+      value: depreciationRate,
+      onChange: setDepreciationRate,
+      type: 'range',
+      min: 1,
+      max: 50,
+      unit: '%'
+    },
+    {
+      label: 'Time Period',
+      value: timePeriod,
+      onChange: setTimePeriod,
+      type: 'range',
+      min: 1,
+      max: 30,
+      unit: ' years'
+    }
+  ];
+
   const calculateDepreciation = (initialValue, years) => {
-    const depreciation = 0.15;
+    const depreciation = depreciationRate / 100;
     const values = [];
     let currentValue = initialValue;
     
@@ -38,11 +64,7 @@ const AutoDepreciation = ({ carList, selectedCarIds }) => {
     return values;
   };
 
-  const maxYears = carList.reduce((max, car) => {
-    return Math.max(max, car.years || 5);
-  }, 0);
-
-  const yearLabels = Array.from({ length: maxYears + 1 }, (_, i) => i);
+  const yearLabels = Array.from({ length: timePeriod + 1 }, (_, i) => i);
 
   const carsToShow = selectedCarIds?.length > 0 
     ? carList.filter(car => selectedCarIds.includes(car.id))
@@ -50,10 +72,9 @@ const AutoDepreciation = ({ carList, selectedCarIds }) => {
 
   const allDepreciationData = carsToShow.map(car => {
     const initialValue = parseFloat(car.value);
-    const years = car.years || maxYears;
     return {
       make: car.make,
-      values: calculateDepreciation(initialValue, years)
+      values: calculateDepreciation(initialValue, timePeriod)
     };
   });
 
@@ -123,20 +144,39 @@ const AutoDepreciation = ({ carList, selectedCarIds }) => {
   return (
     <Card>
       <Card.Header>
-        <h5 className="mb-0">Vehicle Depreciation Projection</h5>
+        <div className="d-flex justify-content-between align-items-center">
+          <h5 className="mb-0">Vehicle Depreciation Projection</h5>
+          <Button
+            ref={settingsButtonRef}
+            variant="light"
+            size="sm"
+            className="p-1"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Sliders size={16} />
+          </Button>
+        </div>
       </Card.Header>
       <Card.Body>
         <div className="mb-3">
           <strong>Depreciation Details:</strong>
           <ul>
-            <li>Annual Depreciation Rate: 15%</li>
-            <li>Time Period: {maxYears} years</li>
+            <li>Annual Depreciation Rate: {depreciationRate}%</li>
+            <li>Time Period: {timePeriod} years</li>
             <li>Starting Values: Individual vehicle values</li>
           </ul>
         </div>
         <div style={{ height: '400px' }}>
           <Line data={chartData} options={chartOptions} />
         </div>
+
+        <AdvancedVisualizationSettings
+          title="Depreciation Settings"
+          settings={settings}
+          target={settingsButtonRef}
+          show={showSettings}
+          onHide={() => setShowSettings(false)}
+        />
       </Card.Body>
     </Card>
   );

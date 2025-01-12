@@ -1,12 +1,38 @@
-import React, { useEffect, useRef } from 'react';
-import { Card, Tabs, Tab } from 'react-bootstrap';
+import React, { useEffect, useRef, useState } from 'react';
+import { Card, Tabs, Tab, Button } from 'react-bootstrap';
+import { Sliders } from 'lucide-react';
 import Chart from 'chart.js/auto';
+import AdvancedVisualizationSettings, { useAdvancedSettings } from './AdvancedVisualizationSettings';
 
 const LongTermGrowthChart = ({ cashList }) => {
   const chartRefs = useRef({});
   const chartInstances = useRef({});
-  const GROWTH_RATE = 0.20; // 20% annual growth
-  const YEARS = 30;
+  const [growthRate, setGrowthRate] = useState(20);
+  const [timePeriod, setTimePeriod] = useState(30);
+  const { SettingsButton, showSettings, setShowSettings, settingsButtonRef } = useAdvancedSettings();
+
+  const settings = [
+    {
+      label: 'Growth Rate',
+      value: growthRate,
+      onChange: setGrowthRate,
+      type: 'range',
+      min: 1,
+      max: 50,
+      step: 1,
+      unit: '%'
+    },
+    {
+      label: 'Time Period',
+      value: timePeriod,
+      onChange: setTimePeriod,
+      type: 'range',
+      min: 5,
+      max: 50,
+      step: 1,
+      unit: ' years'
+    }
+  ];
 
   // Group cash by account type
   const groupedCash = cashList.reduce((acc, cash) => {
@@ -19,8 +45,8 @@ const LongTermGrowthChart = ({ cashList }) => {
   }, {});
 
   const generateProjectionData = (initialValue) => {
-    return Array.from({ length: YEARS + 1 }, (_, year) => {
-      const projectedValue = initialValue * Math.pow(1 + GROWTH_RATE, year);
+    return Array.from({ length: timePeriod + 1 }, (_, year) => {
+      const projectedValue = initialValue * Math.pow(1 + (growthRate / 100), year);
       return {
         year,
         value: projectedValue,
@@ -54,7 +80,7 @@ const LongTermGrowthChart = ({ cashList }) => {
         plugins: {
           title: {
             display: true,
-            text: `30-Year Growth Projection for ${accountType} (20% Annual Return)`,
+            text: `${timePeriod}-Year Growth Projection for ${accountType} (${growthRate}% Annual Return)`,
             font: {
               size: 16
             }
@@ -140,47 +166,70 @@ const LongTermGrowthChart = ({ cashList }) => {
         }
       });
     };
-  }, [cashList]);
+  }, [cashList, growthRate, timePeriod]);
 
   return (
-    <div>
-      <div className="mb-3">
-        <strong>Investment Growth Details:</strong>
-        <ul>
-          <li>Annual Growth Rate: 20%</li>
-          <li>Time Period: 30 years</li>
-          <li>Initial Investment: Starting total from each account type</li>
-        </ul>
-      </div>
-      <Tabs className="mb-3">
-        {Object.entries(groupedCash).map(([accountType, transactions]) => {
-          const initialValue = transactions.reduce((sum, cash) => 
-            sum + parseFloat(cash.amount || 0), 0);
-          
-          return (
-            <Tab 
-              key={accountType} 
-              eventKey={accountType} 
-              title={`${accountType} ($${initialValue.toLocaleString()})`}
-            >
-              <div className="mb-3">
-                <strong>Initial Value:</strong> ${initialValue.toLocaleString()}
-                <br />
-                <strong>Projected Value after 30 years:</strong> $
-                {(initialValue * Math.pow(1 + GROWTH_RATE, YEARS)).toLocaleString(undefined, {
-                  maximumFractionDigits: 0
-                })}
-              </div>
-              <div style={{ height: '400px' }}>
-                <canvas 
-                  ref={el => chartRefs.current[accountType] = el}
-                />
-              </div>
-            </Tab>
-          );
-        })}
-      </Tabs>
-    </div>
+    <Card>
+      <Card.Header>
+        <div className="d-flex justify-content-between align-items-center">
+          <Card.Title className="mb-0">Investment Growth Projection</Card.Title>
+          <Button
+            ref={settingsButtonRef}
+            variant="light"
+            size="sm"
+            className="p-1"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Sliders size={16} />
+          </Button>
+        </div>
+      </Card.Header>
+      <Card.Body>
+        <div className="mb-3">
+          <strong>Investment Growth Details:</strong>
+          <ul>
+            <li>Annual Growth Rate: {growthRate}%</li>
+            <li>Time Period: {timePeriod} years</li>
+            <li>Initial Investment: Starting total from each account type</li>
+          </ul>
+        </div>
+        <Tabs className="mb-3">
+          {Object.entries(groupedCash).map(([accountType, transactions]) => {
+            const initialValue = transactions.reduce((sum, cash) => 
+              sum + parseFloat(cash.amount || 0), 0);
+            
+            return (
+              <Tab 
+                key={accountType} 
+                eventKey={accountType} 
+                title={`${accountType} ($${initialValue.toLocaleString()})`}
+              >
+                <div className="mb-3">
+                  <strong>Initial Value:</strong> ${initialValue.toLocaleString()}
+                  <br />
+                  <strong>Projected Value after {timePeriod} years:</strong> $
+                  {(initialValue * Math.pow(1 + (growthRate / 100), timePeriod)).toLocaleString(undefined, {
+                    maximumFractionDigits: 0
+                  })}
+                </div>
+                <div style={{ height: '400px' }}>
+                  <canvas 
+                    ref={el => chartRefs.current[accountType] = el}
+                  />
+                </div>
+              </Tab>
+            );
+          })}
+        </Tabs>
+        <AdvancedVisualizationSettings
+          title="Growth Rate Settings"
+          settings={settings}
+          target={settingsButtonRef}
+          show={showSettings}
+          onHide={() => setShowSettings(false)}
+        />
+      </Card.Body>
+    </Card>
   );
 };
 

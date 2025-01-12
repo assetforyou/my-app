@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Line } from 'react-chartjs-2';
-import { Card } from 'react-bootstrap';
+import { Card, Button } from 'react-bootstrap';
+import { Sliders } from 'lucide-react';
+import AdvancedVisualizationSettings, { useAdvancedSettings } from './AdvancedVisualizationSettings';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,19 +25,45 @@ ChartJS.register(
 );
 
 const StockProjection = ({ stockList, selectedStockIds }) => {
+  const [growthRate, setGrowthRate] = useState(8);
+  const [timePeriod, setTimePeriod] = useState(30);
+  const { SettingsButton, showSettings, setShowSettings, settingsButtonRef } = useAdvancedSettings();
+
+  const settings = [
+    {
+      label: 'Growth Rate',
+      value: growthRate,
+      onChange: setGrowthRate,
+      type: 'range',
+      min: 1,
+      max: 20,
+      step: 0.5,
+      unit: '%'
+    },
+    {
+      label: 'Time Period',
+      value: timePeriod,
+      onChange: setTimePeriod,
+      type: 'range',
+      min: 5,
+      max: 50,
+      step: 1,
+      unit: ' years'
+    }
+  ];
+
   const selectedStocks = selectedStockIds?.length > 0
     ? stockList.filter(stock => selectedStockIds.includes(stock.id))
     : stockList;
 
   const generateProjectionData = () => {
-    const years = 30;
     const currentYear = new Date().getFullYear();
-    const yearLabels = Array.from({ length: years + 1 }, (_, i) => currentYear + i);
+    const yearLabels = Array.from({ length: timePeriod + 1 }, (_, i) => currentYear + i);
 
     const datasets = selectedStocks.map((stock, stockIndex) => {
       const initialValue = parseFloat(stock.total);
-      const growthData = Array.from({ length: years + 1 }, (_, year) => 
-        Math.round(initialValue * Math.pow(1.08, year))
+      const growthData = Array.from({ length: timePeriod + 1 }, (_, year) => 
+        Math.round(initialValue * Math.pow(1 + (growthRate / 100), year))
       );
 
       const hue = (stockIndex * 137.5) % 360;
@@ -125,24 +153,42 @@ const StockProjection = ({ stockList, selectedStockIds }) => {
   return (
     <Card>
       <Card.Header>
-        <h5 className="mb-0">
-          {selectedStocks.length === 1 
-            ? `30-Year Projection for ${selectedStocks[0].name}`
-            : `30-Year Projection for Selected Stocks`}
-        </h5>
+        <div className="d-flex justify-content-between align-items-center">
+          <h5 className="mb-0">
+            {selectedStocks.length === 1 
+              ? `${timePeriod}-Year Projection for ${selectedStocks[0].name}`
+              : `${timePeriod}-Year Projection for Selected Stocks`}
+          </h5>
+          <Button
+            ref={settingsButtonRef}
+            variant="light"
+            size="sm"
+            className="p-1"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Sliders size={16} />
+          </Button>
+        </div>
       </Card.Header>
       <Card.Body>
         <div className="mb-3">
           <strong>Projection Details:</strong>
           <ul>
-            <li>Annual Growth Rate: 8%</li>
-            <li>Time Period: 30 years</li>
+            <li>Annual Growth Rate: {growthRate}%</li>
+            <li>Time Period: {timePeriod} years</li>
             <li>Starting Value: Individual stock totals</li>
           </ul>
         </div>
         <div style={{ height: '400px' }}>
           <Line data={generateProjectionData()} options={chartOptions} />
         </div>
+        <AdvancedVisualizationSettings
+          title="Growth Settings"
+          settings={settings}
+          target={settingsButtonRef}
+          show={showSettings}
+          onHide={() => setShowSettings(false)}
+        />
       </Card.Body>
     </Card>
   );

@@ -1,11 +1,15 @@
-import React, { useEffect, useRef } from 'react';
-import { Card, Tabs, Tab } from 'react-bootstrap';
+import React, { useEffect, useRef, useState } from 'react';
+import { Card, Tabs, Tab, Button } from 'react-bootstrap';
+import { Sliders } from 'lucide-react';
 import Chart from 'chart.js/auto';
+import AdvancedVisualizationSettings, { useAdvancedSettings } from './AdvancedVisualizationSettings';
 
 const MetalsGrowthChart = ({ metalList }) => {
   const chartRefs = useRef({});
   const chartInstances = useRef({});
-  const YEARS = 30;
+  const [timePeriod, setTimePeriod] = useState(30);
+  const { SettingsButton, showSettings, setShowSettings, settingsButtonRef } = useAdvancedSettings();
+  
   const HISTORICAL_GROWTH_RATES = {
     'Gold': 0.0684,    // 6.84% annual average
     'Silver': 0.0587,  // 5.87% annual average
@@ -13,11 +17,24 @@ const MetalsGrowthChart = ({ metalList }) => {
     'Palladium': 0.0891 // 8.91% annual average
   };
 
+  const settings = [
+    {
+      label: 'Time Period',
+      value: timePeriod,
+      onChange: setTimePeriod,
+      type: 'range',
+      min: 5,
+      max: 50,
+      step: 1,
+      unit: ' years'
+    }
+  ];
+
   const generateProjectionData = (metal) => {
     const initialValue = parseFloat(metal.total);
-    const growthRate = HISTORICAL_GROWTH_RATES[metal.type] || 0.06; // default 6% if type unknown
+    const growthRate = HISTORICAL_GROWTH_RATES[metal.type] || 0.06;
 
-    return Array.from({ length: YEARS + 1 }, (_, year) => ({
+    return Array.from({ length: timePeriod + 1 }, (_, year) => ({
       year,
       value: initialValue * Math.pow(1 + growthRate, year),
       growthPercent: ((Math.pow(1 + growthRate, year) - 1) * 100).toFixed(1)
@@ -32,7 +49,7 @@ const MetalsGrowthChart = ({ metalList }) => {
         datasets: [{
           label: 'Projected Value',
           data: projectionData.map(d => d.value),
-          borderColor: 'rgb(255, 215, 0)',  // Gold color
+          borderColor: 'rgb(255, 215, 0)',
           tension: 0.4,
           fill: true,
           backgroundColor: 'rgba(255, 215, 0, 0.1)'
@@ -104,18 +121,30 @@ const MetalsGrowthChart = ({ metalList }) => {
         if (chart) chart.destroy();
       });
     };
-  }, [metalList]);
+  }, [metalList, timePeriod]);
 
   return (
     <Card>
       <Card.Header>
-        <Card.Title>Precious Metals Value Projection</Card.Title>
+        <div className="d-flex justify-content-between align-items-center">
+          <Card.Title className="mb-0">Precious Metals Value Projection</Card.Title>
+          <Button
+            ref={settingsButtonRef}
+            variant="light"
+            size="sm"
+            className="p-1"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Sliders size={16} />
+          </Button>
+        </div>
       </Card.Header>
       <Card.Body>
         <div className="mb-3">
           <strong>Projection Details:</strong>
           <ul>
-            <li>Based on historical average returns for each metal type</li>
+            <li>Time Period: {timePeriod} years</li>
+            <li>Based on historical average returns:</li>
             <li>Gold: 6.84% annual average</li>
             <li>Silver: 5.87% annual average</li>
             <li>Platinum: 4.23% annual average</li>
@@ -125,6 +154,7 @@ const MetalsGrowthChart = ({ metalList }) => {
         <Tabs className="mb-3">
           {metalList.map((metal, index) => {
             const projectionData = generateProjectionData(metal);
+            const finalValue = projectionData[projectionData.length - 1].value;
             
             return (
               <Tab 
@@ -138,6 +168,10 @@ const MetalsGrowthChart = ({ metalList }) => {
                   <strong>Metal Type:</strong> {metal.type}
                   <br />
                   <strong>Amount:</strong> {metal.grams}g
+                  <br />
+                  <strong>Projected Value after {timePeriod} years:</strong> ${finalValue.toLocaleString(undefined, {
+                    maximumFractionDigits: 0
+                  })}
                 </div>
                 <div style={{ height: '400px' }}>
                   <canvas 
@@ -148,6 +182,13 @@ const MetalsGrowthChart = ({ metalList }) => {
             );
           })}
         </Tabs>
+        <AdvancedVisualizationSettings
+          title="Projection Settings"
+          settings={settings}
+          target={settingsButtonRef}
+          show={showSettings}
+          onHide={() => setShowSettings(false)}
+        />
       </Card.Body>
     </Card>
   );

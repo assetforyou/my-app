@@ -1,13 +1,39 @@
-import React, { useEffect, useRef } from 'react';
-import { Card, Tabs, Tab } from 'react-bootstrap';
+import React, { useEffect, useRef, useState } from 'react';
+import { Card, Tabs, Tab, Button } from 'react-bootstrap';
+import { Sliders } from 'lucide-react';
 import Chart from 'chart.js/auto';
+import AdvancedVisualizationSettings, { useAdvancedSettings } from './AdvancedVisualizationSettings';
 
 const PropertyGrowthChart = ({ propertyList }) => {
   const chartRefs = useRef({});
   const chartInstances = useRef({});
   const YEARS = 30;
-  const APPRECIATION_RATE = 0.0386; // 3.86% historical average
-  const RENTAL_GROWTH_RATE = 0.0315; // 3.15% historical average
+  const [appreciationRate, setAppreciationRate] = useState(3.86);
+  const [rentalGrowthRate, setRentalGrowthRate] = useState(3.15);
+  const { SettingsButton, showSettings, setShowSettings, settingsButtonRef } = useAdvancedSettings();
+
+  const settings = [
+    {
+      label: 'Appreciation Rate',
+      value: appreciationRate,
+      onChange: setAppreciationRate,
+      type: 'range',
+      min: 0,
+      max: 10,
+      step: 0.1,
+      unit: '%'
+    },
+    {
+      label: 'Rental Growth Rate',
+      value: rentalGrowthRate,
+      onChange: setRentalGrowthRate,
+      type: 'range',
+      min: 0,
+      max: 10,
+      step: 0.1,
+      unit: '%'
+    }
+  ];
 
   const generateProjectionData = (property) => {
     const initialValue = parseFloat(property.price);
@@ -18,8 +44,8 @@ const PropertyGrowthChart = ({ propertyList }) => {
     const annualIncome = monthlyIncome * 12;
 
     return Array.from({ length: YEARS + 1 }, (_, year) => {
-      const propertyValue = initialValue * Math.pow(1 + APPRECIATION_RATE, year);
-      const yearlyRental = annualIncome * Math.pow(1 + RENTAL_GROWTH_RATE, year);
+      const propertyValue = initialValue * Math.pow(1 + (appreciationRate / 100), year);
+      const yearlyRental = annualIncome * Math.pow(1 + (rentalGrowthRate / 100), year);
       const totalReturn = ((propertyValue + yearlyRental) / initialValue - 1) * 100;
 
       return {
@@ -120,19 +146,30 @@ const PropertyGrowthChart = ({ propertyList }) => {
         if (chart) chart.destroy();
       });
     };
-  }, [propertyList]);
+  }, [propertyList, appreciationRate, rentalGrowthRate]); // Added rate dependencies
 
   return (
     <Card>
       <Card.Header>
-        <Card.Title>Property Value & Income Projection</Card.Title>
+        <div className="d-flex justify-content-between align-items-center">
+          <Card.Title className="mb-0">Property Value & Income Projection</Card.Title>
+          <Button
+            ref={settingsButtonRef}
+            variant="light"
+            size="sm"
+            className="p-1"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Sliders size={16} />
+          </Button>
+        </div>
       </Card.Header>
       <Card.Body>
         <div className="mb-3">
           <strong>Projection Details:</strong>
           <ul>
-            <li>Property Appreciation: 3.86% annual average (historical)</li>
-            <li>Rental Income Growth: 3.15% annual average</li>
+            <li>Property Appreciation: {appreciationRate}% annual average</li>
+            <li>Rental Income Growth: {rentalGrowthRate}% annual average</li>
             <li>Includes both property value appreciation and rental income</li>
             <li>Based on current monthly costs as potential rental income</li>
           </ul>
@@ -167,6 +204,13 @@ const PropertyGrowthChart = ({ propertyList }) => {
             );
           })}
         </Tabs>
+        <AdvancedVisualizationSettings
+          title="Growth Rate Settings"
+          settings={settings}
+          target={settingsButtonRef}
+          show={showSettings}
+          onHide={() => setShowSettings(false)}
+        />
       </Card.Body>
     </Card>
   );

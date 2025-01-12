@@ -1,24 +1,66 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Card, Tabs, Tab } from 'react-bootstrap';
+import { Card, Tabs, Tab, Button } from 'react-bootstrap';
+import { Sliders } from 'lucide-react';
 import Chart from 'chart.js/auto';
+import AdvancedVisualizationSettings, { useAdvancedSettings } from './AdvancedVisualizationSettings';
 
 const LoanGrowthChart = ({ loanList }) => {
   const chartRefs = useRef({});
   const chartInstances = useRef({});
   const [activeKey, setActiveKey] = useState(null);
-  const YEARS = 30;
-  const MONTHS = YEARS * 12;
+  const [projectionYears, setProjectionYears] = useState(30);
+  const [interestRateAdjustment, setInterestRateAdjustment] = useState(0);
+  const [paymentAdjustment, setPaymentAdjustment] = useState(0);
+  const { SettingsButton, showSettings, setShowSettings, settingsButtonRef } = useAdvancedSettings();
+
+  const settings = [
+    {
+      label: 'Projection Years',
+      value: projectionYears,
+      onChange: setProjectionYears,
+      type: 'range',
+      min: 5,
+      max: 50,
+      step: 1,
+      unit: 'years'
+    },
+    {
+      label: 'Interest Rate Adjustment',
+      value: interestRateAdjustment,
+      onChange: setInterestRateAdjustment,
+      type: 'range',
+      min: -10,
+      max: 10,
+      step: 0.1,
+      unit: '%'
+    },
+    {
+      label: 'Payment Adjustment',
+      value: paymentAdjustment,
+      onChange: setPaymentAdjustment,
+      type: 'range',
+      min: -10,
+      max: 10,
+      step: 1,
+      unit: '%'
+    }
+  ];
 
   const calculateLoanProjection = (loan) => {
     try {
       const principal = parseFloat(loan.loanValue) || 0;
-      const monthlyPayment = parseFloat(loan.repaymentPerMonth) || 0;
-      const annualRate = (parseFloat(loan.interestRate) || 0) / 100;
+      const baseMonthlyPayment = parseFloat(loan.repaymentPerMonth) || 0;
+      const baseAnnualRate = (parseFloat(loan.interestRate) || 0) / 100;
+      
+      // Apply adjustments
+      const monthlyPayment = baseMonthlyPayment * (1 + paymentAdjustment / 100);
+      const annualRate = baseAnnualRate + (interestRateAdjustment / 100);
       const monthlyRate = annualRate / 12;
+      const MONTHS = projectionYears * 12;
 
       if (principal <= 0 || monthlyPayment <= 0) {
         console.warn('Invalid loan values:', { principal, monthlyPayment });
-        return Array.from({ length: YEARS + 1 }, (_, year) => ({
+        return Array.from({ length: projectionYears + 1 }, (_, year) => ({
           year,
           balance: principal,
           repaid: 0,
@@ -178,7 +220,7 @@ const LoanGrowthChart = ({ loanList }) => {
         if (chart) chart.destroy();
       });
     };
-  }, [loanList, activeKey]);
+  }, [loanList, activeKey, projectionYears, interestRateAdjustment, paymentAdjustment]);
 
   if (!loanList || loanList.length === 0) {
     return <div>No loan data available</div>;
@@ -187,16 +229,28 @@ const LoanGrowthChart = ({ loanList }) => {
   return (
     <Card>
       <Card.Header>
-        <Card.Title>Loan Repayment Progress</Card.Title>
+        <div className="d-flex justify-content-between align-items-center">
+          <Card.Title className="mb-0">Loan Repayment Progress</Card.Title>
+          <Button
+            ref={settingsButtonRef}
+            variant="light"
+            size="sm"
+            className="p-1"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Sliders size={16} />
+          </Button>
+        </div>
       </Card.Header>
       <Card.Body>
         <div className="mb-3">
           <strong>Projection Details:</strong>
           <ul>
-            <li>Time Period: {YEARS} years</li>
+            <li>Time Period: {projectionYears} years</li>
+            <li>Interest Rate Adjustment: {interestRateAdjustment > 0 ? '+' : ''}{interestRateAdjustment}%</li>
+            <li>Payment Adjustment: {paymentAdjustment > 0 ? '+' : ''}{paymentAdjustment}%</li>
             <li>Shows both remaining balance and total amount repaid</li>
             <li>Includes principal and interest payments</li>
-            <li>Based on current interest rate and monthly payments</li>
           </ul>
         </div>
         <Tabs 
@@ -219,11 +273,11 @@ const LoanGrowthChart = ({ loanList }) => {
                 <div className="mb-3">
                   <strong>Initial Amount:</strong> ${parseFloat(loan.loanValue || 0).toLocaleString()}
                   <br />
-                  <strong>Monthly Payment:</strong> ${parseFloat(loan.repaymentPerMonth || 0).toLocaleString()}
+                  <strong>Monthly Payment:</strong> ${(parseFloat(loan.repaymentPerMonth || 0) * (1 + paymentAdjustment / 100)).toLocaleString()}
                   <br />
                   <strong>Total Payments:</strong> ${totalPayments.toLocaleString(undefined, {maximumFractionDigits: 0})}
                   <br />
-                  <strong>Expected Payoff:</strong> {payoffYear > 0 ? `Year ${payoffYear}` : 'Over 30 years'}
+                  <strong>Expected Payoff:</strong> {payoffYear > 0 ? `Year ${payoffYear}` : `Over ${projectionYears} years`}
                 </div>
                 <div style={{ height: '400px', width: '100%' }}>
                   <canvas 
@@ -234,6 +288,13 @@ const LoanGrowthChart = ({ loanList }) => {
             );
           })}
         </Tabs>
+        <AdvancedVisualizationSettings
+          title="Loan Projection Settings"
+          settings={settings}
+          target={settingsButtonRef}
+          show={showSettings}
+          onHide={() => setShowSettings(false)}
+        />
       </Card.Body>
     </Card>
   );
