@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaShieldAlt, FaChartLine, FaLock, FaUser, FaBuilding } from 'react-icons/fa';
 import '../style/HomePage.css';
+import logo_transparent from '../images/logo_transparent.png';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -74,7 +75,10 @@ function HomePage() {
     <div className="home-page">
       <header className="header">
         <div className="container">
-          <div className="logo">Noble Asset Vault</div>
+        <div className="title">
+          <img src={logo_transparent} alt="Noble Asset Vault" className="custom-title-icon" />
+          Noble Asset Vault
+        </div>
           <nav className="nav">
             <ul>
               {['About', 'Services', 'Solutions', 'Contact'].map((item) => (

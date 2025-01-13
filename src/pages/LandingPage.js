@@ -3,7 +3,7 @@ import Layout from '../components/AdLayout';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { Settings } from 'lucide-react';
+import { Settings, Vault } from 'lucide-react';
 import Auto from './Auto';
 import Cash from './Cash';
 import Stocks from './Stocks';
@@ -14,6 +14,7 @@ import CreateAsset from './CreateAsset';
 import CustomAsset from './CustomAsset';
 import AccountSettings from '../components/AccountSettings';
 import '../style/LandingPage.css';
+import logo_transparent from '../images/logo_transparent.png';
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
@@ -337,7 +338,10 @@ function LandingPage() {
   return (
     <div className="landing-page">
       <div className="top-bar">
-        <div className="title">Noble Asset Vault</div>
+      <div className="title">
+        <img src={logo_transparent} alt="Noble Asset Vault" className="custom-title-icon" />
+        Noble Asset Vault
+      </div>
         <div className="settings-dropdown" ref={settingsRef}>
           <button onClick={toggleSettings} className="settings-icon">
             <Settings size={24} />
@@ -351,34 +355,35 @@ function LandingPage() {
           )}
         </div>
       </div>
-      <div className="sidebar">
-        <div className="sidebar-content">
-          <div className="sidebar-buttons">
-            <button onClick={() => setSelectedAssetAndCloseSettings('home')}>Home</button>
-            <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('createAsset')}>Create Asset</button>
-            <div className="dropdown">
-              <button className="dropbtn">Assets</button>
-              <div className="dropdown-content">
-                <button onClick={() => setSelectedAssetAndCloseSettings('auto')}>Auto</button>
-                <button onClick={() => setSelectedAssetAndCloseSettings('cash')}>Cash</button>
-                <button onClick={() => setSelectedAssetAndCloseSettings('stocks')}>Stocks</button>
-                <button onClick={() => setSelectedAsset('metals')}>Metals</button>
-                <button onClick={() => setSelectedAsset('property')}>Property</button>
-                <button onClick={() => setSelectedAsset('loan')}>Loan</button>
-                {customAssets.map(asset => (
-                  <button key={asset.id} onClick={() => setSelectedAsset(`custom-${asset.id}`)}>{asset.name}</button>
-                ))}
+        <div className="sidebar">
+          <div className="sidebar-content">
+            <div className="sidebar-buttons">
+              <button onClick={() => setSelectedAssetAndCloseSettings('home')}>Home</button>
+              <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('createAsset')}>Create Asset</button>
+              <div className="dropdown">
+                <button className="dropbtn">Assets</button>
+                <div className="dropdown-content">
+                  <button onClick={() => setSelectedAssetAndCloseSettings('auto')}>Auto</button>
+                  <button onClick={() => setSelectedAssetAndCloseSettings('cash')}>Cash</button>
+                  <button onClick={() => setSelectedAssetAndCloseSettings('stocks')}>Stocks</button>
+                  <button onClick={() => setSelectedAsset('metals')}>Metals</button>
+                  <button onClick={() => setSelectedAsset('property')}>Property</button>
+                  <button onClick={() => setSelectedAsset('loan')}>Loan</button>
+                  {customAssets.map(asset => (
+                    <button key={asset.id} onClick={() => setSelectedAsset(`custom-${asset.id}`)}>{asset.name}</button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="sidebar-footer">
-            <button className="back-to-website-btn" onClick={handleBackToWebsite}>Back to Website</button>
-            <button className="sign-out-btn" onClick={handleSignOut}>Sign Out</button>
+            <div className="sidebar-footer">
+              <button className="back-to-website-btn" onClick={handleBackToWebsite}>Back to Website</button>
+              <button className="sign-out-btn" onClick={handleSignOut}>Sign Out</button>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="content">
-        {renderContent()}
+
+          <div className="content">
+            {renderContent()}
       </div>
     </div>
   );
