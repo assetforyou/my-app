@@ -15,6 +15,7 @@ import CustomAsset from './CustomAsset';
 import AccountSettings from '../components/AccountSettings';
 import '../style/LandingPage.css';
 import logo_transparent from '../images/logo_transparent.png';
+import AnalyticsDashboard from '../pages/AnalyticsDashboard';
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
@@ -262,6 +263,17 @@ function LandingPage() {
         return <Loan userEmail={userEmail} loanList={loanList} loanTotal={loanTotal} fetchLoanDetails={() => fetchLoanDetails(userEmail)}  />;
       case 'createAsset':
         return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
+      case 'analytics':
+        return <AnalyticsDashboard 
+          cashList={cashList}
+          stockList={stockList}
+          metalList={metalList}
+          propertyList={propertyList}
+          cashTotal={cashTotal}
+          stockTotal={stockTotal}
+          metalTotal={metalTotal}
+          propertyTotalPrice={propertyTotalPrice}
+        />;
       case 'home':
         return (
           <Layout>
@@ -315,6 +327,7 @@ function LandingPage() {
                 </div>
               )}
             </div>
+            <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('analytics')}>Advanced Analysis</button>
           </div>
           </Layout>
         );
@@ -374,6 +387,7 @@ function LandingPage() {
                   ))}
                 </div>
               </div>
+              
             </div>
             <div className="sidebar-footer">
               <button className="back-to-website-btn" onClick={handleBackToWebsite}>Back to Website</button>
