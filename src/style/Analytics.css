@@ -1,135 +1,283 @@
 /* Analytics.css */
+.analytics-container {
+  width: calc(100% - 150px - 250px); /* Subtracting sidebar and ads column */
+  margin-left: 100px; /* Space for sidebar */
+  padding: 24px;
+}
+
 .analytics-card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 16px;
-    overflow: hidden;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.card-content {
+  padding: 20px;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.analytics-button {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.analytics-button.active {
+  background: #0088FE;
+  color: white;
+  border-color: #0088FE;
+}
+
+/* Scrollable chart container */
+.chart-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  position: relative;
+  padding-bottom: 16px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chart-container {
+  min-width: 600px;
+  width: 100%;
+  height: 400px;
+  margin-top: 16px;
+}
+
+/* Scrollbar styling */
+.chart-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Scroll indicator fade effect */
+.chart-scroll-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: calc(100% - 16px);
+  width: 30px;
+  background: linear-gradient(to right, transparent, white);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.chart-scroll-container:hover::after {
+  opacity: 1;
+}
+
+.goals-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.goal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.goal-name {
+  font-weight: 500;
+}
+
+.goal-target {
+  color: #666;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+  text-align: right;
+  color: white;
+  font-size: 10px;
+  line-height: 8px;
+  padding-right: 4px;
+}
+
+.progress-red {
+  background: #ff4d4f;
+}
+
+.progress-yellow {
+  background: #faad14;
+}
+
+.progress-green {
+  background: #52c41a;
+}
+
+.goal-deadline {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.time-range-select {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+}
+
+.no-data-message {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* Loading state */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+/* Error state */
+.error-message {
+  color: #ff4d4f;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .analytics-container {
+      width: calc(100% - 300px); /* Only account for sidebar */
+      margin-left: 300px;
   }
-  
+}
+
+@media (max-width: 768px) {
+  .analytics-container {
+      width: 100%;
+      margin-left: 0;
+      padding: 16px;
+  }
+
+  .chart-container {
+      min-width: 400px; /* Smaller minimum width for mobile */
+  }
+
   .card-content {
-    padding: 20px;
+      padding: 16px;
   }
-  
+
   .card-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: #333;
+      font-size: 1.125rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .analytics-container {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+  }
+
+  .analytics-card {
+      break-inside: avoid;
+      margin: 0;
+      box-shadow: none;
+      page-break-inside: avoid;
   }
   
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+  .chart-scroll-container {
+      overflow: visible;
   }
   
-  .button-group {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
+  .chart-scroll-container::after {
+      display: none;
   }
-  
-  .analytics-button {
-    padding: 8px 16px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: white;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .analytics-button.active {
-    background: #0088FE;
-    color: white;
-    border-color: #0088FE;
-  }
-  
-  .chart-container {
-    width: 100%;
-    margin-top: 16px;
-  }
-  
-  .goals-container {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-  
-  .goal-item {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .goal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .goal-name {
-    font-weight: 500;
-  }
-  
-  .goal-target {
-    color: #666;
-  }
-  
-  .progress-bar-container {
-    width: 100%;
-    height: 8px;
-    background: #eee;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  
-  .progress-bar {
-    height: 100%;
-    transition: width 0.3s ease;
-    text-align: right;
-    color: white;
-    font-size: 10px;
-    line-height: 8px;
-    padding-right: 4px;
-  }
-  
-  .progress-red {
-    background: #ff4d4f;
-  }
-  
-  .progress-yellow {
-    background: #faad14;
-  }
-  
-  .progress-green {
-    background: #52c41a;
-  }
-  
-  .goal-deadline {
-    font-size: 0.875rem;
-    color: #666;
-  }
-  
-  .time-range-select {
-    padding: 6px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: white;
-    cursor: pointer;
-  }
-  
-  .no-data-message {
-    text-align: center;
-    padding: 2rem;
-    color: #666;
-    font-style: italic;
-  }
-  
-  .chart-container {
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+}
+
+/* Table styles for data displays */
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.analytics-table th,
+.analytics-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.analytics-table th {
+  background: #f5f5f5;
+  font-weight: 500;
+}
+
+.analytics-table tr:hover {
+  background: #f9f9f9;
+}
+
+/* Tooltip styles */
+.analytics-tooltip {
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}

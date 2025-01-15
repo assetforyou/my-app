@@ -17,6 +17,7 @@ import '../style/LandingPage.css';
 import logo_transparent from '../images/logo_transparent.png';
 import AnalyticsDashboard from '../pages/AnalyticsDashboard';
 
+
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
   const [userEmail, setUserEmail] = useState('');
@@ -238,9 +239,9 @@ function LandingPage() {
         <div className="asset-action-container">
           <h3>What would you like to do with {selectedAssetForAction.name}?</h3>
           <div className="asset-action-buttons">
-          <button onClick={() => handleAssetAction('view')}>View Asset Page</button>
-          <button onClick={() => handleAssetAction('delete')}>Delete Asset</button>
-          <button onClick={() => setSelectedAssetForAction(null)}>Cancel</button>
+            <button onClick={() => handleAssetAction('view')}>View Asset Page</button>
+            <button onClick={() => handleAssetAction('delete')}>Delete Asset</button>
+            <button onClick={() => setSelectedAssetForAction(null)}>Cancel</button>
           </div>
         </div>
       );
@@ -256,11 +257,11 @@ function LandingPage() {
       case 'stocks':
         return <Stocks userEmail={userEmail} stockList={stockList} stockTotal={stockTotal} fetchStockDetails={fetchStockDetails} />;
       case 'metals':
-        return <Metals userEmail={userEmail} metalList={metalList} setMetalList={setMetalList}  metalTotal={metalTotal} fetchMetalDetails={fetchMetalDetails} />;
+        return <Metals userEmail={userEmail} metalList={metalList} setMetalList={setMetalList} metalTotal={metalTotal} fetchMetalDetails={fetchMetalDetails} />;
       case 'property':
         return <Property userEmail={userEmail} propertyList={propertyList} setPropertyList={updatePropertyList} propertyTotalPrice={propertyTotalPrice} propertyTotalMonthlyCost={propertyTotalMonthlyCost} fetchPropertyDetails={fetchPropertyDetails} />;
       case 'loan':
-        return <Loan userEmail={userEmail} loanList={loanList} loanTotal={loanTotal} fetchLoanDetails={() => fetchLoanDetails(userEmail)}  />;
+        return <Loan userEmail={userEmail} loanList={loanList} loanTotal={loanTotal} fetchLoanDetails={() => fetchLoanDetails(userEmail)} />;
       case 'createAsset':
         return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'analytics':
@@ -273,62 +274,66 @@ function LandingPage() {
           stockTotal={stockTotal}
           metalTotal={metalTotal}
           propertyTotalPrice={propertyTotalPrice}
+          userEmail={userEmail}
+          customAssets={customAssets}
         />;
       case 'home':
         return (
           <Layout>
-          <div className="home-content">
-            <h2 className="summary-title">Asset Summary</h2>
-            <div className="summary-container">
-              <div className="summary-section">
-                <h2>Built-in Assets</h2>
-                <div className="built-in-assets">
-                  <div className="summary-box">
-                    <h3>Cash</h3>
-                    <p>Total Cash: ${cashTotal.toFixed(2)}</p>
-                  </div>
-                  <div className="summary-box">
-                    <h3>Stocks</h3>
-                    <p>Total Value: ${stockTotal.toFixed(2)}</p>
-                  </div>
-                  <div className="summary-box">
-                    <h3>Metals</h3>
-                    <p>Total Value: ${metalTotal.toFixed(2)}</p>
-                  </div>
-                  <div className="summary-box">
-                    <h3>Autos</h3>
-                    <p>Total: {carList.length}</p>
-                    <p>Value: ${autoTotal.toFixed(2)}</p>
-                  </div>
-                  <div className="summary-box">
-                    <h3>Properties</h3>
-                    <p>Total: {propertyList.length}</p>
-                    <p>Value: ${propertyTotalPrice.toFixed(2)}</p>
-                    <p>Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</p>
-                  </div>
-                  <div className="summary-box">
-                    <h3>Loans</h3>
-                    <p>Total: {loanList.length}</p>
-                    <p>Value: ${loanTotal.toFixed(2)}</p>
-                  </div>
-                </div>
-              </div>
-              {customAssets.length > 0 && (
+            <div className="home-content">
+              <h2 className="summary-title">Asset Summary</h2>
+              <div className="summary-container">
                 <div className="summary-section">
-                  <h2>Custom Assets</h2>
-                  <div className="custom-assets">
-                    {customAssets.map(asset => (
-                      <div key={asset.id} className="summary-box clickable" onClick={() => handleAssetClick(asset)}>
-                        <h3>{asset.name}</h3>
-                        <p>Total Value: ${parseFloat(asset.totalValue || 0).toFixed(2)}</p>
-                      </div>
-                    ))}
+                  <h2>Built-in Assets</h2>
+                  <div className="built-in-assets">
+                    <div className="summary-box">
+                      <h3>Cash</h3>
+                      <p>Total Cash: ${cashTotal.toFixed(2)}</p>
+                    </div>
+                    <div className="summary-box">
+                      <h3>Stocks</h3>
+                      <p>Total Value: ${stockTotal.toFixed(2)}</p>
+                    </div>
+                    <div className="summary-box">
+                      <h3>Metals</h3>
+                      <p>Total Value: ${metalTotal.toFixed(2)}</p>
+                    </div>
+                    <div className="summary-box">
+                      <h3>Autos</h3>
+                      <p>Total: {carList.length}</p>
+                      <p>Value: ${autoTotal.toFixed(2)}</p>
+                    </div>
+                    <div className="summary-box">
+                      <h3>Properties</h3>
+                      <p>Total: {propertyList.length}</p>
+                      <p>Value: ${propertyTotalPrice.toFixed(2)}</p>
+                      <p>Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</p>
+                    </div>
+                    <div className="summary-box">
+                      <h3>Loans</h3>
+                      <p>Total: {loanList.length}</p>
+                      <p>Value: ${loanTotal.toFixed(2)}</p>
+                    </div>
                   </div>
                 </div>
-              )}
+                {customAssets.length > 0 && (
+                  <div className="summary-section">
+                    <h2>Custom Assets</h2>
+                    <div className="custom-assets">
+                      {customAssets.map(asset => (
+                        <div key={asset.id} className="summary-box clickable" onClick={() => handleAssetClick(asset)}>
+                          <h3>{asset.name}</h3>
+                          <p>Total Value: ${parseFloat(asset.totalValue || 0).toFixed(2)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="analysis-buttons">
+                <button onClick={() => setSelectedAsset('analytics')}>Advanced Analysis</button>
+              </div>
             </div>
-            <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('analytics')}>Advanced Analysis</button>
-          </div>
           </Layout>
         );
       default:
@@ -351,10 +356,10 @@ function LandingPage() {
   return (
     <div className="landing-page">
       <div className="top-bar">
-      <div className="title">
-        <img src={logo_transparent} alt="Noble Asset Vault" className="custom-title-icon" />
-        Noble Asset Vault
-      </div>
+        <div className="title">
+          <img src={logo_transparent} alt="Noble Asset Vault" className="custom-title-icon" />
+          Noble Asset Vault
+        </div>
         <div className="settings-dropdown" ref={settingsRef}>
           <button onClick={toggleSettings} className="settings-icon">
             <Settings size={24} />
@@ -368,36 +373,35 @@ function LandingPage() {
           )}
         </div>
       </div>
-        <div className="sidebar">
-          <div className="sidebar-content">
-            <div className="sidebar-buttons">
-              <button onClick={() => setSelectedAssetAndCloseSettings('home')}>Home</button>
-              <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('createAsset')}>Create Asset</button>
-              <div className="dropdown">
-                <button className="dropbtn">Assets</button>
-                <div className="dropdown-content">
-                  <button onClick={() => setSelectedAssetAndCloseSettings('auto')}>Auto</button>
-                  <button onClick={() => setSelectedAssetAndCloseSettings('cash')}>Cash</button>
-                  <button onClick={() => setSelectedAssetAndCloseSettings('stocks')}>Stocks</button>
-                  <button onClick={() => setSelectedAsset('metals')}>Metals</button>
-                  <button onClick={() => setSelectedAsset('property')}>Property</button>
-                  <button onClick={() => setSelectedAsset('loan')}>Loan</button>
-                  {customAssets.map(asset => (
-                    <button key={asset.id} onClick={() => setSelectedAsset(`custom-${asset.id}`)}>{asset.name}</button>
-                  ))}
-                </div>
+      <div className="sidebar">
+        <div className="sidebar-content">
+          <div className="sidebar-buttons">
+            <button onClick={() => setSelectedAssetAndCloseSettings('home')}>Home</button>
+            <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('createAsset')}>Create Asset</button>
+            <div className="dropdown">
+              <button className="dropbtn">Assets</button>
+              <div className="dropdown-content">
+                <button onClick={() => setSelectedAssetAndCloseSettings('auto')}>Auto</button>
+                <button onClick={() => setSelectedAssetAndCloseSettings('cash')}>Cash</button>
+                <button onClick={() => setSelectedAssetAndCloseSettings('stocks')}>Stocks</button>
+                <button onClick={() => setSelectedAsset('metals')}>Metals</button>
+                <button onClick={() => setSelectedAsset('property')}>Property</button>
+                <button onClick={() => setSelectedAsset('loan')}>Loan</button>
+                {customAssets.map(asset => (
+                  <button key={asset.id} onClick={() => setSelectedAsset(`custom-${asset.id}`)}>{asset.name}</button>
+                ))}
               </div>
-              
-            </div>
-            <div className="sidebar-footer">
-              <button className="back-to-website-btn" onClick={handleBackToWebsite}>Back to Website</button>
-              <button className="sign-out-btn" onClick={handleSignOut}>Sign Out</button>
             </div>
           </div>
+          <div className="sidebar-footer">
+            <button className="back-to-website-btn" onClick={handleBackToWebsite}>Back to Website</button>
+            <button className="sign-out-btn" onClick={handleSignOut}>Sign Out</button>
+          </div>
         </div>
+      </div>
 
-          <div className="content">
-            {renderContent()}
+      <div className="content">
+        {renderContent()}
       </div>
     </div>
   );
