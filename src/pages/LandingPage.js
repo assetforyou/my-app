@@ -10,13 +10,13 @@ import Stocks from './Stocks';
 import Metals from './Metals';
 import Property from './Property';
 import Loan from './Loan';
+import Crypto from './Crypto';  // Added Crypto import
 import CreateAsset from './CreateAsset';
 import CustomAsset from './CustomAsset';
 import AccountSettings from '../components/AccountSettings';
 import '../style/LandingPage.css';
 import logo_transparent from '../images/logo_transparent.png';
 import AnalyticsDashboard from '../pages/AnalyticsDashboard';
-
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
@@ -34,6 +34,8 @@ function LandingPage() {
   const [propertyTotalMonthlyCost, setPropertyTotalMonthlyCost] = useState(0);
   const [loanList, setLoanList] = useState([]);
   const [loanTotal, setLoanTotal] = useState(0);
+  const [cryptoList, setCryptoList] = useState([]); // Added for crypto
+  const [cryptoTotal, setCryptoTotal] = useState(0); // Added for crypto
   const [customAssets, setCustomAssets] = useState([]);
   const [selectedAssetForAction, setSelectedAssetForAction] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -50,6 +52,7 @@ function LandingPage() {
         fetchMetalDetails(user.email);
         fetchPropertyDetails(user.email);
         fetchLoanDetails(user.email);
+        fetchCryptoDetails(user.email); // Added crypto fetch
         fetchCustomAssets(user.email);
       } else {
         navigate('/login');
@@ -233,6 +236,19 @@ function LandingPage() {
     setSelectedAssetForAction(null);
   };
 
+  const fetchCryptoDetails = async (email) => {
+    try {
+      const q = query(collection(db, 'crypto'), where("userEmail", "==", email));
+      const querySnapshot = await getDocs(q);
+      const cryptos = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCryptoList(cryptos);
+      const total = cryptos.reduce((sum, crypto) => sum + parseFloat(crypto.total || 0), 0);
+      setCryptoTotal(total);
+    } catch (error) {
+      console.error('Error fetching crypto details:', error);
+    }
+  };
+
   const renderContent = () => {
     if (selectedAssetForAction) {
       return (
@@ -262,6 +278,8 @@ function LandingPage() {
         return <Property userEmail={userEmail} propertyList={propertyList} setPropertyList={updatePropertyList} propertyTotalPrice={propertyTotalPrice} propertyTotalMonthlyCost={propertyTotalMonthlyCost} fetchPropertyDetails={fetchPropertyDetails} />;
       case 'loan':
         return <Loan userEmail={userEmail} loanList={loanList} loanTotal={loanTotal} fetchLoanDetails={() => fetchLoanDetails(userEmail)} />;
+      case 'crypto':
+        return <Crypto userEmail={userEmail} cryptoList={cryptoList} setCryptoList={setCryptoList} cryptoTotal={cryptoTotal} fetchCryptoDetails={() => fetchCryptoDetails(userEmail)} />;
       case 'createAsset':
         return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'analytics':
@@ -270,10 +288,12 @@ function LandingPage() {
           stockList={stockList}
           metalList={metalList}
           propertyList={propertyList}
+          cryptoList={cryptoList} // Added crypto to analytics
           cashTotal={cashTotal}
           stockTotal={stockTotal}
           metalTotal={metalTotal}
           propertyTotalPrice={propertyTotalPrice}
+          cryptoTotal={cryptoTotal} // Added crypto total to analytics
           userEmail={userEmail}
           customAssets={customAssets}
         />;
@@ -313,6 +333,11 @@ function LandingPage() {
                       <h3>Loans</h3>
                       <p>Total: {loanList.length}</p>
                       <p>Value: ${loanTotal.toFixed(2)}</p>
+                    </div>
+                    <div className="summary-box">
+                      <h3>Cryptocurrency</h3>
+                      <p>Total: {cryptoList.length}</p>
+                      <p>Value: ${cryptoTotal.toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
@@ -387,6 +412,7 @@ function LandingPage() {
                 <button onClick={() => setSelectedAsset('metals')}>Metals</button>
                 <button onClick={() => setSelectedAsset('property')}>Property</button>
                 <button onClick={() => setSelectedAsset('loan')}>Loan</button>
+                <button onClick={() => setSelectedAsset('crypto')}>Crypto</button>
                 {customAssets.map(asset => (
                   <button key={asset.id} onClick={() => setSelectedAsset(`custom-${asset.id}`)}>{asset.name}</button>
                 ))}

@@ -7,6 +7,7 @@ import AlternativeInvestments from './AlternativeInvestments';
 import CustomAssetPerformance from './CustomAssetPerformance';
 import RiskAssessment from './RiskAssessment';
 import TaxImpactAnalysis from './TaxImpactAnalysis';
+import CryptoProjection from '../components/CryptoProjection';
 
 const ScrollableChart = ({ children, title }) => (
   <div className="analytics-card">
@@ -26,16 +27,25 @@ const AnalyticsDashboard = ({
   stockList, 
   metalList, 
   propertyList,
+  cryptoList,
   cashTotal,
   stockTotal,
   metalTotal,
   propertyTotalPrice,
+  cryptoTotal,
   customAssets,
   userEmail,
   loanList = []
 }) => {
   return (
     <div className="analytics-container">
+      <ScrollableChart title="Cryptocurrency Projections">
+        <CryptoProjection 
+          cryptoList={cryptoList || []}
+          selectedCryptoIds={[]}
+        />
+      </ScrollableChart>
+      
       <ScrollableChart title="Geographic Distribution">
         <GeographicDistribution propertyList={propertyList} stockList={stockList} />
       </ScrollableChart>
@@ -46,6 +56,7 @@ const AnalyticsDashboard = ({
           stockTotal={stockTotal}
           metalTotal={metalTotal}
           propertyTotal={propertyTotalPrice}
+          cryptoTotal={cryptoTotal}
         />
       </ScrollableChart>
       
@@ -58,7 +69,12 @@ const AnalyticsDashboard = ({
       </ScrollableChart>
       
       <ScrollableChart title="Alternative Investments">
-        <AlternativeInvestments userEmail={userEmail} />
+        <AlternativeInvestments 
+          cryptoList={cryptoList}
+          nftList={[]}
+          privateEquityList={[]}
+          ventureCapitalList={[]}
+        />
       </ScrollableChart>
       
       <ScrollableChart title="Historical Performance">
@@ -67,6 +83,7 @@ const AnalyticsDashboard = ({
           stockList={stockList}
           metalList={metalList}
           propertyList={propertyList}
+          cryptoList={cryptoList}
         />
       </ScrollableChart>
       
@@ -75,6 +92,7 @@ const AnalyticsDashboard = ({
           customAssets={customAssets}
           propertyList={propertyList}
           stockList={stockList}
+          cryptoList={cryptoList}
         />
       </ScrollableChart>
       
@@ -84,6 +102,7 @@ const AnalyticsDashboard = ({
           stockList={stockList}
           metalList={metalList}
           propertyList={propertyList}
+          cryptoList={cryptoList}
         />
       </ScrollableChart>
       
@@ -93,6 +112,7 @@ const AnalyticsDashboard = ({
           stockList={stockList}
           metalList={metalList}
           propertyList={propertyList}
+          cryptoList={cryptoList}
         />
       </ScrollableChart>
     </div>
