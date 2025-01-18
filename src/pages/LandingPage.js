@@ -355,7 +355,7 @@ function LandingPage() {
                   </div>
                 )}
               </div>
-              <div className="analysis-buttons">
+              <div className="advanced-analysis">
                 <button onClick={() => setSelectedAsset('analytics')}>Advanced Analysis</button>
               </div>
             </div>
