@@ -17,6 +17,7 @@ import AccountSettings from '../components/AccountSettings';
 import '../style/LandingPage.css';
 import logo_transparent from '../images/logo_transparent.png';
 import AnalyticsDashboard from '../pages/AnalyticsDashboard';
+import CustomAssetCard from '../components/AssetActionModal'; 
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
@@ -346,10 +347,22 @@ function LandingPage() {
                     <h2>Custom Assets</h2>
                     <div className="custom-assets">
                       {customAssets.map(asset => (
-                        <div key={asset.id} className="summary-box clickable" onClick={() => handleAssetClick(asset)}>
-                          <h3>{asset.name}</h3>
-                          <p>Total Value: ${parseFloat(asset.totalValue || 0).toFixed(2)}</p>
-                        </div>
+                        <CustomAssetCard
+                          key={asset.id}
+                          asset={asset}
+                          onView={() => setSelectedAsset(`custom-${asset.id}`)}
+                          onDelete={async () => {
+                            try {
+                              await deleteDoc(doc(db, 'customAssets', asset.id));
+                              setCustomAssets(prevAssets => 
+                                prevAssets.filter(a => a.id !== asset.id)
+                              );
+                            } catch (error) {
+                              console.error('Error deleting asset:', error);
+                              alert('Failed to delete asset.');
+                            }
+                          }}
+                        />
                       ))}
                     </div>
                   </div>
