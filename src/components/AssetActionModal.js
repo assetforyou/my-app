@@ -1,51 +1,45 @@
 import React, { useState } from 'react';
+import { X } from 'lucide-react';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const CustomAssetCard = ({ asset, onView, onDelete }) => {
-  const [showOptions, setShowOptions] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation(); // Prevent triggering onView
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deleteDoc(doc(db, 'customAssets', asset.id));
+      await onDelete();
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error('Error deleting asset:', error);
+      alert('Failed to delete asset.');
+    }
+  };
 
   return (
-    <div className="relative group">
-      <div 
-        className="summary-box p-6 rounded-lg bg-slate-800/80 backdrop-blur-sm border border-slate-700/30
-          transition-all duration-300 hover:bg-slate-800/90 hover:shadow-xl hover:shadow-slate-900/20"
-        onMouseEnter={() => setShowOptions(true)}
-        onMouseLeave={() => setShowOptions(false)}
-      >
-        <h3 className="text-xl font-semibold text-white mb-2">{asset.name}</h3>
-        <p className="text-white/90 text-lg">
-          Total Value: ${parseFloat(asset.totalValue || 0).toFixed(2)}
-        </p>
-        
-        {/* Options Panel */}
-        <div 
-          className={`absolute right-0 top-0 h-full flex items-center
-            transition-all duration-300 ease-out
-            ${showOptions 
-              ? 'opacity-100 translate-x-full' 
-              : 'opacity-0 translate-x-1/2 pointer-events-none'}`}
-        >
-          <div className="bg-slate-700/90 backdrop-blur-md rounded-xl p-3 shadow-lg border border-slate-600/30 ml-4">
-            <div className="flex flex-col gap-2">
-              <button 
-                onClick={() => onView(asset)}
-                className="px-6 py-2.5 text-white bg-blue-500/20 hover:bg-blue-500/30 
-                  rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap
-                  hover:translate-x-1 hover:shadow-md"
-              >
-                View Details
-              </button>
-              <button 
-                onClick={() => onDelete(asset)}
-                className="px-6 py-2.5 text-white bg-red-500/10 hover:bg-red-500/20 
-                  rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap
-                  hover:translate-x-1 hover:shadow-md"
-              >
-                Delete Asset
-              </button>
+    <div className="custom-asset-card" onClick={onView}>
+      <div className="custom-asset-delete-icon" onClick={handleDeleteClick}>
+        <X size={20} />
+      </div>
+      <h3>{asset.name}</h3>
+      <p>Total Value: ${parseFloat(asset.totalValue || 0).toFixed(2)}</p>
+      {showDeleteConfirm && (
+        <div className="delete-confirm-overlay">
+          <div className="delete-confirm-modal">
+            <p>Are you sure you want to delete this asset?</p>
+            <div className="delete-confirm-buttons">
+              <button onClick={confirmDelete} className="delete">OK</button>
+              <button onClick={() => setShowDeleteConfirm(false)} className="cancel">Cancel</button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

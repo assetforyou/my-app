@@ -220,7 +220,7 @@ function LandingPage() {
   const handleAssetClick = (asset) => {
     setSelectedAssetForAction(asset);
   };
-
+  
   const handleAssetAction = async (action) => {
     if (action === 'view') {
       setSelectedAsset(`custom-${selectedAssetForAction.id}`);
@@ -307,35 +307,35 @@ function LandingPage() {
                 <div className="summary-section">
                   <h2>Built-in Assets</h2>
                   <div className="built-in-assets">
-                    <div className="summary-box">
+                    <div className="summary-box" onClick={() => setSelectedAsset('cash')}>
                       <h3>Cash</h3>
                       <p>Total Cash: ${cashTotal.toFixed(2)}</p>
                     </div>
-                    <div className="summary-box">
+                    <div className="summary-box" onClick={() => setSelectedAsset('stocks')}>
                       <h3>Stocks</h3>
                       <p>Total Value: ${stockTotal.toFixed(2)}</p>
                     </div>
-                    <div className="summary-box">
+                    <div className="summary-box" onClick={() => setSelectedAsset('metals')}>
                       <h3>Metals</h3>
                       <p>Total Value: ${metalTotal.toFixed(2)}</p>
                     </div>
-                    <div className="summary-box">
+                    <div className="summary-box" onClick={() => setSelectedAsset('auto')}>
                       <h3>Autos</h3>
                       <p>Total: {carList.length}</p>
                       <p>Value: ${autoTotal.toFixed(2)}</p>
                     </div>
-                    <div className="summary-box">
+                    <div className="summary-box" onClick={() => setSelectedAsset('property')}>
                       <h3>Properties</h3>
                       <p>Total: {propertyList.length}</p>
                       <p>Value: ${propertyTotalPrice.toFixed(2)}</p>
                       <p>Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</p>
                     </div>
-                    <div className="summary-box">
+                    <div className="summary-box" onClick={() => setSelectedAsset('loan')}>
                       <h3>Loans</h3>
                       <p>Total: {loanList.length}</p>
                       <p>Value: ${loanTotal.toFixed(2)}</p>
                     </div>
-                    <div className="summary-box">
+                    <div className="summary-box" onClick={() => setSelectedAsset('crypto')}>
                       <h3>Cryptocurrency</h3>
                       <p>Total: {cryptoList.length}</p>
                       <p>Value: ${cryptoTotal.toFixed(2)}</p>
@@ -346,24 +346,24 @@ function LandingPage() {
                   <div className="summary-section">
                     <h2>Custom Assets</h2>
                     <div className="custom-assets">
-                      {customAssets.map(asset => (
-                        <CustomAssetCard
-                          key={asset.id}
-                          asset={asset}
-                          onView={() => setSelectedAsset(`custom-${asset.id}`)}
-                          onDelete={async () => {
-                            try {
-                              await deleteDoc(doc(db, 'customAssets', asset.id));
-                              setCustomAssets(prevAssets => 
-                                prevAssets.filter(a => a.id !== asset.id)
-                              );
-                            } catch (error) {
-                              console.error('Error deleting asset:', error);
-                              alert('Failed to delete asset.');
-                            }
-                          }}
-                        />
-                      ))}
+                    {customAssets.map(asset => (
+                      <CustomAssetCard
+                        key={asset.id}
+                        asset={asset}
+                        onView={() => setSelectedAsset(`custom-${asset.id}`)}
+                        onDelete={async () => {
+                          try {
+                            await deleteDoc(doc(db, 'customAssets', asset.id));
+                            setCustomAssets(prevAssets => 
+                              prevAssets.filter(a => a.id !== asset.id)
+                            );
+                          } catch (error) {
+                            console.error('Error deleting asset:', error);
+                            alert('Failed to delete asset.');
+                          }
+                        }}
+                      />
+                    ))}
                     </div>
                   </div>
                 )}
