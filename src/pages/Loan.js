@@ -1,19 +1,17 @@
 import React, { useState, useRef } from 'react';
 import Layout from '../components/AdLayout';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
 import { Upload, Download, MoreVertical } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import LoanGrowthChart from '../components/LoanGrowth';
+import DynamoDBService from '../dynamoDBService';
 
-function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails }) {
+function Loan({ userEmail, loanList, setLoanList, loanTotal, setLoanTotal, fetchLoanDetails }) {
   const [loanDetails, setLoanDetails] = useState({
     type: '',
     loanValue: '',
-    purchaseDate: '', // Changed from purchaseYear to purchaseDate
+    purchaseDate: '',
     repaymentPerMonth: '',
     currency: 'USD',
     description: '',
@@ -26,30 +24,50 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setLoanDetails(prev => ({ ...prev, [name]: value }));
+  
+    // If the field is a numeric field, parse it as a float
+    if (name === 'loanValue' || name === 'repaymentPerMonth') {
+      const parsedValue = parseFloat(value);
+      setLoanDetails(prev => ({
+        ...prev,
+        [name]: isNaN(parsedValue) ? '' : parsedValue, // Only update if the value is a valid number
+      }));
+    } else {
+      setLoanDetails(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSaveLoanDetails = async () => {
     setSaveButtonText('Saving...');
+  
+    // Parse and validate numeric fields
+    const loanValueInSelectedCurrency = parseFloat(loanDetails.loanValue);
+    const repaymentPerMonth = parseFloat(loanDetails.repaymentPerMonth);
+  
+    // Check if the parsed values are valid numbers
+    if (isNaN(loanValueInSelectedCurrency) || isNaN(repaymentPerMonth)) {
+      alert('Please enter valid numeric values for Loan Value and Repayment Per Month.');
+      setSaveButtonText('Save');
+      return;
+    }
+  
     try {
-      const loanValueInSelectedCurrency = parseFloat(loanDetails.loanValue);
-      const repaymentPerMonth = parseFloat(loanDetails.repaymentPerMonth);
-      const newLoanRef = await addDoc(collection(db, 'loans'), {
-        ...loanDetails,
-        userEmail,
-        loanValue: loanValueInSelectedCurrency,
-        repaymentPerMonth,
-      });
-
       const newLoan = {
-        id: newLoanRef.id,
         ...loanDetails,
         userEmail,
-        loanValue: loanValueInSelectedCurrency,
-        repaymentPerMonth,
+        loanValue: loanValueInSelectedCurrency, // Ensure this is a valid number
+        repaymentPerMonth: repaymentPerMonth, // Ensure this is a valid number
+        id: Date.now() // Generate a unique ID as a number
       };
-      setLoanList(prev => [...prev, newLoan]);
-
+  
+      const savedLoan = await DynamoDBService.addAsset('Loans', newLoan);
+      setLoanList(prev => [...prev, savedLoan]);
+      setLoanTotal(prev => prev + loanValueInSelectedCurrency); // Update the total loan value
+  
+      // Reset the form
       setLoanDetails({
         type: '',
         loanValue: '',
@@ -61,21 +79,21 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
         reminderNote: '',
         reminderDate: ''
       });
+  
       setSaveButtonText('Saved!');
       setTimeout(() => setSaveButtonText('Save'), 2000);
-      fetchLoanDetails(userEmail);
     } catch (error) {
       console.error('Error saving loan details:', error);
       setSaveButtonText('Save');
-      alert('Failed to save loan details.');
+      alert('Failed to save loan details. Please ensure all fields are valid.');
     }
   };
 
   const handleDeleteLoan = async (loanId) => {
     if (window.confirm('Are you sure you want to delete this loan entry?')) {
       try {
-        await deleteDoc(doc(db, 'loans', loanId));
-        setLoanList(prev => prev.filter(loan => loan.id !== loanId));
+        await DynamoDBService.deleteAsset('Loans', loanId, userEmail);
+        setLoanList(prev => prev.filter(loan => loan.id !== loanId)); // Use setLoanList
         alert('Loan entry deleted successfully.');
         fetchLoanDetails(userEmail);
       } catch (error) {
@@ -209,14 +227,6 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
     );
   };
 
-  // Updated chartData to use purchaseDate instead of purchaseYear
-  const chartData = loanList
-    .map(loan => ({
-      purchaseDate: loan.purchaseDate,
-      loanValue: parseFloat(loan.loanValue)
-    }))
-    .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
-
   return (
     <Layout>
       <div className="container-fluid px-4">
@@ -265,10 +275,9 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, fetchLoanDetails })
           <div className="col-12 col-xl-8">
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Total Loans: {loanTotal}</h5>
+                <h5 className="mb-0">Total Loans: ${loanTotal.toFixed(2)}</h5>
               </Card.Header>
             </Card>
-
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Loan Value Analysis</h5>

@@ -12,13 +12,29 @@ const dynamodb = new AWS.DynamoDB.DocumentClient();
 
 // Generic asset operations
 const DynamoDBService = {
-  // Fetch user's assets
-  fetchAssets: async (tableName, userEmail) => {
+  // Fetch asset by ID from the CustomAssets table
+  fetchAssetById: async (tableName, assetId) => {
     const params = {
       TableName: tableName,
-      FilterExpression: 'userEmail = :email',
+      Key: { id: Number(assetId) }
+    };
+
+    try {
+      const result = await dynamodb.get(params).promise();
+      return result.Item;
+    } catch (error) {
+      console.error(`Error fetching asset from ${tableName}:`, error);
+      return null;
+    }
+  },
+
+  // Fetch all items for a custom asset from the CustomAssetItems table
+  fetchAssetItems: async (tableName, assetId) => {
+    const params = {
+      TableName: tableName,
+      FilterExpression: 'assetId = :assetId',
       ExpressionAttributeValues: {
-        ':email': userEmail
+        ':assetId': Number(assetId)
       }
     };
 
@@ -26,8 +42,28 @@ const DynamoDBService = {
       const result = await dynamodb.scan(params).promise();
       return result.Items;
     } catch (error) {
-      console.error(`Error fetching ${tableName}:`, error);
+      console.error(`Error fetching items from ${tableName}:`, error);
       return [];
+    }
+  },
+
+  // Add a new item to the CustomAssetItems table
+  addAssetItem: async (tableName, item) => {
+    const params = {
+      TableName: tableName,
+      Item: {
+        ...item,
+        id: Number(item.id), // Ensure id is a number
+        assetId: Number(item.assetId) // Ensure assetId is a number
+      }
+    };
+
+    try {
+      await dynamodb.put(params).promise();
+      return params.Item;
+    } catch (error) {
+      console.error(`Error adding item to ${tableName}:`, error);
+      throw error;
     }
   },
 
@@ -37,16 +73,21 @@ const DynamoDBService = {
       TableName: tableName,
       Item: {
         ...asset,
-        id: uuidv4(),
-        createdAt: new Date().toISOString()
+        id: Number(asset.id), // Ensure id is a number
+        createdAt: new Date().toISOString(),
+        userEmail: asset.userEmail // Ensure userEmail is included
       }
     };
 
+    console.log('Saving asset with params:', params); // Debugging log
+
     try {
       await dynamodb.put(params).promise();
+      console.log('Asset saved successfully:', params.Item); // Debugging log
       return params.Item;
     } catch (error) {
-      console.error(`Error adding asset to ${tableName}:`, error);
+      console.error(`Error adding asset to ${tableName}:`, error); // Debugging log
+      throw error; // Rethrow the error to handle it in the calling function
     }
   },
 
@@ -70,7 +111,7 @@ const DynamoDBService = {
 
     const params = {
       TableName: tableName,
-      Key: { id: assetId },
+      Key: { id: Number(assetId) }, // Ensure id is a number
       UpdateExpression: `SET ${updateExpression}`,
       ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionAttributeValues,
@@ -86,17 +127,106 @@ const DynamoDBService = {
   },
 
   // Delete asset
-  deleteAsset: async (tableName, assetId) => {
-    const params = {
-      TableName: tableName,
-      Key: { id: assetId }
-    };
-
+  deleteAsset: async (tableName, assetId, userEmail) => {
     try {
-      await dynamodb.delete(params).promise();
+      console.log('Deleting item with params:', { tableName, assetId, userEmail });
+
+      // Ensure assetId is a number
+      const id = Number(assetId);
+
+      // Define the key based on the table schema
+      const key = {
+        id: id, // Primary Key (number)
+        userEmail: userEmail // Sort Key (string)
+      };
+
+      console.log('Key being used for deletion:', key);
+
+      // Get full item details (optional, for debugging)
+      const getParams = {
+        TableName: tableName,
+        Key: key
+      };
+
+      console.log('Fetching item with params:', getParams);
+
+      const existingItem = await dynamodb.get(getParams).promise();
+
+      console.log('Existing item details:', existingItem.Item);
+
+      if (!existingItem.Item) {
+        console.error('Item not found:', key);
+        return false;
+      }
+
+      // Delete the item
+      const deleteParams = {
+        TableName: tableName,
+        Key: key
+      };
+
+      console.log('Deleting item with params:', deleteParams);
+
+      await dynamodb.delete(deleteParams).promise();
       return true;
     } catch (error) {
-      console.error(`Error deleting asset from ${tableName}:`, error);
+      console.error('Delete error:', {
+        message: error.message,
+        code: error.code,
+        fullError: error
+      });
+      return false;
+    }
+  },
+
+  deleteAssetItem: async (tableName, itemId, userEmail) => {
+    try {
+      console.log('Deleting asset item with params:', { tableName, itemId, userEmail });
+
+      // Ensure itemId is a number
+      const id = Number(itemId);
+
+      // Define the key based on the table schema
+      const key = {
+        id: id, // Partition Key (number)
+        userEmail: userEmail // Sort Key (string)
+      };
+
+      console.log('Key being used for deletion:', key);
+
+      // Get full item details (optional, for debugging)
+      const getParams = {
+        TableName: tableName,
+        Key: key
+      };
+
+      console.log('Fetching item with params:', getParams);
+
+      const existingItem = await dynamodb.get(getParams).promise();
+
+      console.log('Existing item details:', existingItem.Item);
+
+      if (!existingItem.Item) {
+        console.error('Item not found:', key);
+        return false;
+      }
+
+      // Delete the item
+      const deleteParams = {
+        TableName: tableName,
+        Key: key
+      };
+
+      console.log('Deleting item with params:', deleteParams);
+
+      await dynamodb.delete(deleteParams).promise();
+      return true;
+    } catch (error) {
+      console.error('Delete error:', {
+        message: error.message,
+        code: error.code,
+        fullError: error
+      });
       return false;
     }
   },

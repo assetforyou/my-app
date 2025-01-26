@@ -1,17 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/AdLayout';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
 import { Upload, Download, MoreVertical } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import MetalsGrowthChart from '../components/MetalsGrowth';
+import DynamoDBService from '../dynamoDBService';
 
 const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
 
-function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDetails }) {
+function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal, fetchMetalDetails }) {
   const [metalDetails, setMetalDetails] = useState({
     type: '',
     grams: '',
@@ -99,20 +97,15 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
   const handleSaveMetalDetails = async () => {
     setSaveButtonText('Saving...');
     try {
-      const newMetalRef = await addDoc(collection(db, 'metals'), {
-        ...metalDetails,
-        userEmail,
-        grams: parseFloat(metalDetails.grams),
-        valuePerGram: parseFloat(metalDetails.valuePerGram),
-        total: parseFloat(metalDetails.total)
-      });
-
       const newMetal = {
-        id: newMetalRef.id,
         ...metalDetails,
         userEmail,
+        id: Date.now() // Generate a unique ID as a number
       };
-      setMetalList(prev => [...prev, newMetal]);
+
+      const savedMetal = await DynamoDBService.addAsset('Metals', newMetal);
+      setMetalList(prev => [...prev, savedMetal]);
+      setMetalTotal(prev => prev + parseFloat(metalDetails.total));
 
       setMetalDetails({
         type: '',
@@ -124,9 +117,9 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
         reminderNote: '',
         reminderDate: ''
       });
+
       setSaveButtonText('Saved!');
       setTimeout(() => setSaveButtonText('Save'), 2000);
-      fetchMetalDetails(userEmail);
     } catch (error) {
       console.error('Error saving metal details:', error);
       setSaveButtonText('Save');
@@ -137,7 +130,7 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
   const handleDeleteMetal = async (metalId) => {
     if (window.confirm('Are you sure you want to delete this metal entry?')) {
       try {
-        await deleteDoc(doc(db, 'metals', metalId));
+        await DynamoDBService.deleteAsset('Metals', metalId, userEmail); // Pass userEmail
         setMetalList(prev => prev.filter(metal => metal.id !== metalId));
         alert('Metal entry deleted successfully.');
         fetchMetalDetails(userEmail);
@@ -180,15 +173,48 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
     XLSX.writeFile(wb, "metal_data.xlsx");
   };
 
-  const chartData = metalList
-    .map(metal => ({
-      purchaseDate: metal.purchaseDate,
-      value: parseFloat(metal.total)
-    }))
-    .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
+  const renderFormControl = (key, value) => {
+    if (key === 'currency') {
+      return (
+        <Form.Select
+          name={key}
+          value={value}
+          onChange={handleInputChange}
+        >
+          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
+            <option key={currency} value={currency}>{currency}</option>
+          ))}
+        </Form.Select>
+      );
+    }
 
-  if (isLoading) return <Layout><div className="container-fluid px-4">Loading metal prices...</div></Layout>;
-  if (error) return <Layout><div className="container-fluid px-4">Error: {error}</div></Layout>;
+    if (key === 'purchaseDate' || key === 'reminderDate') {
+      return (
+        <Form.Control
+          type="text"
+          onFocus={(e) => e.target.type = 'date'}
+          onBlur={(e) => {
+            if (!e.target.value) e.target.type = 'text';
+          }}
+          name={key}
+          placeholder={key === 'purchaseDate' ? 'Select purchase date' : 'Select reminder date'}
+          value={value}
+          onChange={handleInputChange}
+        />
+      );
+    }
+
+    return (
+      <Form.Control
+        type={key === 'grams' || key === 'valuePerGram' || key === 'total' ? 'number' : 'text'}
+        name={key}
+        placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+        value={value}
+        onChange={handleInputChange}
+        readOnly={key === 'valuePerGram' || key === 'total'}
+      />
+    );
+  };
 
   return (
     <Layout>
@@ -231,32 +257,7 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
                   {Object.entries(metalDetails).map(([key, value]) => (
                     key !== 'type' && (
                       <div className="col-12" key={key}>
-                        {key === 'currency' ? (
-                          <Form.Select
-                            name={key}
-                            value={value}
-                            onChange={handleInputChange}
-                          >
-                            {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
-                              <option key={currency} value={currency}>{currency}</option>
-                            ))}
-                          </Form.Select>
-                        ) : (
-                          <Form.Control
-                            type={key.includes('Date') ? 'text' : ['grams', 'valuePerGram', 'total'].includes(key) ? 'number' : 'text'}
-                            onFocus={(e) => key.includes('Date') ? e.target.type = 'date' : null}
-                            onBlur={(e) => {
-                              if (key.includes('Date') && !e.target.value) e.target.type = 'text';
-                            }}
-                            name={key}
-                            placeholder={key === 'reminderDate' ? 'Select reminder date' :
-                                       key === 'purchaseDate' ? 'Select purchase date' :
-                                       key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                            value={value}
-                            onChange={handleInputChange}
-                            readOnly={['valuePerGram', 'total'].includes(key)}
-                          />
-                        )}
+                        {renderFormControl(key, value)}
                       </div>
                     )
                   ))}
@@ -281,7 +282,6 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, fetchMetalDeta
                 <h5 className="mb-0">Total Metal Value: ${metalTotal.toFixed(2)}</h5>
               </Card.Header>
             </Card>
-            
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Metals Value Analysis</h5>

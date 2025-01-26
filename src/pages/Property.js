@@ -1,14 +1,13 @@
 import React, { useState, useRef, useCallback } from 'react';
 import Layout from '../components/AdLayout';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
 import { Upload, Download, MoreVertical } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import PropertyGrowthChart from '../components/PropertyGrowth';
-function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, propertyTotalMonthlyCost, fetchPropertyDetails }) {
+import DynamoDBService from '../dynamoDBService';
+
+function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, setPropertyTotalPrice, propertyTotalMonthlyCost, setPropertyTotalMonthlyCost, fetchPropertyDetails }) {
   const [propertyDetails, setPropertyDetails] = useState({
     address: '',
     bedrooms: '',
@@ -70,28 +69,41 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
   const handleSavePropertyDetails = async () => {
     setSaveButtonText('Saving...');
     try {
+      // Parse numeric fields
+      const price = parseFloat(propertyDetails.price);
       const mortgagePayment = parseFloat(propertyDetails.mortgagePayment);
       const utilities = parseFloat(propertyDetails.utilities);
       const otherExpenses = parseFloat(propertyDetails.otherExpenses);
+
+      // Validate numeric fields
+      if (isNaN(price) || isNaN(mortgagePayment) || isNaN(utilities) || isNaN(otherExpenses)) {
+        throw new Error('Invalid numeric values in property details.');
+      }
+
+      // Calculate total monthly cost
       const totalMonthlyCost = mortgagePayment + utilities + otherExpenses;
-      const price = parseFloat(propertyDetails.price);
 
-      const docRef = await addDoc(collection(db, 'properties'), {
-        ...propertyDetails,
-        userEmail,
-        totalMonthlyCost,
-        price,
-      });
-
+      // Prepare the new property object
       const newProperty = {
-        id: docRef.id,
         ...propertyDetails,
         userEmail,
-        totalMonthlyCost,
         price,
+        mortgagePayment,
+        utilities,
+        otherExpenses,
+        totalMonthlyCost,
+        id: Date.now() // Generate a unique ID as a number
       };
 
-      setPropertyList([...propertyList, newProperty]);
+      // Save the property to DynamoDB
+      const savedProperty = await DynamoDBService.addAsset('Properties', newProperty);
+
+      // Update state
+      setPropertyList(prev => [...prev, savedProperty]);
+      setPropertyTotalPrice(prev => prev + price);
+      setPropertyTotalMonthlyCost(prev => prev + totalMonthlyCost);
+
+      // Reset the form
       setPropertyDetails({
         address: '',
         bedrooms: '',
@@ -105,20 +117,20 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
         currency: 'USD',
         purchaseDate: ''
       });
+
       setSaveButtonText('Saved!');
       setTimeout(() => setSaveButtonText('Save'), 2000);
-      fetchPropertyDetails(userEmail);
     } catch (error) {
       console.error('Error saving property details:', error);
       setSaveButtonText('Save');
-      alert('Failed to save property details.');
+      alert('Failed to save property details. Please ensure all numeric fields are valid.');
     }
   };
 
   const handleDeleteProperty = async (propertyId) => {
     if (window.confirm('Are you sure you want to delete this property?')) {
       try {
-        await deleteDoc(doc(db, 'properties', propertyId));
+        await DynamoDBService.deleteAsset('Properties', propertyId, userEmail); // Pass userEmail
         setPropertyList(prev => prev.filter(property => property.id !== propertyId));
         alert('Property deleted successfully.');
         fetchPropertyDetails(userEmail);
@@ -128,7 +140,7 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
       }
     }
   };
-
+  
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
@@ -139,19 +151,18 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
       const ws = wb.Sheets[wsname];
       const data = XLSX.utils.sheet_to_json(ws);
       if (data.length > 0) {
-        const firstRow = data[0];
         setPropertyDetails({
-          address: firstRow.address || '',
-          bedrooms: firstRow.bedrooms || '',
-          bathrooms: firstRow.bathrooms || '',
-          basement: firstRow.basement || '',
-          price: firstRow.price || '',
-          mortgagePayment: firstRow.mortgagePayment || '',
-          interestRate: firstRow.interestRate || '',
-          utilities: firstRow.utilities || '',
-          otherExpenses: firstRow.otherExpenses || '',
-          currency: firstRow.currency || 'USD',
-          purchaseDate: firstRow.purchaseDate || ''
+          address: data[0].address || '',
+          bedrooms: data[0].bedrooms || '',
+          bathrooms: data[0].bathrooms || '',
+          basement: data[0].basement || '',
+          price: data[0].price || '',
+          mortgagePayment: data[0].mortgagePayment || '',
+          interestRate: data[0].interestRate || '',
+          utilities: data[0].utilities || '',
+          otherExpenses: data[0].otherExpenses || '',
+          currency: data[0].currency || 'USD',
+          purchaseDate: data[0].purchaseDate || ''
         });
       }
     };
@@ -165,12 +176,48 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
     XLSX.writeFile(wb, "property_data.xlsx");
   };
 
-  const chartData = propertyList
-    .map(property => ({
-      purchaseDate: property.purchaseDate,
-      value: parseFloat(property.price)
-    }))
-    .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
+  const renderFormControl = (key, value) => {
+    if (key === 'currency') {
+      return (
+        <Form.Select
+          name={key}
+          value={value}
+          onChange={handleInputChange}
+        >
+          {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
+            <option key={currency} value={currency}>{currency}</option>
+          ))}
+        </Form.Select>
+      );
+    }
+
+    if (key === 'purchaseDate' || key === 'reminderDate') {
+      return (
+        <Form.Control
+          type="text"
+          onFocus={(e) => e.target.type = 'date'}
+          onBlur={(e) => {
+            if (!e.target.value) e.target.type = 'text';
+          }}
+          name={key}
+          placeholder={key === 'purchaseDate' ? 'Select purchase date' : 'Select reminder date'}
+          value={value}
+          onChange={handleInputChange}
+        />
+      );
+    }
+
+    return (
+      <Form.Control
+        type={key === 'price' || key === 'mortgagePayment' || key === 'interestRate' || key === 'utilities' || key === 'otherExpenses' ? 'number' : 'text'}
+        name={key}
+        placeholder={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+        value={value}
+        onChange={handleInputChange}
+        step="0.01" // Allow decimal values
+      />
+    );
+  };
 
   return (
     <Layout>
@@ -223,31 +270,7 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
                     .filter(([key]) => key !== 'address')
                     .map(([key, value]) => (
                       <div className="col-12" key={key}>
-                        {key === 'currency' ? (
-                          <Form.Select
-                            name={key}
-                            value={value}
-                            onChange={handleInputChange}
-                          >
-                            {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR'].map(currency => (
-                              <option key={currency} value={currency}>{currency}</option>
-                            ))}
-                          </Form.Select>
-                        ) : (
-                          <Form.Control
-                            type={key.includes('Date') ? 'text' : 
-                                  ['price', 'mortgagePayment', 'interestRate', 'utilities', 'otherExpenses', 'bedrooms', 'bathrooms'].includes(key) ? 'number' : 'text'}
-                            onFocus={(e) => key.includes('Date') ? e.target.type = 'date' : null}
-                            onBlur={(e) => {
-                              if (key.includes('Date') && !e.target.value) e.target.type = 'text';
-                            }}
-                            name={key}
-                            placeholder={key === 'purchaseDate' ? 'Select purchase date' :
-                                       key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                            value={value}
-                            onChange={handleInputChange}
-                          />
-                        )}
+                        {renderFormControl(key, value)}
                       </div>
                     ))}
                   <div className="col-12">
@@ -266,18 +289,15 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
 
           {/* Table and Charts Column */}
           <div className="col-12 col-xl-8">
-            <div className="row g-4">
-                <Card className="mb-4">
-                  <Card.Header>
-                    <h5 className="mb-0">Total Property Value: {propertyTotalPrice}</h5>
-                    <h5 className="mb-0">Total Monthly Cost: {propertyTotalMonthlyCost}</h5>
-                  </Card.Header>
-                </Card>
-            </div>
-            
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Property Value Projection</h5>
+                <h5 className="mb-0">Total Property Value: ${propertyTotalPrice.toFixed(2)}</h5>
+                <h5 className="mb-0">Total Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</h5>
+              </Card.Header>
+            </Card>
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Property Value Analysis</h5>
               </Card.Header>
               <Card.Body>
                 <PropertyGrowthChart propertyList={propertyList} />

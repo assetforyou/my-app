@@ -1,18 +1,16 @@
 import React, { useState, useRef } from 'react';
 import Layout from '../components/AdLayout';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
 import axios from 'axios';
 import { Upload, Download, MoreVertical } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import CryptoProjection from '../components/CryptoProjection';
+import DynamoDBService from '../dynamoDBService';
 
-// Replace with your API key
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
-function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, fetchCryptoDetails }) {
+function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTotal, fetchCryptoDetails }) {
   const [cryptoDetails, setCryptoDetails] = useState({
     name: '',
     symbol: '',
@@ -35,6 +33,17 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, fetchCrypto
     const { name, value } = e.target;
     setCryptoDetails(prev => ({ ...prev, [name]: value }));
   };
+  
+  const handleSearchCrypto = async () => {
+    try {
+      const response = await axios.get(
+        `${COINGECKO_API_BASE}/search?query=${searchQuery}`
+      );
+      setSearchResults(response.data.coins || []);
+    } catch (error) {
+      console.error('Error searching cryptocurrencies:', error);
+    }
+  };
 
   const fetchLiveCryptoPrice = async (symbol) => {
     try {
@@ -55,22 +64,18 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, fetchCrypto
       const numberOfCoins = parseFloat(cryptoDetails.number);
       const totalValue = numberOfCoins * livePrice;
 
-      try {
-        const newCryptoRef = await addDoc(collection(db, 'crypto'), {
-          ...cryptoDetails,
-          value: livePrice,
-          total: totalValue,
-          userEmail,
-        });
+      const newCrypto = {
+        ...cryptoDetails,
+        userEmail,
+        value: livePrice,
+        total: totalValue,
+        id: Date.now() // Generate a unique ID as a number
+      };
 
-        const newCrypto = {
-          id: newCryptoRef.id,
-          ...cryptoDetails,
-          value: livePrice,
-          total: totalValue,
-          userEmail,
-        };
-        setCryptoList(prev => [...prev, newCrypto]);
+      try {
+        const savedCrypto = await DynamoDBService.addAsset('Crypto', newCrypto);
+        setCryptoList(prev => [...prev, savedCrypto]);
+        setCryptoTotal(prev => prev + totalValue);
 
         setCryptoDetails({
           name: '',
@@ -84,9 +89,9 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, fetchCrypto
           reminderNote: '',
           reminderDate: ''
         });
+
         setSaveButtonText('Saved!');
         setTimeout(() => setSaveButtonText('Save'), 2000);
-        fetchCryptoDetails(userEmail);
       } catch (error) {
         console.error('Error saving crypto details:', error);
         setSaveButtonText('Save');
@@ -98,43 +103,19 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, fetchCrypto
     }
   };
 
-  const handleSearchCrypto = async () => {
-    try {
-      const response = await axios.get(
-        `${COINGECKO_API_BASE}/search?query=${searchQuery}`
-      );
-      setSearchResults(response.data.coins || []);
-    } catch (error) {
-      console.error('Error searching cryptocurrencies:', error);
-    }
-  };
-
-  const handleCryptoSelect = (cryptoId) => {
-    setSelectedCryptoIds(prev => {
-      if (prev.includes(cryptoId)) {
-        return prev.filter(id => id !== cryptoId);
-      } else {
-        return [...prev, cryptoId];
-      }
-    });
-  };
-
   const handleDeleteCrypto = async (cryptoId) => {
-    if (window.confirm('Are you sure you want to delete this crypto entry?')) {
-      try {
-        await deleteDoc(doc(db, 'crypto', cryptoId));
-        setCryptoList(prev => prev.filter(crypto => crypto.id !== cryptoId));
-        if (selectedCryptoIds.includes(cryptoId)) {
-          setSelectedCryptoIds(prev => prev.filter(id => id !== cryptoId));
-        }
-        alert('Crypto entry deleted successfully.');
-        fetchCryptoDetails(userEmail);
-      } catch (error) {
-        console.error('Error deleting crypto entry:', error);
-        alert('Failed to delete crypto entry.');
-      }
+  if (window.confirm('Are you sure you want to delete this crypto entry?')) {
+    try {
+      await DynamoDBService.deleteAsset('Crypto', cryptoId, userEmail); // Pass userEmail
+      setCryptoList(prev => prev.filter(crypto => crypto.id !== cryptoId));
+      alert('Crypto entry deleted successfully.');
+      fetchCryptoDetails(userEmail);
+    } catch (error) {
+      console.error('Error deleting crypto entry:', error);
+      alert('Failed to delete crypto entry.');
     }
-  };
+  }
+};
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -317,19 +298,9 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, fetchCrypto
           <div className="col-12 col-xl-8">
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">
-                  {selectedCryptoIds.length > 0 
-                    ? `Selected Crypto Value: $${cryptoList
-                        .filter(s => selectedCryptoIds.includes(s.id))
-                        .reduce((sum, crypto) => sum + crypto.total, 0)
-                        .toLocaleString()}`
-                    : `Total Portfolio Value: ${cryptoTotal}`
-                  }
-                </h5>
+                <h5 className="mb-0">Total Portfolio Value: ${cryptoTotal.toFixed(2)}</h5>
               </Card.Header>
             </Card>
-
-            {/* Crypto Growth Component */}
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Cryptocurrency Value Analysis</h5>
@@ -343,8 +314,6 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, fetchCrypto
               <ResponsiveTable 
                 data={cryptoList}
                 onDelete={handleDeleteCrypto}
-                onSelect={handleCryptoSelect}
-                selectedCryptoIds={selectedCryptoIds}
               />
             </Card>
           </div>

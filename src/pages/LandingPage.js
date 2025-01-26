@@ -1,23 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/AdLayout';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebase';
-import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { Settings, Vault } from 'lucide-react';
+import { auth } from '../firebase';
+import { Settings, Vault, X } from 'lucide-react';
 import Auto from './Auto';
 import Cash from './Cash';
 import Stocks from './Stocks';
 import Metals from './Metals';
 import Property from './Property';
 import Loan from './Loan';
-import Crypto from './Crypto';  // Added Crypto import
+import Crypto from './Crypto';
 import CreateAsset from './CreateAsset';
 import CustomAsset from './CustomAsset';
 import AccountSettings from '../components/AccountSettings';
 import '../style/LandingPage.css';
 import logo_transparent from '../images/logo_transparent.png';
 import AnalyticsDashboard from '../pages/AnalyticsDashboard';
-import CustomAssetCard from '../components/AssetActionModal'; 
+import DynamoDBService from '../dynamoDBService';
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
@@ -35,26 +34,52 @@ function LandingPage() {
   const [propertyTotalMonthlyCost, setPropertyTotalMonthlyCost] = useState(0);
   const [loanList, setLoanList] = useState([]);
   const [loanTotal, setLoanTotal] = useState(0);
-  const [cryptoList, setCryptoList] = useState([]); // Added for crypto
-  const [cryptoTotal, setCryptoTotal] = useState(0); // Added for crypto
+  const [cryptoList, setCryptoList] = useState([]);
+  const [cryptoTotal, setCryptoTotal] = useState(0);
   const [customAssets, setCustomAssets] = useState([]);
-  const [selectedAssetForAction, setSelectedAssetForAction] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const settingsRef = useRef(null);
   const navigate = useNavigate();
+
+  // Toggle settings dropdown
+  const toggleSettings = () => {
+    setIsSettingsOpen(!isSettingsOpen);
+  };
+
+  // Handle account settings navigation
+  const handleAccountSettings = () => {
+    setSelectedAsset('accountSettings');
+    setIsSettingsOpen(false);
+  };
+
+  // Handle sign out
+  const handleSignOut = () => {
+    setIsSettingsOpen(false);
+    auth.signOut().then(() => {
+      navigate('/login');
+    }).catch((error) => {
+      console.error('Sign out error:', error);
+      alert('Failed to sign out. Please try again.');
+    });
+  };
+
+  // Handle back to website navigation
+  const handleBackToWebsite = () => {
+    setIsSettingsOpen(false);
+    navigate('/');
+  };
+
+  // Set selected asset and close settings
+  const setSelectedAssetAndCloseSettings = (asset) => {
+    setSelectedAsset(asset);
+    setIsSettingsOpen(false);
+  };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setUserEmail(user.email || 'User');
-        fetchCarDetails(user.email);
-        fetchCashDetails(user.email);
-        fetchStockDetails(user.email);
-        fetchMetalDetails(user.email);
-        fetchPropertyDetails(user.email);
-        fetchLoanDetails(user.email);
-        fetchCryptoDetails(user.email); // Added crypto fetch
-        fetchCustomAssets(user.email);
+        fetchAllAssetDetails(user.email);
       } else {
         navigate('/login');
       }
@@ -74,39 +99,27 @@ function LandingPage() {
     };
   }, [navigate]);
 
-  const toggleSettings = () => {
-    setIsSettingsOpen(!isSettingsOpen);
-  };
-
-  const handleAccountSettings = () => {
-    setSelectedAsset('accountSettings');
-    setIsSettingsOpen(false);
-  };
-
-  const handleSignOut = () => {
-    setIsSettingsOpen(false);
-    auth.signOut().then(() => {
-      navigate('/login');
-    }).catch((error) => {
-      console.error('Sign out error:', error);
-    });
-  };
-
-  const handleBackToWebsite = () => {
-    setIsSettingsOpen(false);
-    navigate('/');
-  };
-
-  const setSelectedAssetAndCloseSettings = (asset) => {
-    setSelectedAsset(asset);
-    setIsSettingsOpen(false);
+  const fetchAllAssetDetails = async (email) => {
+    try {
+      await Promise.all([
+        fetchCarDetails(email),
+        fetchCashDetails(email),
+        fetchStockDetails(email),
+        fetchMetalDetails(email),
+        fetchPropertyDetails(email),
+        fetchLoanDetails(email),
+        fetchCryptoDetails(email),
+        fetchCustomAssets(email),
+      ]);
+    } catch (error) {
+      console.error('Error fetching asset details:', error);
+      alert('Failed to fetch asset details. Please try again.');
+    }
   };
 
   const fetchCarDetails = async (email) => {
     try {
-      const q = query(collection(db, 'autos'), where("userEmail", "==", email));
-      const querySnapshot = await getDocs(q);
-      const cars = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const cars = await DynamoDBService.fetchAssets('Autos', email);
       setCarList(cars);
       const total = cars.reduce((sum, car) => sum + parseFloat(car.value || 0), 0);
       setAutoTotal(total);
@@ -117,9 +130,7 @@ function LandingPage() {
 
   const fetchCashDetails = async (email) => {
     try {
-      const q = query(collection(db, 'cash'), where("userEmail", "==", email));
-      const querySnapshot = await getDocs(q);
-      const cashEntries = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const cashEntries = await DynamoDBService.fetchAssets('Cash', email);
       setCashList(cashEntries);
       const total = cashEntries.reduce((sum, entry) => sum + parseFloat(entry.amount), 0);
       setCashTotal(total);
@@ -130,9 +141,7 @@ function LandingPage() {
 
   const fetchStockDetails = async (email) => {
     try {
-      const q = query(collection(db, 'stocks'), where("userEmail", "==", email));
-      const querySnapshot = await getDocs(q);
-      const stocks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const stocks = await DynamoDBService.fetchAssets('Stocks', email);
       setStockList(stocks);
       const total = stocks.reduce((sum, stock) => sum + parseFloat(stock.total), 0);
       setStockTotal(total);
@@ -143,9 +152,7 @@ function LandingPage() {
 
   const fetchMetalDetails = async (email) => {
     try {
-      const q = query(collection(db, 'metals'), where("userEmail", "==", email));
-      const querySnapshot = await getDocs(q);
-      const metals = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const metals = await DynamoDBService.fetchAssets('Metals', email);
       setMetalList(metals);
       const total = metals.reduce((sum, metal) => sum + parseFloat(metal.total), 0);
       setMetalTotal(total);
@@ -156,9 +163,7 @@ function LandingPage() {
 
   const fetchPropertyDetails = async (email) => {
     try {
-      const q = query(collection(db, 'properties'), where("userEmail", "==", email));
-      const querySnapshot = await getDocs(q);
-      const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const properties = await DynamoDBService.fetchAssets('Properties', email);
       setPropertyList(properties);
       const totalPrice = properties.reduce((sum, property) => sum + parseFloat(property.price || 0), 0);
       const totalMonthlyCost = properties.reduce((sum, property) => sum + parseFloat(property.totalMonthlyCost || 0), 0);
@@ -169,20 +174,9 @@ function LandingPage() {
     }
   };
 
-  const updatePropertyList = (newPropertyList) => {
-    setPropertyList(newPropertyList);
-    const totalPrice = newPropertyList.reduce((sum, property) => sum + parseFloat(property.price || 0), 0);
-    const totalMonthlyCost = newPropertyList.reduce((sum, property) => sum + parseFloat(property.totalMonthlyCost || 0), 0);
-    setPropertyTotalPrice(totalPrice);
-    setPropertyTotalMonthlyCost(totalMonthlyCost);
-  };
-
-
   const fetchLoanDetails = async (email) => {
     try {
-      const q = query(collection(db, 'loans'), where("userEmail", "==", email));
-      const querySnapshot = await getDocs(q);
-      const loans = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const loans = await DynamoDBService.fetchAssets('Loans', email);
       setLoanList(loans);
       const total = loans.reduce((sum, loan) => sum + parseFloat(loan.loanValue || 0), 0);
       setLoanTotal(total);
@@ -191,57 +185,9 @@ function LandingPage() {
     }
   };
 
-  const fetchCustomAssets = async (email) => {
-    try {
-      const q = query(collection(db, 'customAssets'), where("userEmail", "==", email));
-      const querySnapshot = await getDocs(q);
-      const assets = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setCustomAssets(assets);
-    } catch (error) {
-      console.error('Error fetching custom assets:', error);
-    }
-  };
-
-  const updateAssetTotal = async (assetId, newTotal) => {
-    try {
-      const assetRef = doc(db, 'customAssets', assetId);
-      await updateDoc(assetRef, { totalValue: newTotal });
-      
-      setCustomAssets(prevAssets => 
-        prevAssets.map(asset => 
-          asset.id === assetId ? { ...asset, totalValue: newTotal } : asset
-        )
-      );
-    } catch (error) {
-      console.error('Error updating asset total:', error);
-    }
-  };
-
-  const handleAssetClick = (asset) => {
-    setSelectedAssetForAction(asset);
-  };
-  
-  const handleAssetAction = async (action) => {
-    if (action === 'view') {
-      setSelectedAsset(`custom-${selectedAssetForAction.id}`);
-    } else if (action === 'delete') {
-      try {
-        await deleteDoc(doc(db, 'customAssets', selectedAssetForAction.id));
-        setCustomAssets(prevAssets => prevAssets.filter(asset => asset.id !== selectedAssetForAction.id));
-        setSelectedAsset('home');
-      } catch (error) {
-        console.error('Error deleting asset:', error);
-        alert('Failed to delete asset.');
-      }
-    }
-    setSelectedAssetForAction(null);
-  };
-
   const fetchCryptoDetails = async (email) => {
     try {
-      const q = query(collection(db, 'crypto'), where("userEmail", "==", email));
-      const querySnapshot = await getDocs(q);
-      const cryptos = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const cryptos = await DynamoDBService.fetchAssets('Crypto', email);
       setCryptoList(cryptos);
       const total = cryptos.reduce((sum, crypto) => sum + parseFloat(crypto.total || 0), 0);
       setCryptoTotal(total);
@@ -250,54 +196,158 @@ function LandingPage() {
     }
   };
 
-  const renderContent = () => {
-    if (selectedAssetForAction) {
-      return (
-        <div className="asset-action-container">
-          <h3>What would you like to do with {selectedAssetForAction.name}?</h3>
-          <div className="asset-action-buttons">
-            <button onClick={() => handleAssetAction('view')}>View Asset Page</button>
-            <button onClick={() => handleAssetAction('delete')}>Delete Asset</button>
-            <button onClick={() => setSelectedAssetForAction(null)}>Cancel</button>
-          </div>
-        </div>
-      );
+  const fetchCustomAssets = async (email) => {
+    try {
+      const assets = await DynamoDBService.fetchAssets('CustomAssets', email);
+      console.log('Fetched custom assets:', assets); // Debugging log
+      setCustomAssets(assets);
+    } catch (error) {
+      console.error('Error fetching custom assets:', error);
     }
+  };
 
+  const updateAssetTotal = async (assetId, newTotal) => {
+    try {
+      await DynamoDBService.updateAsset('CustomAssets', assetId, { totalValue: newTotal });
+      setCustomAssets(prevAssets =>
+        prevAssets.map(asset =>
+          asset.id === assetId ? { ...asset, totalValue: newTotal } : asset
+        )
+      );
+    } catch (error) {
+      console.error('Error updating asset total:', error);
+      alert('Failed to update asset total. Please try again.');
+    }
+  };
+
+  const handleDeleteAsset = async (assetId) => {
+    if (window.confirm('Are you sure you want to delete this asset?')) {
+      try {
+        console.log('Deleting asset with ID:', assetId); // Debugging log
+        console.log('User email:', userEmail); // Debugging log
+
+        // Ensure the asset ID is a number
+        const id = Number(assetId);
+
+        // Call the deleteAsset function
+        const isDeleted = await DynamoDBService.deleteAsset('CustomAssets', id, userEmail);
+
+        if (isDeleted) {
+          console.log('Asset deleted successfully.');
+          setCustomAssets(prevAssets => prevAssets.filter(asset => asset.id !== id));
+          alert('Asset has been deleted.');
+        } else {
+          console.error('Failed to delete asset.');
+        }
+      } catch (error) {
+        console.error('Error deleting asset:', error);
+        alert('Failed to delete asset. Please try again.');
+      }
+    }
+  };
+
+  const renderContent = () => {
     switch (selectedAsset) {
       case 'accountSettings':
         return <AccountSettings userEmail={userEmail} />;
       case 'auto':
-        return <Auto userEmail={userEmail} carList={carList} setCarList={setCarList} autoTotal={autoTotal} fetchCarDetails={fetchCarDetails} />;
+        return (
+          <Auto
+            userEmail={userEmail}
+            carList={carList}
+            setCarList={setCarList}
+            autoTotal={autoTotal}
+            setAutoTotal={setAutoTotal}
+            fetchCarDetails={fetchCarDetails}
+          />
+        );
       case 'cash':
-        return <Cash userEmail={userEmail} cashList={cashList} setCashList={setCashList} cashTotal={cashTotal} fetchCashDetails={fetchCashDetails} />;
+        return (
+          <Cash
+            userEmail={userEmail}
+            cashList={cashList}
+            setCashList={setCashList}
+            cashTotal={cashTotal}
+            setCashTotal={setCashTotal}
+            fetchCashDetails={fetchCashDetails}
+          />
+        );
       case 'stocks':
-        return <Stocks userEmail={userEmail} stockList={stockList} stockTotal={stockTotal} fetchStockDetails={fetchStockDetails} />;
+        return (
+          <Stocks
+            userEmail={userEmail}
+            stockList={stockList}
+            setStockList={setStockList}
+            stockTotal={stockTotal}
+            setStockTotal={setStockTotal}
+            fetchStockDetails={fetchStockDetails}
+          />
+        );
       case 'metals':
-        return <Metals userEmail={userEmail} metalList={metalList} setMetalList={setMetalList} metalTotal={metalTotal} fetchMetalDetails={fetchMetalDetails} />;
+        return (
+          <Metals
+            userEmail={userEmail}
+            metalList={metalList}
+            setMetalList={setMetalList}
+            metalTotal={metalTotal}
+            setMetalTotal={setMetalTotal}
+            fetchMetalDetails={fetchMetalDetails}
+          />
+        );
       case 'property':
-        return <Property userEmail={userEmail} propertyList={propertyList} setPropertyList={updatePropertyList} propertyTotalPrice={propertyTotalPrice} propertyTotalMonthlyCost={propertyTotalMonthlyCost} fetchPropertyDetails={fetchPropertyDetails} />;
+        return (
+          <Property
+            userEmail={userEmail}
+            propertyList={propertyList}
+            setPropertyList={setPropertyList}
+            propertyTotalPrice={propertyTotalPrice}
+            setPropertyTotalPrice={setPropertyTotalPrice}
+            propertyTotalMonthlyCost={propertyTotalMonthlyCost}
+            setPropertyTotalMonthlyCost={setPropertyTotalMonthlyCost}
+            fetchPropertyDetails={fetchPropertyDetails}
+          />
+        );
       case 'loan':
-        return <Loan userEmail={userEmail} loanList={loanList} loanTotal={loanTotal} fetchLoanDetails={() => fetchLoanDetails(userEmail)} />;
+        return (
+          <Loan
+            userEmail={userEmail}
+            loanList={loanList}
+            setLoanList={setLoanList}
+            loanTotal={loanTotal}
+            setLoanTotal={setLoanTotal}
+            fetchLoanDetails={fetchLoanDetails}
+          />
+        );
       case 'crypto':
-        return <Crypto userEmail={userEmail} cryptoList={cryptoList} setCryptoList={setCryptoList} cryptoTotal={cryptoTotal} fetchCryptoDetails={() => fetchCryptoDetails(userEmail)} />;
+        return (
+          <Crypto
+            userEmail={userEmail}
+            cryptoList={cryptoList}
+            setCryptoList={setCryptoList}
+            cryptoTotal={cryptoTotal}
+            setCryptoTotal={setCryptoTotal}
+            fetchCryptoDetails={fetchCryptoDetails}
+          />
+        );
       case 'createAsset':
         return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'analytics':
-        return <AnalyticsDashboard 
-          cashList={cashList}
-          stockList={stockList}
-          metalList={metalList}
-          propertyList={propertyList}
-          cryptoList={cryptoList} // Added crypto to analytics
-          cashTotal={cashTotal}
-          stockTotal={stockTotal}
-          metalTotal={metalTotal}
-          propertyTotalPrice={propertyTotalPrice}
-          cryptoTotal={cryptoTotal} // Added crypto total to analytics
-          userEmail={userEmail}
-          customAssets={customAssets}
-        />;
+        return (
+          <AnalyticsDashboard
+            cashList={cashList}
+            stockList={stockList}
+            metalList={metalList}
+            propertyList={propertyList}
+            cryptoList={cryptoList}
+            cashTotal={cashTotal}
+            stockTotal={stockTotal}
+            metalTotal={metalTotal}
+            propertyTotalPrice={propertyTotalPrice}
+            cryptoTotal={cryptoTotal}
+            userEmail={userEmail}
+            customAssets={customAssets}
+          />
+        );
       case 'home':
         return (
           <Layout>
@@ -346,24 +396,22 @@ function LandingPage() {
                   <div className="summary-section">
                     <h2>Custom Assets</h2>
                     <div className="custom-assets">
-                    {customAssets.map(asset => (
-                      <CustomAssetCard
-                        key={asset.id}
-                        asset={asset}
-                        onView={() => setSelectedAsset(`custom-${asset.id}`)}
-                        onDelete={async () => {
-                          try {
-                            await deleteDoc(doc(db, 'customAssets', asset.id));
-                            setCustomAssets(prevAssets => 
-                              prevAssets.filter(a => a.id !== asset.id)
-                            );
-                          } catch (error) {
-                            console.error('Error deleting asset:', error);
-                            alert('Failed to delete asset.');
-                          }
-                        }}
-                      />
-                    ))}
+                      {customAssets.map(asset => (
+                        <div 
+                          key={asset.id} 
+                          className="custom-asset-card"
+                          onClick={() => setSelectedAsset(`custom-${asset.id}`)} // Navigate to the custom asset's page
+                        >
+                          <div className="custom-asset-delete-icon" onClick={(e) => {
+                            e.stopPropagation(); // Prevent the card click event from firing
+                            handleDeleteAsset(asset.id);
+                          }}>
+                            <X size={20} />
+                          </div>
+                          <h3>{asset.name}</h3>
+                          <p>Total Value: ${parseFloat(asset.totalValue || 0).toFixed(2)}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -377,15 +425,22 @@ function LandingPage() {
       default:
         if (selectedAsset.startsWith('custom-')) {
           const assetId = selectedAsset.split('-')[1];
-          const asset = customAssets.find(a => a.id === assetId);
-          return asset ? (
-            <CustomAsset 
-              userEmail={userEmail} 
-              asset={asset} 
-              fetchCustomAssets={fetchCustomAssets}
-              updateAssetTotal={updateAssetTotal}
-            />
-          ) : null;
+          const asset = customAssets.find(a => a.id === Number(assetId));
+          console.log('Selected Asset:', asset); // Debugging log
+        
+          if (asset) {
+            return (
+              <CustomAsset
+                userEmail={userEmail}
+                asset={asset}
+                fetchCustomAssets={fetchCustomAssets}
+                updateAssetTotal={updateAssetTotal}
+              />
+            );
+          } else {
+            console.error('Asset not found:', assetId); // Debugging log
+            return <div>Asset not found.</div>;
+          }
         }
         return <div>Select an asset type from the sidebar</div>;
     }
@@ -427,7 +482,12 @@ function LandingPage() {
                 <button onClick={() => setSelectedAsset('loan')}>Loan</button>
                 <button onClick={() => setSelectedAsset('crypto')}>Crypto</button>
                 {customAssets.map(asset => (
-                  <button key={asset.id} onClick={() => setSelectedAsset(`custom-${asset.id}`)}>{asset.name}</button>
+                  <button 
+                    key={asset.id} 
+                    onClick={() => setSelectedAsset(`custom-${asset.id}`)} // Set selectedAsset to custom-<assetId>
+                  >
+                    {asset.name}
+                  </button>
                 ))}
               </div>
             </div>

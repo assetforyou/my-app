@@ -23,6 +23,7 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+
 const AutoDepreciation = ({ carList, selectedCarIds }) => {
   const [depreciationRate, setDepreciationRate] = useState(15);
   const [timePeriod, setTimePeriod] = useState(5);
@@ -66,17 +67,21 @@ const AutoDepreciation = ({ carList, selectedCarIds }) => {
 
   const yearLabels = Array.from({ length: timePeriod + 1 }, (_, i) => i);
 
+  // Filter cars based on selectedCarIds
   const carsToShow = selectedCarIds?.length > 0 
     ? carList.filter(car => selectedCarIds.includes(car.id))
     : carList;
 
-  const allDepreciationData = carsToShow.map(car => {
-    const initialValue = parseFloat(car.value);
-    return {
-      make: car.make,
-      values: calculateDepreciation(initialValue, timePeriod)
-    };
-  });
+  // Ensure carList is an array and handle missing/undefined fields
+  const allDepreciationData = carsToShow
+    .filter(car => car && car.value) // Ensure car and car.value exist
+    .map(car => {
+      const initialValue = parseFloat(car.value || 0); // Default to 0 if value is missing
+      return {
+        make: car.make || 'Unknown Make', // Default to 'Unknown Make' if make is missing
+        values: calculateDepreciation(initialValue, timePeriod)
+      };
+    });
 
   const chartData = {
     labels: yearLabels,

@@ -1,13 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/AdLayout';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
 import { Upload, Download, MoreVertical } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import AutoDepreciation from '../components/AutoDepreciation';
+import DynamoDBService from '../dynamoDBService';
 
 function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
   const [carDetails, setCarDetails] = useState({
@@ -20,39 +18,62 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
     reminderNote: '',
     reminderDate: ''
   });
+
   const [saveButtonText, setSaveButtonText] = useState('Save');
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCarDetails(prev => ({ ...prev, [name]: value }));
   };
-  
+
   const [selectedCarIds, setSelectedCarIds] = useState([]);
 
   const handleCarSelection = (selectedIds) => {
     setSelectedCarIds(selectedIds);
   };
 
+  const fetchCarDetails = async (email) => {
+    try {
+      const cars = await DynamoDBService.fetchAssets('Autos', email);
+      setCarList(cars);
+      const total = cars.reduce((sum, car) => sum + parseFloat(car.value || 0), 0);
+      setAutoTotal(total);
+    } catch (error) {
+      console.error('Error fetching car details:', error);
+    }
+  };
+
   const handleSaveCarDetails = async () => {
+    // Validate required fields
+    if (!carDetails.make || !carDetails.value || !carDetails.year) {
+      alert('Please fill in all required fields (Make, Value, Year)');
+      return;
+    }
+
     setSaveButtonText('Saving...');
+    setIsLoading(true);
+
     try {
       const carValue = parseFloat(carDetails.value);
-      const newCarRef = await addDoc(collection(db, 'autos'), {
-        ...carDetails,
-        userEmail,
-        value: carValue,
-      });
-
       const newCar = {
-        id: newCarRef.id,
         ...carDetails,
-        userEmail,
+        userEmail, // Ensure userEmail is included
         value: carValue,
+        purchaseDate: carDetails.purchaseDate || new Date().toISOString().split('T')[0],
+        id: Date.now() // Generate a unique ID as a number
       };
-      setCarList(prev => [...prev, newCar]);
+
+      console.log('Saving car details:', newCar); // Debugging log
+
+      const savedCar = await DynamoDBService.addAsset('Autos', newCar);
+      
+      // Update car list and total
+      setCarList(prev => [...prev, savedCar]);
       setAutoTotal(prev => prev + carValue);
 
+      // Reset form
       setCarDetails({
         make: '',
         mileage: '',
@@ -63,29 +84,46 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
         reminderNote: '',
         reminderDate: ''
       });
+
       setSaveButtonText('Saved!');
+      setIsLoading(false);
+
+      // Reset button text after 2 seconds
       setTimeout(() => setSaveButtonText('Save'), 2000);
     } catch (error) {
       console.error('Error saving car details:', error);
       setSaveButtonText('Save');
-      alert('Failed to save car details.');
+      setIsLoading(false);
+      alert('Failed to save car details. Please try again.');
     }
   };
 
   const handleDeleteCar = async (carId) => {
     if (window.confirm('Are you sure you want to delete this car?')) {
       try {
-        await deleteDoc(doc(db, 'autos', carId));
-        const deletedCar = carList.find(car => car.id === carId);
-        setCarList(prev => prev.filter(car => car.id !== carId));
-        setAutoTotal(prev => prev - parseFloat(deletedCar.value));
-        alert('Car deleted successfully.');
+        console.log('Deleting car with ID:', carId);
+        const isDeleted = await DynamoDBService.deleteAsset('Autos', carId, userEmail); // Pass userEmail
+    
+        if (isDeleted) {
+          console.log('Car deleted successfully. Updating state...');
+          const updatedCarList = carList.filter(car => car.id !== carId);
+          setCarList(updatedCarList);
+    
+          const newTotal = updatedCarList.reduce((sum, car) => sum + parseFloat(car.value || 0), 0);
+          setAutoTotal(newTotal);
+    
+          alert('Car has been deleted.');
+        } else {
+          alert('Failed to delete car. Please check the console for more details.');
+        }
       } catch (error) {
         console.error('Error deleting car:', error);
-        alert('Failed to delete car.');
+        alert(`Failed to delete car. Check console for details.`);
       }
     }
   };
+
+  
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -103,7 +141,7 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
           year: data[0].year || '',
           value: data[0].value || '',
           currency: data[0].currency || 'USD',
-          purchaseDate: data[0].purchaseDate || '',
+          purchaseDate: data[0].purchaseDate || new Date().toISOString().split('T')[0],
           reminderNote: data[0].reminderNote || '',
           reminderDate: data[0].reminderDate || ''
         });
@@ -119,16 +157,9 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
     XLSX.writeFile(wb, "car_data.xlsx");
   };
 
-  const chartData = carList
-    .map(car => ({
-      purchaseDate: car.purchaseDate,
-      value: parseFloat(car.value)
-    }))
-    .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
-  
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 1990 + 2 }, (_, i) => currentYear + 1 - i);
-  
+
   const renderFormControl = (key, value) => {
     if (key === 'currency') {
       return (
@@ -218,10 +249,11 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
                     </div>
                   ))}
                   <div className="col-12">
-                    <Button 
-                      variant="primary" 
-                      onClick={handleSaveCarDetails} 
+                    <Button
+                      variant="primary"
+                      onClick={handleSaveCarDetails}
                       className="w-100"
+                      disabled={isLoading}
                     >
                       {saveButtonText}
                     </Button>
@@ -235,7 +267,10 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
           <div className="col-12 col-xl-8">
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Total Value: {autoTotal}</h5>
+                <h5 className="mb-0">Total Value: {new Intl.NumberFormat('en-US', { 
+                  style: 'currency', 
+                  currency: 'USD' 
+                }).format(autoTotal)}</h5>
               </Card.Header>
             </Card>
             <Card className="mb-4">
@@ -243,12 +278,12 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
                 <h5 className="mb-0">Auto Value Analysis</h5>
               </Card.Header>
               <Card.Body>
-                <AutoDepreciation 
-                  carList={carList} 
+                <AutoDepreciation
+                  carList={carList}
                   selectedCarIds={selectedCarIds}
                 />
               </Card.Body>
-              <ResponsiveTable 
+              <ResponsiveTable
                 data={carList}
                 onDelete={handleDeleteCar}
                 onSelectionChange={handleCarSelection}

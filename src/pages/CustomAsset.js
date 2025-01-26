@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/AdLayout';
-import { collection, addDoc, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../firebase';
 import { Upload, Download, MoreVertical } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import CustomAssetVisualization from '../components/CustomAssetVisualization';
+import DynamoDBService from '../dynamoDBService';
 
 function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) {
   const [assetItems, setAssetItems] = useState([]);
@@ -17,18 +15,49 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchAssetItems();
-  }, [asset.id]);
-
+    if (asset) {
+      fetchAssetItems();
+    }
+  }, [asset.id]); // Re-fetch items when asset.id changes
+  
   const fetchAssetItems = async () => {
     try {
-      const q = query(collection(db, `customAssets/${asset.id}/items`), where("userEmail", "==", userEmail));
-      const querySnapshot = await getDocs(q);
-      const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Fetch the asset definition from the CustomAssets table
+      const assetDefinition = await DynamoDBService.fetchAssetById('CustomAssets', asset.id);
+      console.log('Asset Definition:', assetDefinition);
+  
+      // Fetch all items for the custom asset from the CustomAssetItems table
+      const items = await DynamoDBService.fetchAssetItems('CustomAssetItems', asset.id);
+      console.log('Fetched Items:', items);
+  
       setAssetItems(items);
       calculateTotalValue(items);
     } catch (error) {
       console.error('Error fetching custom asset items:', error);
+    }
+  };
+  
+  const handleAddItem = async () => {
+    setSaveButtonText('Adding...');
+    try {
+      const newItemWithId = {
+        ...newItem,
+        userEmail,
+        assetId: asset.id, // Link to the asset definition
+        id: Date.now().toString(), // Generate a unique ID for the item
+        createdAt: new Date().toISOString()
+      };
+  
+      // Save the item to the CustomAssetItems table
+      const savedItem = await DynamoDBService.addAssetItem('CustomAssetItems', newItemWithId);
+      setAssetItems(prev => [...prev, savedItem]);
+      setNewItem({});
+      setSaveButtonText('Added!');
+      setTimeout(() => setSaveButtonText('Add Item'), 2000);
+    } catch (error) {
+      console.error('Error adding custom asset item:', error);
+      alert('Failed to add item.');
+      setSaveButtonText('Add Item');
     }
   };
 
@@ -46,30 +75,26 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
     setNewItem(prevItem => ({ ...prevItem, [name]: value }));
   };
 
-  const handleAddItem = async () => {
-    setSaveButtonText('Adding...');
-    try {
-      await addDoc(collection(db, `customAssets/${asset.id}/items`), {
-        ...newItem,
-        userEmail,
-      });
-      await fetchAssetItems();
-      setNewItem({});
-      setSaveButtonText('Added!');
-      setTimeout(() => setSaveButtonText('Add Item'), 2000);
-    } catch (error) {
-      console.error('Error adding custom asset item:', error);
-      alert('Failed to add item.');
-      setSaveButtonText('Add Item');
-    }
-  };
 
   const handleDeleteItem = async (itemId) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
-        await deleteDoc(doc(db, `customAssets/${asset.id}/items`, itemId));
-        await fetchAssetItems();
-        alert('Item deleted successfully.');
+        console.log('Deleting item with ID:', itemId); // Debugging log
+        console.log('User email:', userEmail); // Debugging log
+  
+        // Ensure the item ID is a number
+        const id = Number(itemId);
+  
+        // Call the deleteAssetItem function
+        const isDeleted = await DynamoDBService.deleteAssetItem('CustomAssetItems', id, userEmail);
+  
+        if (isDeleted) {
+          console.log('Item deleted successfully.');
+          setAssetItems(prev => prev.filter(item => item.id !== id));
+          alert('Item deleted successfully.');
+        } else {
+          console.error('Failed to delete item.');
+        }
       } catch (error) {
         console.error('Error deleting custom asset item:', error);
         alert('Failed to delete item.');
@@ -97,29 +122,13 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
     };
     reader.readAsBinaryString(file);
   };
-  
+
   const handleDownloadData = () => {
     const ws = XLSX.utils.json_to_sheet(assetItems);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "AssetItems");
     XLSX.writeFile(wb, `${asset.name}_data.xlsx`);
   };
-  
-  const chartData = assetItems
-    .filter(item => {
-      const dateField = asset.fields.find(field => field.type === 'date');
-      const costField = asset.fields.find(field => field.type === 'cost');
-      return item[dateField?.name] && item[costField?.name];
-    })
-    .map(item => {
-      const dateField = asset.fields.find(field => field.type === 'date');
-      const costField = asset.fields.find(field => field.type === 'cost');
-      return {
-        date: item[dateField.name],
-        value: parseFloat(item[costField.name])
-      };
-    })
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   const renderFormControl = (field) => {
     if (field.type === 'date') {
@@ -148,7 +157,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
       />
     );
   };
-    
+
   return (
     <Layout>
       <div className="container-fluid px-4">
@@ -197,31 +206,26 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
           <div className="col-12 col-xl-8">
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Total Value: {asset.currency} {totalValue.toFixed(2)}</h5>
+                <h5 className="mb-0">Total Value: ${totalValue.toFixed(2)}</h5>
               </Card.Header>
             </Card>
-            
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0"> Value Analysis</h5>
+                <h5 className="mb-0">Value Analysis</h5>
               </Card.Header>
               <Card.Body>
-              {chartData.length > 0 && (
                 <CustomAssetVisualization 
                   assetItems={assetItems}
                   assetFields={asset.fields}
                   assetName={asset.name}
-                  currency={asset.currency}
                 />
-              )}
               </Card.Body>
               <ResponsiveTable 
                 data={assetItems}
                 onDelete={handleDeleteItem}
                 fields={asset.fields}
-                currency={asset.currency}
               />
-             </Card>
+            </Card>
           </div>
         </div>
 

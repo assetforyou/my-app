@@ -1,16 +1,16 @@
 import React, { useState, useRef } from 'react';
 import Layout from '../components/AdLayout';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
 import axios from 'axios';
 import { Upload, Download, MoreVertical } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import StockProjection from '../components/StockProjection';
+import DynamoDBService from '../dynamoDBService';
+
 const ALPHA_VANTAGE_API_KEY = 'YOUR_API_KEY'; // Replace with your API key
 
-function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDetails }) {
+function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal, fetchStockDetails }) {
   const [stockDetails, setStockDetails] = useState({
     name: '',
     number: '',
@@ -32,7 +32,18 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     const { name, value } = e.target;
     setStockDetails(prev => ({ ...prev, [name]: value }));
   };
-
+  
+  const handleSearchStocks = async () => {
+    try {
+      const response = await axios.get(
+        `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${searchQuery}&apikey=${ALPHA_VANTAGE_API_KEY}`
+      );
+      setSearchResults(response.data.bestMatches || []);
+    } catch (error) {
+      console.error('Error searching stocks:', error);
+    }
+  };
+  
   const fetchLiveStockPrice = async (symbol) => {
     try {
       const response = await axios.get(
@@ -53,22 +64,18 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
       const numberOfStocks = parseFloat(stockDetails.number);
       const totalValue = numberOfStocks * livePrice;
 
-      try {
-        const newStockRef = await addDoc(collection(db, 'stocks'), {
-          ...stockDetails,
-          value: livePrice,
-          total: totalValue,
-          userEmail,
-        });
+      const newStock = {
+        ...stockDetails,
+        userEmail,
+        value: livePrice,
+        total: totalValue,
+        id: Date.now() // Generate a unique ID as a number
+      };
 
-        const newStock = {
-          id: newStockRef.id,
-          ...stockDetails,
-          value: livePrice,
-          total: totalValue,
-          userEmail,
-        };
-        setStockList(prev => [...prev, newStock]);
+      try {
+        const savedStock = await DynamoDBService.addAsset('Stocks', newStock);
+        setStockList(prev => [...prev, savedStock]);
+        setStockTotal(prev => prev + totalValue);
 
         setStockDetails({
           name: '',
@@ -81,9 +88,9 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
           reminderNote: '',
           reminderDate: ''
         });
+
         setSaveButtonText('Saved!');
         setTimeout(() => setSaveButtonText('Save'), 2000);
-        fetchStockDetails(userEmail);
       } catch (error) {
         console.error('Error saving stock details:', error);
         setSaveButtonText('Save');
@@ -95,35 +102,11 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
     }
   };
 
-  const handleSearchStocks = async () => {
-    try {
-      const response = await axios.get(
-        `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${searchQuery}&apikey=${ALPHA_VANTAGE_API_KEY}`
-      );
-      setSearchResults(response.data.bestMatches || []);
-    } catch (error) {
-      console.error('Error searching stocks:', error);
-    }
-  };
-
-  const handleStockSelect = (stockId) => {
-    setSelectedStockIds(prev => {
-      if (prev.includes(stockId)) {
-        return prev.filter(id => id !== stockId);
-      } else {
-        return [...prev, stockId];
-      }
-    });
-  };
-
   const handleDeleteStock = async (stockId) => {
     if (window.confirm('Are you sure you want to delete this stock entry?')) {
       try {
-        await deleteDoc(doc(db, 'stocks', stockId));
-        setStockList(prev => prev.filter(stock => stock.id !== stockId));
-        if (selectedStockIds === stockId) {
-          setSelectedStockIds(null);
-        }
+        await DynamoDBService.deleteAsset('Stocks', stockId, userEmail);
+        setStockList(prev => prev.filter(stock => stock.id !== stockId)); // Use setStockList
         alert('Stock entry deleted successfully.');
         fetchStockDetails(userEmail);
       } catch (error) {
@@ -314,36 +297,24 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, fetchStockDeta
 
           {/* Table and Charts Column */}
           <div className="col-12 col-xl-8">
-          <Card className="mb-4">
+            <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">
-                  {selectedStockIds.length > 0 
-                    ? `Selected Stock Value: $${stockList
-                        .filter(s => selectedStockIds.includes(s.id))
-                        .reduce((sum, stock) => sum + stock.total, 0)
-                        .toLocaleString()}`
-                    : `Total Portfolio Value: ${stockTotal}`
-                  }
-                </h5>
+                <h5 className="mb-0">Total Portfolio Value: ${stockTotal.toFixed(2)}</h5>
               </Card.Header>
             </Card>
-
-            {/* Stock Growth Component */}
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Stocks Value Analysis</h5>
               </Card.Header>
               <Card.Body>
-              <StockProjection 
-                stockList={stockList} 
-                selectedStockIds={selectedStockIds}
-              />
+                <StockProjection 
+                  stockList={stockList} 
+                  selectedStockIds={selectedStockIds}
+                />
               </Card.Body>
               <ResponsiveTable 
                 data={stockList}
                 onDelete={handleDeleteStock}
-                onSelect={handleStockSelect}
-                selectedStockIds={selectedStockIds}
               />
             </Card>
           </div>

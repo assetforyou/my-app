@@ -1,15 +1,13 @@
 import React, { useState, useRef } from 'react';
 import Layout from '../components/AdLayout';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
 import { Upload, Download, MoreVertical } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import LongTermGrowthChart from '../components/CashGrowth';
+import DynamoDBService from '../dynamoDBService';
 
-function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails }) {
+function Cash({ userEmail, cashList, setCashList, cashTotal, setCashTotal, fetchCashDetails }) {
   const [cashDetails, setCashDetails] = useState({
     amount: '',
     currency: 'USD',
@@ -32,20 +30,20 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
     setSaveButtonText('Saving...');
     try {
       const amountInSelectedCurrency = parseFloat(cashDetails.amount);
-      const newCashRef = await addDoc(collection(db, 'cash'), {
-        ...cashDetails,
-        userEmail,
-        amount: amountInSelectedCurrency,
-      });
-
       const newCash = {
-        id: newCashRef.id,
         ...cashDetails,
         userEmail,
         amount: amountInSelectedCurrency,
+        id: Date.now() // Generate a unique ID as a number
       };
-      setCashList(prev => [...prev, newCash]);
 
+      const savedCash = await DynamoDBService.addAsset('Cash', newCash);
+      
+      // Update cash list and total
+      setCashList(prev => [...prev, savedCash]);
+      setCashTotal(prev => prev + amountInSelectedCurrency);
+
+      // Reset form
       setCashDetails({
         amount: '',
         currency: 'USD',
@@ -56,27 +54,27 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
         reminderNote: '',
         reminderDate: ''
       });
+
       setSaveButtonText('Saved!');
       setTimeout(() => setSaveButtonText('Save'), 2000);
-      fetchCashDetails(userEmail);
     } catch (error) {
       console.error('Error saving cash details:', error);
       setSaveButtonText('Save');
-      alert('Failed to save cash details.');
+      alert('Failed to save cash details. Please try again.');
     }
   };
 
   const handleDeleteCash = async (cashId) => {
-    if (window.confirm('Are you sure you want to delete this cash entry?')) {
-      try {
-        await deleteDoc(doc(db, 'cash', cashId));
-        setCashList(prev => prev.filter(cash => cash.id !== cashId));
-        alert('Cash entry deleted successfully.');
-        fetchCashDetails(userEmail);
-      } catch (error) {
-        console.error('Error deleting cash entry:', error);
-        alert('Failed to delete cash entry.');
+    try {
+      const success = await DynamoDBService.deleteAsset('Cash', cashId, userEmail);
+      if (success) {
+        console.log('Cash deleted successfully');
+        fetchCashDetails(userEmail); // Refresh the cash list after deletion
+      } else {
+        console.error('Failed to delete cash');
       }
+    } catch (error) {
+      console.error('Error deleting cash:', error);
     }
   };
 
@@ -111,18 +109,6 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
     XLSX.utils.book_append_sheet(wb, ws, "CashList");
     XLSX.writeFile(wb, "cash_data.xlsx");
   };
-
-  const chartData = cashList
-    .map(cash => {
-      // Get the date without timezone offset
-      const date = new Date(cash.transactionDate);
-      const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
-      return {
-        transactionDate: localDate.toISOString().split('T')[0],
-        amount: parseFloat(cash.amount)
-      };
-    })
-    .sort((a, b) => new Date(a.transactionDate) - new Date(b.transactionDate));
 
   const renderFormControl = (key, value) => {
     if (key === 'currency') {
@@ -212,23 +198,23 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, fetchCashDetails })
 
           {/* Table and Charts Column */}
           <div className="col-12 col-xl-8">
-          <Card className="mb-4">
+            <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Total Cash: {cashTotal}</h5>
+                <h5 className="mb-0">Total Cash: ${cashTotal.toFixed(2)}</h5>
               </Card.Header>
             </Card>
-          <Card className="mb-4">
-            <Card.Header>
-              <h5 className="mb-0">Cash Value Analysis</h5>
-            </Card.Header>
-            <Card.Body>
-              <LongTermGrowthChart cashList={cashList} />
-            </Card.Body>
-            <ResponsiveTable 
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Cash Value Analysis</h5>
+              </Card.Header>
+              <Card.Body>
+                <LongTermGrowthChart cashList={cashList} />
+              </Card.Body>
+              <ResponsiveTable 
                 data={cashList}
                 onDelete={handleDeleteCash}
               />
-          </Card>
+            </Card>
           </div>
         </div>
 

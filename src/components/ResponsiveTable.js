@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Maximize2 } from 'lucide-react';
 import { Button, Modal, Card, Form } from 'react-bootstrap';
 
 const ResponsiveTable = ({ data, onDelete, onSelectionChange }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState(data.map(item => item.id));
+  const [selectedItems, setSelectedItems] = useState([]);
+
+  // Ensure data is an array and filter out invalid items
+  const validData = Array.isArray(data) ? data.filter(item => item && item.id) : [];
+
+  // Update selectedItems when data changes
+  useEffect(() => {
+    const newSelectedItems = validData.map(item => item.id);
+    setSelectedItems(newSelectedItems);
+    if (onSelectionChange) {
+      onSelectionChange(newSelectedItems);
+    }
+  }, [data]);
 
   const handleCheckboxChange = (id) => {
     const updatedSelection = selectedItems.includes(id)
@@ -18,7 +30,7 @@ const ResponsiveTable = ({ data, onDelete, onSelectionChange }) => {
   };
 
   const handleSelectAll = (e) => {
-    const newSelection = e.target.checked ? data.map(item => item.id) : [];
+    const newSelection = e.target.checked ? validData.map(item => item.id) : [];
     setSelectedItems(newSelection);
     if (onSelectionChange) {
       onSelectionChange(newSelection);
@@ -27,14 +39,12 @@ const ResponsiveTable = ({ data, onDelete, onSelectionChange }) => {
 
   const formatValue = (key, value, item) => {
     if (value === null || value === undefined || value === '') {
-      // Return placeholders for date fields
       if (key === 'purchaseDate') return 'Set purchase date';
       if (key === 'reminderDate') return 'Set reminder date';
       if (key === 'transactionDate') return 'Set transaction date';
       return '-';
     }
     
-    // Handle currency values (amount or value fields)
     if ((key === 'amount' || key === 'value') && !isNaN(value)) {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -42,12 +52,10 @@ const ResponsiveTable = ({ data, onDelete, onSelectionChange }) => {
       }).format(value);
     }
     
-    // Handle date fields with placeholders
     if (key.toLowerCase().includes('date')) {
       try {
         const date = new Date(value);
         if (isNaN(date.getTime())) {
-          // If invalid date
           if (key === 'purchaseDate') return 'Set purchase date';
           if (key === 'reminderDate') return 'Set reminder date';
           if (key === 'transactionDate') return 'Set transaction date';
@@ -59,7 +67,6 @@ const ResponsiveTable = ({ data, onDelete, onSelectionChange }) => {
           day: 'numeric'
         });
       } catch {
-        // If date parsing fails
         if (key === 'purchaseDate') return 'Set purchase date';
         if (key === 'reminderDate') return 'Set reminder date';
         if (key === 'transactionDate') return 'Set transaction date';
@@ -67,7 +74,6 @@ const ResponsiveTable = ({ data, onDelete, onSelectionChange }) => {
       }
     }
     
-    // Handle numbers with commas
     if (typeof value === 'number') {
       return value.toLocaleString();
     }
@@ -76,8 +82,8 @@ const ResponsiveTable = ({ data, onDelete, onSelectionChange }) => {
   };
 
   const getHeaders = () => {
-    if (!data || data.length === 0) return [];
-    const sample = data[0];
+    if (!validData || validData.length === 0) return [];
+    const sample = validData[0];
     return Object.keys(sample).filter(key => 
       key !== 'id' && key !== 'userEmail' && key !== 'currency'
     );
@@ -91,13 +97,21 @@ const ResponsiveTable = ({ data, onDelete, onSelectionChange }) => {
   };
 
   const getValueStyle = (key, value) => {
-    // Add styles for placeholder text
     if (value === null || value === undefined || value === '') {
       if (key.toLowerCase().includes('date')) {
         return { color: '#6c757d', fontStyle: 'italic' };
       }
     }
     return {};
+  };
+
+  const handleLocalDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this item?')) {
+      if (onDelete) {
+        // Ensure the id is treated as a string
+        await onDelete(String(id));
+      }
+    }
   };
 
   const TableContent = () => (
@@ -108,7 +122,7 @@ const ResponsiveTable = ({ data, onDelete, onSelectionChange }) => {
             <th className="align-middle">
               <Form.Check
                 type="checkbox"
-                checked={selectedItems.length === data.length}
+                checked={selectedItems.length === validData.length && validData.length > 0}
                 onChange={handleSelectAll}
               />
             </th>
@@ -121,35 +135,43 @@ const ResponsiveTable = ({ data, onDelete, onSelectionChange }) => {
           </tr>
         </thead>
         <tbody>
-          {data.map((item, index) => (
-            <tr key={index}>
-              <td className="align-middle">
-                <Form.Check
-                  type="checkbox"
-                  checked={selectedItems.includes(item.id)}
-                  onChange={() => handleCheckboxChange(item.id)}
-                />
-              </td>
-              {getHeaders().map((key, i) => (
-                <td 
-                  key={i} 
-                  className="align-middle"
-                  style={getValueStyle(key, item[key])}
-                >
-                  {formatValue(key, item[key], item)}
+          {validData.length > 0 ? (
+            validData.map((item, index) => (
+              <tr key={item.id || index}>
+                <td className="align-middle">
+                  <Form.Check
+                    type="checkbox"
+                    checked={selectedItems.includes(item.id)}
+                    onChange={() => handleCheckboxChange(item.id)}
+                  />
                 </td>
-              ))}
-              <td className="text-end align-middle">
-                <Button 
-                  variant="danger" 
-                  size="sm"
-                  onClick={() => onDelete(item.id)}
-                >
-                  Delete
-                </Button>
+                {getHeaders().map((key, i) => (
+                  <td 
+                    key={i} 
+                    className="align-middle"
+                    style={getValueStyle(key, item[key])}
+                  >
+                    {formatValue(key, item[key], item)}
+                  </td>
+                ))}
+                <td className="text-end align-middle">
+                  <Button 
+                    variant="danger" 
+                    size="sm"
+                    onClick={() => handleLocalDelete(item.id)}
+                  >
+                    Delete
+                  </Button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={getHeaders().length + 2} className="text-center">
+                No data available
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>
