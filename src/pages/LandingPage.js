@@ -450,8 +450,8 @@ function LandingPage() {
     <div className="landing-page">
       <div className="top-bar">
         <div className="title">
-          <img src={logo_transparent} alt="Noble Asset Vault" className="custom-title-icon" />
-          Noble Asset Vault
+          <img src={logo_transparent} alt="Vault Knight" className="custom-title-icon" />
+          Vault Knight
         </div>
         <div className="settings-dropdown" ref={settingsRef}>
           <button onClick={toggleSettings} className="settings-icon">

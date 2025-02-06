@@ -29,7 +29,7 @@ function SignUp() {
 
   return (
     <div className="signup-page">
-      <h1>Sign Up for Noble Asset Vault</h1>
+      <h1>Sign Up for Vault Knight</h1>
       <form onSubmit={handleSignUp}>
         <input
           type="email"

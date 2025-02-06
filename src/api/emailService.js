@@ -30,7 +30,7 @@ async function sendMail(to, subject, text) {
     });
 
     const mailOptions = {
-      from: 'Noble Asset Vault <assetforryou@gmail.com>',
+      from: 'Vault Knight <assetforryou@gmail.com>',
       to,
       subject,
       text,

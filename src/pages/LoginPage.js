@@ -23,7 +23,7 @@ function LoginPage() {
 
   return (
     <div className="login-page">
-      <h1>Welcome to Noble Asset Vault</h1>
+      <h1>Welcome to Vault Knight</h1>
       <form onSubmit={handleLogin}>
         <input
           type="email"

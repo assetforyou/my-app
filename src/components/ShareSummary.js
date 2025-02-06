@@ -14,7 +14,7 @@ const ShareSummary = () => {
       const imageData = canvas.toDataURL('image/png');
 
       // Prepare share text
-      const shareText = 'Check out my asset summary from Noble Asset Vault!';
+      const shareText = 'Check out my asset summary from Vault Knight!';
       const shareUrl = window.location.href;
 
       // Handle different platforms

@@ -76,8 +76,8 @@ function HomePage() {
       <header className="header">
         <div className="container">
         <div className="title">
-          <img src={logo_transparent} alt="Noble Asset Vault" className="custom-title-icon" />
-          Noble Asset Vault
+          <img src={logo_transparent} alt="Vault Knight" className="custom-title-icon" />
+          Vault Knight
         </div>
           <nav className="nav">
             <ul>
@@ -107,9 +107,9 @@ function HomePage() {
 
       <motion.section id="about" className="section about-section" {...fadeInUp}>
         <div className="container">
-          <h2>About Noble Asset Vault</h2>
+          <h2>About Vault Knight</h2>
           <p>
-            At Noble Asset Vault, we combine cutting-edge technology with financial expertise to provide a secure, 
+            At Vault Knight, we combine cutting-edge technology with financial expertise to provide a secure, 
             comprehensive asset management platform. Our solution caters to both individual investors and 
             financial institutions, offering unparalleled security and insights for your digital assets.
           </p>
@@ -217,14 +217,14 @@ function HomePage() {
       <footer className="footer">
         <div className="container">
           <div className="footer-content">
-            <div className="footer-logo">Noble Asset Vault</div>
+            <div className="footer-logo">Vault Knight</div>
             <div className="footer-links">
               <a href="/privacy">Privacy Policy</a>
               <a href="/terms">Terms of Service</a>
               <a href="/careers">Careers</a>
             </div>
           </div>
-          <p>&copy; {new Date().getFullYear()} Noble Asset Vault. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Vault Knight. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -723,7 +723,7 @@ body {
 .content {
   margin-left: 250px;
   padding: 80px 50px 50px;
-  background: linear-gradient(rgba(245, 245, 245, 0.9), rgba(245, 245, 245, 0.9)),
+  background: linear-gradient(rgba(224, 150, 150, 0.886), rgba(228, 168, 168, 0.9)),
               url('../images/logo.jpeg');
   background-size: 70% 100%;
   background-position: center;
