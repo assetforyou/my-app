@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Background -->
+  <rect width="400" height="400" fill="#f0f0f0"/>
+  
+  <!-- Vault body -->
+  <rect x="50" y="50" width="300" height="300" rx="20" ry="20" fill="#2c3e50"/>
+  
+  <!-- Vault door -->
+  <rect x="70" y="70" width="260" height="260" rx="10" ry="10" fill="#34495e"/>
+  
+  <!-- Door handle -->
+  <circle cx="300" cy="200" r="20" fill="#ecf0f1"/>
+  <circle cx="300" cy="200" r="15" fill="#bdc3c7"/>
+  
+  <!-- Lock mechanism -->
+  <circle cx="300" cy="200" r="40" fill="none" stroke="#3498db" stroke-width="5"/>
+  <path d="M300 160 L300 240" stroke="#3498db" stroke-width="5"/>
+  <path d="M260 200 L340 200" stroke="#3498db" stroke-width="5"/>
+  
+  <!-- Digital display -->
+  <rect x="100" y="100" width="120" height="40" rx="5" ry="5" fill="#2ecc71"/>
+  <text x="110" y="130" font-family="Arial" font-size="24" fill="#ffffff">SECURE</text>
+  
+  <!-- Circuit board patterns -->
+  <path d="M50 20 H380 M50 40 H380 M20 50 V380 M40 50 V380" stroke="#3498db" stroke-width="2"/>
+  
+  <!-- Binary code -->
+  <text x="60" y="380" font-family="Courier" font-size="10" fill="#3498db">
+    01001110 01101111 01100010 01101100 01100101
+  </text>
+  
+  <!-- Glowing effect -->
+  <circle cx="200" cy="200" r="180" fill="url(#glowGradient)" opacity="0.3"/>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <radialGradient id="glowGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#3498db;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#3498db;stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+</svg>
