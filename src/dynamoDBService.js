@@ -42,8 +42,7 @@ const DynamoDBService = {
       const result = await dynamodb.scan(params).promise();
       return result.Items;
     } catch (error) {
-      console.error(`Error fetching items from ${tableName}:`, error);
-      return [];
+      throw new Error(`Error fetching items from ${tableName}: ${error.message}`);
     }
   },
 
@@ -53,7 +52,7 @@ const DynamoDBService = {
       TableName: tableName,
       Item: {
         ...item,
-        id: Number(item.id), // Ensure id is a number
+        id: item.id || uuidv4(), // Ensure id is unique
         assetId: Number(item.assetId) // Ensure assetId is a number
       }
     };
@@ -62,8 +61,7 @@ const DynamoDBService = {
       await dynamodb.put(params).promise();
       return params.Item;
     } catch (error) {
-      console.error(`Error adding item to ${tableName}:`, error);
-      throw error;
+      throw new Error(`Error adding item to ${tableName}: ${error.message}`);
     }
   },
 
@@ -73,7 +71,7 @@ const DynamoDBService = {
       TableName: tableName,
       Item: {
         ...asset,
-        id: Number(asset.id), // Ensure id is a number
+        id: asset.id || uuidv4(), // Ensure id is unique
         createdAt: new Date().toISOString(),
         userEmail: asset.userEmail // Ensure userEmail is included
       }
@@ -86,8 +84,7 @@ const DynamoDBService = {
       console.log('Asset saved successfully:', params.Item); // Debugging log
       return params.Item;
     } catch (error) {
-      console.error(`Error adding asset to ${tableName}:`, error); // Debugging log
-      throw error; // Rethrow the error to handle it in the calling function
+      throw new Error(`Error adding asset to ${tableName}: ${error.message}`);
     }
   },
 
@@ -228,6 +225,25 @@ const DynamoDBService = {
         fullError: error
       });
       return false;
+    }
+  },
+
+  // Fetch all assets for a specific table and user email
+  fetchAssets: async (tableName, userEmail) => {
+    const params = {
+      TableName: tableName,
+      FilterExpression: 'userEmail = :userEmail',
+      ExpressionAttributeValues: {
+        ':userEmail': userEmail
+      }
+    };
+
+    try {
+      const result = await dynamodb.scan(params).promise();
+      return result.Items;
+    } catch (error) {
+      console.error(`Error fetching assets from ${tableName}:`, error);
+      return [];
     }
   },
 
