@@ -14,6 +14,9 @@ import KeyboardShortcuts from './components/KeyboardShortcuts';
 
 // Lazy load heavy components for better initial load performance
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const Bonds = lazy(() => import('./pages/Bonds'));
+const Retirement = lazy(() => import('./pages/Retirement'));
+const Savings = lazy(() => import('./pages/Savings'));
 
 // Toast wrapper component to handle global notifications
 function AppContent() {
@@ -41,6 +44,9 @@ function AppContent() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/bonds" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Bonds /></Suspense></ProtectedRoute>} />
+        <Route path="/retirement" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Retirement /></Suspense></ProtectedRoute>} />
+        <Route path="/savings" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Savings /></Suspense></ProtectedRoute>} />
         <Route
           path="/landing"
           element={

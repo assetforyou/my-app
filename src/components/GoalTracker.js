@@ -15,8 +15,8 @@ const GoalTracker = ({ goals, cashTotal, stockTotal, metalTotal, propertyTotal }
   ];
 
   const getVariant = (progress) => {
-    if (progress < 30) return 'danger';
-    if (progress < 70) return 'warning';
+    if (progress < 30) return 'info';
+    if (progress < 70) return 'primary';
     return 'success';
   };
 

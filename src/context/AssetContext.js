@@ -30,7 +30,10 @@ export const AssetProvider = ({ children }) => {
     properties: [],
     loans: [],
     crypto: [],
-    customAssets: []
+    customAssets: [],
+    bonds: [],
+    retirement: [],
+    savings: []
   });
   
   const [loading, setLoading] = useState(false);
@@ -48,14 +51,18 @@ export const AssetProvider = ({ children }) => {
       propertyMonthlyCost: assets.properties.reduce((sum, property) => sum + parseFloat(property.totalMonthlyCost || 0), 0),
       loans: assets.loans.reduce((sum, loan) => sum + parseFloat(loan.loanValue || 0), 0),
       crypto: assets.crypto.reduce((sum, crypto) => sum + parseFloat(crypto.total || 0), 0),
-      customAssets: assets.customAssets.reduce((sum, asset) => sum + parseFloat(asset.totalValue || 0), 0)
+      customAssets: assets.customAssets.reduce((sum, asset) => sum + parseFloat(asset.totalValue || 0), 0),
+      bonds: assets.bonds.reduce((sum, bond) => sum + parseFloat(bond.currentValue || 0), 0),
+      retirement: assets.retirement.reduce((sum, rt) => sum + parseFloat(rt.currentBalance || 0), 0),
+      savings: assets.savings.reduce((sum, sv) => sum + parseFloat(sv.currentBalance || 0), 0)
     };
   }, [assets]);
 
   // Calculate net worth
   const netWorth = useMemo(() => {
     const totalAssets = totals.auto + totals.cash + totals.stocks + totals.metals + 
-                        totals.properties + totals.crypto + totals.customAssets;
+                        totals.properties + totals.crypto + totals.customAssets +
+                        totals.bonds + totals.retirement + totals.savings;
     return totalAssets - totals.loans;
   }, [totals]);
 
@@ -69,7 +76,7 @@ export const AssetProvider = ({ children }) => {
     setError(null);
     
     try {
-      const [cars, cash, stocks, metals, properties, loans, crypto, customAssets] = await Promise.all([
+      const [cars, cash, stocks, metals, properties, loans, crypto, customAssets, bonds, retirement, savings] = await Promise.all([
         FirestoreAssetService.fetchAssets('Autos', email),
         FirestoreAssetService.fetchAssets('Cash', email),
         FirestoreAssetService.fetchAssets('Stocks', email),
@@ -77,7 +84,10 @@ export const AssetProvider = ({ children }) => {
         FirestoreAssetService.fetchAssets('Properties', email),
         FirestoreAssetService.fetchAssets('Loans', email),
         FirestoreAssetService.fetchAssets('Crypto', email),
-        FirestoreAssetService.fetchAssets('CustomAssets', email)
+        FirestoreAssetService.fetchAssets('CustomAssets', email),
+        FirestoreAssetService.fetchAssets('Bonds', email),
+        FirestoreAssetService.fetchAssets('Retirement', email),
+        FirestoreAssetService.fetchAssets('Savings', email)
       ]);
 
       setAssets({
@@ -88,7 +98,10 @@ export const AssetProvider = ({ children }) => {
         properties,
         loans,
         crypto,
-        customAssets
+        customAssets,
+        bonds,
+        retirement,
+        savings
       });
     } catch (err) {
       console.error('Error fetching assets:', err);
@@ -201,7 +214,10 @@ export const AssetProvider = ({ children }) => {
           properties: [],
           loans: [],
           crypto: [],
-          customAssets: []
+          customAssets: [],
+          bonds: [],
+          retirement: [],
+          savings: []
         });
       }
     });
@@ -234,7 +250,10 @@ export const AssetProvider = ({ children }) => {
     properties: assets.properties,
     loans: assets.loans,
     crypto: assets.crypto,
-    customAssets: assets.customAssets
+    customAssets: assets.customAssets,
+    bonds: assets.bonds,
+    retirement: assets.retirement,
+    savings: assets.savings
   };
 
   return (

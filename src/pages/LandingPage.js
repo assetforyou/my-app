@@ -11,6 +11,9 @@ import Metals from './Metals';
 import Property from './Property';
 import Loan from './Loan';
 import Crypto from './Crypto';
+import Bonds from './Bonds';
+import Retirement from './Retirement';
+import Savings from './Savings';
 import CreateAsset from './CreateAsset';
 import CustomAsset from './CustomAsset';
 import AccountSettings from '../components/AccountSettings';
@@ -38,6 +41,12 @@ function LandingPage() {
   const [loanTotal, setLoanTotal] = useState(0);
   const [cryptoList, setCryptoList] = useState([]);
   const [cryptoTotal, setCryptoTotal] = useState(0);
+  const [bondList, setBondList] = useState([]);
+  const [bondTotal, setBondTotal] = useState(0);
+  const [retirementList, setRetirementList] = useState([]);
+  const [retirementTotal, setRetirementTotal] = useState(0);
+  const [savingsList, setSavingsList] = useState([]);
+  const [savingsTotal, setSavingsTotal] = useState(0);
   const [customAssets, setCustomAssets] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -145,6 +154,9 @@ function LandingPage() {
         fetchLoanDetails(email),
         fetchCryptoDetails(email),
         fetchCustomAssets(email),
+        fetchBondDetails(email),
+        fetchRetirementDetails(email),
+        fetchSavingsDetails(email),
       ]);
     } catch (err) {
       console.error('Error fetching asset details:', err);
@@ -228,6 +240,39 @@ function LandingPage() {
       setCryptoTotal(total);
     } catch (error) {
       console.error('Error fetching crypto details:', error);
+    }
+  };
+
+  const fetchBondDetails = async (email) => {
+    try {
+      const bonds = await FirestoreAssetService.fetchAssets('Bonds', email);
+      setBondList(bonds);
+      const total = bonds.reduce((sum, bond) => sum + parseFloat(bond.currentValue || 0), 0);
+      setBondTotal(total);
+    } catch (error) {
+      console.error('Error fetching bond details:', error);
+    }
+  };
+
+  const fetchRetirementDetails = async (email) => {
+    try {
+      const retirement = await FirestoreAssetService.fetchAssets('Retirement', email);
+      setRetirementList(retirement);
+      const total = retirement.reduce((sum, rt) => sum + parseFloat(rt.currentBalance || 0), 0);
+      setRetirementTotal(total);
+    } catch (error) {
+      console.error('Error fetching retirement details:', error);
+    }
+  };
+
+  const fetchSavingsDetails = async (email) => {
+    try {
+      const savings = await FirestoreAssetService.fetchAssets('Savings', email);
+      setSavingsList(savings);
+      const total = savings.reduce((sum, sv) => sum + parseFloat(sv.currentBalance || 0), 0);
+      setSavingsTotal(total);
+    } catch (error) {
+      console.error('Error fetching savings details:', error);
     }
   };
 
@@ -361,6 +406,39 @@ function LandingPage() {
             fetchCryptoDetails={fetchCryptoDetails}
           />
         );
+      case 'bonds':
+        return (
+          <Bonds
+            userEmail={userEmail}
+            bondList={bondList}
+            setBondList={setBondList}
+            bondTotal={bondTotal}
+            setBondTotal={setBondTotal}
+            fetchBondDetails={fetchBondDetails}
+          />
+        );
+      case 'retirement':
+        return (
+          <Retirement
+            userEmail={userEmail}
+            retirementList={retirementList}
+            setRetirementList={setRetirementList}
+            retirementTotal={retirementTotal}
+            setRetirementTotal={setRetirementTotal}
+            fetchRetirementDetails={fetchRetirementDetails}
+          />
+        );
+      case 'savings':
+        return (
+          <Savings
+            userEmail={userEmail}
+            savingsList={savingsList}
+            setSavingsList={setSavingsList}
+            savingsTotal={savingsTotal}
+            setSavingsTotal={setSavingsTotal}
+            fetchSavingsDetails={fetchSavingsDetails}
+          />
+        );
       case 'createAsset':
         return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'analytics':
@@ -436,6 +514,21 @@ function LandingPage() {
                       <h3>Cryptocurrency</h3>
                       <p>Total: {cryptoList.length}</p>
                       <p>Value: ${cryptoTotal.toFixed(2)}</p>
+                    </div>
+                    <div className="summary-box" onClick={() => setSelectedAsset('bonds')}>
+                      <h3>Bonds</h3>
+                      <p>Total: {bondList.length}</p>
+                      <p>Value: ${bondTotal.toFixed(2)}</p>
+                    </div>
+                    <div className="summary-box" onClick={() => setSelectedAsset('retirement')}>
+                      <h3>Retirement</h3>
+                      <p>Total: {retirementList.length}</p>
+                      <p>Value: ${retirementTotal.toFixed(2)}</p>
+                    </div>
+                    <div className="summary-box" onClick={() => setSelectedAsset('savings')}>
+                      <h3>Savings</h3>
+                      <p>Total: {savingsList.length}</p>
+                      <p>Value: ${savingsTotal.toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
@@ -539,6 +632,9 @@ function LandingPage() {
                 <button onClick={() => setSelectedAsset('property')}>Property</button>
                 <button onClick={() => setSelectedAsset('loan')}>Loan</button>
                 <button onClick={() => setSelectedAsset('crypto')}>Crypto</button>
+                <button onClick={() => setSelectedAsset('bonds')}>Bonds</button>
+                <button onClick={() => setSelectedAsset('retirement')}>Retirement</button>
+                <button onClick={() => setSelectedAsset('savings')}>Savings</button>
                 {customAssets.map(asset => (
                   <button 
                     key={asset.id} 
