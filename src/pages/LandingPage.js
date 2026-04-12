@@ -556,11 +556,6 @@ function LandingPage() {
                   </div>
                 )}
               </div>
-              <div className="advanced-analysis">
-                <button type="button" className="vk-advanced-analysis" onClick={() => setSelectedAsset('analytics')}>
-                  Advanced analysis
-                </button>
-              </div>
             </div>
           </Layout>
         );
@@ -622,6 +617,7 @@ function LandingPage() {
           <div className="sidebar-buttons">
             <button onClick={() => setSelectedAssetAndCloseSettings('home')}>Home</button>
             <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('createAsset')}>Create Asset</button>
+            <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('analytics')}>Advanced Analysis</button>
             <div className="dropdown">
               <button className="dropbtn">Assets</button>
               <div className="dropdown-content">
