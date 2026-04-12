@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import CryptoProjection from '../components/CryptoProjection';
-import DynamoDBService from '../dynamoDBService';
+import FirestoreAssetService from '../firestoreAssetService';
 
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
@@ -73,7 +73,7 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTo
       };
 
       try {
-        const savedCrypto = await DynamoDBService.addAsset('Crypto', newCrypto);
+        const savedCrypto = await FirestoreAssetService.addAsset('Crypto', newCrypto);
         setCryptoList(prev => [...prev, savedCrypto]);
         setCryptoTotal(prev => prev + totalValue);
 
@@ -106,7 +106,7 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTo
   const handleDeleteCrypto = async (cryptoId) => {
   if (window.confirm('Are you sure you want to delete this crypto entry?')) {
     try {
-      await DynamoDBService.deleteAsset('Crypto', cryptoId, userEmail); // Pass userEmail
+      await FirestoreAssetService.deleteAsset('Crypto', cryptoId, userEmail); // Pass userEmail
       setCryptoList(prev => prev.filter(crypto => crypto.id !== cryptoId));
       alert('Crypto entry deleted successfully.');
       fetchCryptoDetails(userEmail);
@@ -214,7 +214,7 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTo
 
   return (
     <Layout>
-      <div className="container-fluid px-4">
+      <div className="container-fluid vk-asset-page">
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">

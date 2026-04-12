@@ -6,9 +6,9 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import StockProjection from '../components/StockProjection';
-import DynamoDBService from '../dynamoDBService';
+import FirestoreAssetService from '../firestoreAssetService';
 
-const ALPHA_VANTAGE_API_KEY = 'YOUR_API_KEY'; // Replace with your API key
+const ALPHA_VANTAGE_API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY || '';
 
 function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal, fetchStockDetails }) {
   const [stockDetails, setStockDetails] = useState({
@@ -34,6 +34,10 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
   };
   
   const handleSearchStocks = async () => {
+    if (!ALPHA_VANTAGE_API_KEY) {
+      alert('Add REACT_APP_ALPHA_VANTAGE_API_KEY to your .env file for stock search.');
+      return;
+    }
     try {
       const response = await axios.get(
         `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${searchQuery}&apikey=${ALPHA_VANTAGE_API_KEY}`
@@ -45,6 +49,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
   };
   
   const fetchLiveStockPrice = async (symbol) => {
+    if (!ALPHA_VANTAGE_API_KEY) return null;
     try {
       const response = await axios.get(
         `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
@@ -73,7 +78,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
       };
 
       try {
-        const savedStock = await DynamoDBService.addAsset('Stocks', newStock);
+        const savedStock = await FirestoreAssetService.addAsset('Stocks', newStock);
         setStockList(prev => [...prev, savedStock]);
         setStockTotal(prev => prev + totalValue);
 
@@ -105,7 +110,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
   const handleDeleteStock = async (stockId) => {
     if (window.confirm('Are you sure you want to delete this stock entry?')) {
       try {
-        await DynamoDBService.deleteAsset('Stocks', stockId, userEmail);
+        await FirestoreAssetService.deleteAsset('Stocks', stockId, userEmail);
         setStockList(prev => prev.filter(stock => stock.id !== stockId)); // Use setStockList
         alert('Stock entry deleted successfully.');
         fetchStockDetails(userEmail);
@@ -216,7 +221,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
 
   return (
     <Layout>
-      <div className="container-fluid px-4">
+      <div className="container-fluid vk-asset-page">
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">

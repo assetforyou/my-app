@@ -3,7 +3,7 @@ import Layout from '../components/AdLayout';
 import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Table, Dropdown } from 'react-bootstrap';
-import DynamoDBService from '../dynamoDBService'; // Import the DynamoDB service
+import FirestoreAssetService from '../firestoreAssetService';
 
 function CreateAsset({ userEmail, onAssetCreated }) {
   const [assetDetails, setAssetDetails] = useState({
@@ -64,7 +64,7 @@ function CreateAsset({ userEmail, onAssetCreated }) {
       };
   
       // Save the asset definition to the CustomAssets table
-      await DynamoDBService.addAsset('CustomAssets', assetData);
+      await FirestoreAssetService.addAsset('CustomAssets', assetData);
   
       onAssetCreated(userEmail);
       setSaveButtonText('Created!');
@@ -118,8 +118,8 @@ function CreateAsset({ userEmail, onAssetCreated }) {
 
   return (
     <Layout>
-      <div className="container mt-4">
-        <Card className="mb-4">
+      <div className="container-fluid vk-asset-page mt-2">
+        <Card className="mb-4 mx-auto" style={{ maxWidth: 720 }}>
           <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
             Create Custom Asset
             <Dropdown>

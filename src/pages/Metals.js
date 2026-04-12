@@ -5,9 +5,9 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import MetalsGrowthChart from '../components/MetalsGrowth';
-import DynamoDBService from '../dynamoDBService';
+import FirestoreAssetService from '../firestoreAssetService';
 
-const ALPHA_VANTAGE_API_KEY = 'L2ETEZ9ROFG567L7';
+const ALPHA_VANTAGE_API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY || '';
 
 function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal, fetchMetalDetails }) {
   const [metalDetails, setMetalDetails] = useState({
@@ -33,6 +33,9 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal,
   }, []);
 
   const fetchMetalPrice = async (symbol) => {
+    if (!ALPHA_VANTAGE_API_KEY) {
+      throw new Error('Missing REACT_APP_ALPHA_VANTAGE_API_KEY in .env');
+    }
     try {
       const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`);
       const data = await response.json();
@@ -49,6 +52,11 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal,
   const fetchAvailableMetals = async () => {
     setIsLoading(true);
     setError(null);
+    if (!ALPHA_VANTAGE_API_KEY) {
+      setError('Add REACT_APP_ALPHA_VANTAGE_API_KEY to your .env file to load spot prices.');
+      setIsLoading(false);
+      return;
+    }
     const metals = [
       { symbol: 'XAUUSD', name: 'Gold' },
       { symbol: 'XAGUSD', name: 'Silver' },
@@ -103,7 +111,7 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal,
         id: Date.now() // Generate a unique ID as a number
       };
 
-      const savedMetal = await DynamoDBService.addAsset('Metals', newMetal);
+      const savedMetal = await FirestoreAssetService.addAsset('Metals', newMetal);
       setMetalList(prev => [...prev, savedMetal]);
       setMetalTotal(prev => prev + parseFloat(metalDetails.total));
 
@@ -130,7 +138,7 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal,
   const handleDeleteMetal = async (metalId) => {
     if (window.confirm('Are you sure you want to delete this metal entry?')) {
       try {
-        await DynamoDBService.deleteAsset('Metals', metalId, userEmail); // Pass userEmail
+        await FirestoreAssetService.deleteAsset('Metals', metalId, userEmail); // Pass userEmail
         setMetalList(prev => prev.filter(metal => metal.id !== metalId));
         alert('Metal entry deleted successfully.');
         fetchMetalDetails(userEmail);
@@ -218,7 +226,7 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal,
 
   return (
     <Layout>
-      <div className="container-fluid px-4">
+      <div className="container-fluid vk-asset-page">
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">

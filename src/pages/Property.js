@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import PropertyGrowthChart from '../components/PropertyGrowth';
-import DynamoDBService from '../dynamoDBService';
+import FirestoreAssetService from '../firestoreAssetService';
 
 function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, setPropertyTotalPrice, propertyTotalMonthlyCost, setPropertyTotalMonthlyCost, fetchPropertyDetails }) {
   const [propertyDetails, setPropertyDetails] = useState({
@@ -95,8 +95,8 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
         id: Date.now() // Generate a unique ID as a number
       };
 
-      // Save the property to DynamoDB
-      const savedProperty = await DynamoDBService.addAsset('Properties', newProperty);
+      // Save the property to Firestore
+      const savedProperty = await FirestoreAssetService.addAsset('Properties', newProperty);
 
       // Update state
       setPropertyList(prev => [...prev, savedProperty]);
@@ -130,7 +130,7 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
   const handleDeleteProperty = async (propertyId) => {
     if (window.confirm('Are you sure you want to delete this property?')) {
       try {
-        await DynamoDBService.deleteAsset('Properties', propertyId, userEmail); // Pass userEmail
+        await FirestoreAssetService.deleteAsset('Properties', propertyId, userEmail); // Pass userEmail
         setPropertyList(prev => prev.filter(property => property.id !== propertyId));
         alert('Property deleted successfully.');
         fetchPropertyDetails(userEmail);
@@ -221,7 +221,7 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
 
   return (
     <Layout>
-      <div className="container-fluid px-4">
+      <div className="container-fluid vk-asset-page">
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">

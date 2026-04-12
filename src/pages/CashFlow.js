@@ -46,7 +46,7 @@ const CashFlow = ({ propertyList = [], loanList = [], cashList = [] }) => {
 
   return (
     <Layout>
-      <div className="container-fluid px-4">
+      <div className="container-fluid vk-asset-page">
         <div className="row">
           <div className="col-12">
             <Card className="mb-4">

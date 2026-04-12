@@ -1,9 +1,4 @@
-/* src/App.css */
+/* App shell — routes own layout */
 .App {
-    text-align: center;
-  }
-  
-  h1 {
-    color: #333;
-  }
-  
+  min-height: 100vh;
+}

@@ -1,46 +1,59 @@
+/**
+ * Contact-form email API. Run with: npm run server
+ * Loads root `.env` (never commit real credentials).
+ */
+require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const nodemailer = require('nodemailer');
-const bodyParser = require('body-parser');
 
 const app = express();
-app.use(bodyParser.json());
+const PORT = process.env.PORT || 3001;
 
-// Create a transporter using SMTP
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // Use TLS
-  auth: {
-    user: 'assetforryou@gmail.com', // Your Gmail address
-    pass: 'oyua igsj yypq wton' // Replace with your generated app password
-  }
-});
+app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
+app.use(express.json());
 
 app.post('/api/send-email', async (req, res) => {
   const { fullName, email, inquiryType, message, recipientEmail } = req.body;
 
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+  const smtpFrom = process.env.SMTP_FROM || smtpUser;
+  const smtpTo = recipientEmail || process.env.SMTP_TO;
+
+  if (!smtpUser || !smtpPass || !smtpTo) {
+    console.error('Missing SMTP_USER, SMTP_PASS, or recipient (body recipientEmail / SMTP_TO).');
+    return res.status(503).json({ message: 'Email service is not configured.' });
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+  });
+
   const mailOptions = {
-    from: 'assetforryou@gmail.com', // Your Gmail address
-    to: recipientEmail,
-    subject: `New Inquiry from ${fullName}: ${inquiryType}`,
-    text: `
-      Name: ${fullName}
-      Email: ${email}
-      Inquiry Type: ${inquiryType}
-      Message: ${message}
-    `
+    from: smtpFrom,
+    to: smtpTo,
+    subject: `Vault Knight inquiry from ${fullName}: ${inquiryType || 'General'}`,
+    text: `Name: ${fullName}\nEmail: ${email}\nType: ${inquiryType}\n\n${message}`,
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    res.status(200).send('Email sent successfully');
+    res.status(200).json({ message: 'Email sent successfully' });
   } catch (error) {
     console.error('Error sending email:', error);
-    res.status(500).send('Error sending email');
+    res.status(500).json({ message: 'Error sending email' });
   }
 });
 
-const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Mail API listening on http://localhost:${PORT}`);
 });

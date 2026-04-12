@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/AdLayout';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
-import { Settings, Vault, X } from 'lucide-react';
+import { Settings, X } from 'lucide-react';
 import Auto from './Auto';
 import Cash from './Cash';
 import Stocks from './Stocks';
@@ -16,7 +16,7 @@ import AccountSettings from '../components/AccountSettings';
 import '../style/LandingPage.css';
 import logo_transparent from '../images/logo_transparent.png';
 import AnalyticsDashboard from '../pages/AnalyticsDashboard';
-import DynamoDBService from '../dynamoDBService';
+import FirestoreAssetService from '../firestoreAssetService';
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
@@ -80,8 +80,6 @@ function LandingPage() {
       if (user) {
         setUserEmail(user.email || 'User');
         fetchAllAssetDetails(user.email);
-      } else {
-        navigate('/login');
       }
     });
 
@@ -97,7 +95,7 @@ function LandingPage() {
       unsubscribe();
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [navigate]);
+  }, []);
 
   const fetchAllAssetDetails = async (email) => {
     try {
@@ -119,7 +117,7 @@ function LandingPage() {
 
   const fetchCarDetails = async (email) => {
     try {
-      const cars = await DynamoDBService.fetchAssets('Autos', email);
+      const cars = await FirestoreAssetService.fetchAssets('Autos', email);
       setCarList(cars);
       const total = cars.reduce((sum, car) => sum + parseFloat(car.value || 0), 0);
       setAutoTotal(total);
@@ -130,7 +128,7 @@ function LandingPage() {
 
   const fetchCashDetails = async (email) => {
     try {
-      const cashEntries = await DynamoDBService.fetchAssets('Cash', email);
+      const cashEntries = await FirestoreAssetService.fetchAssets('Cash', email);
       setCashList(cashEntries);
       const total = cashEntries.reduce((sum, entry) => sum + parseFloat(entry.amount), 0);
       setCashTotal(total);
@@ -141,7 +139,7 @@ function LandingPage() {
 
   const fetchStockDetails = async (email) => {
     try {
-      const stocks = await DynamoDBService.fetchAssets('Stocks', email);
+      const stocks = await FirestoreAssetService.fetchAssets('Stocks', email);
       setStockList(stocks);
       const total = stocks.reduce((sum, stock) => sum + parseFloat(stock.total), 0);
       setStockTotal(total);
@@ -152,7 +150,7 @@ function LandingPage() {
 
   const fetchMetalDetails = async (email) => {
     try {
-      const metals = await DynamoDBService.fetchAssets('Metals', email);
+      const metals = await FirestoreAssetService.fetchAssets('Metals', email);
       setMetalList(metals);
       const total = metals.reduce((sum, metal) => sum + parseFloat(metal.total), 0);
       setMetalTotal(total);
@@ -163,7 +161,7 @@ function LandingPage() {
 
   const fetchPropertyDetails = async (email) => {
     try {
-      const properties = await DynamoDBService.fetchAssets('Properties', email);
+      const properties = await FirestoreAssetService.fetchAssets('Properties', email);
       setPropertyList(properties);
       const totalPrice = properties.reduce((sum, property) => sum + parseFloat(property.price || 0), 0);
       const totalMonthlyCost = properties.reduce((sum, property) => sum + parseFloat(property.totalMonthlyCost || 0), 0);
@@ -176,7 +174,7 @@ function LandingPage() {
 
   const fetchLoanDetails = async (email) => {
     try {
-      const loans = await DynamoDBService.fetchAssets('Loans', email);
+      const loans = await FirestoreAssetService.fetchAssets('Loans', email);
       setLoanList(loans);
       const total = loans.reduce((sum, loan) => sum + parseFloat(loan.loanValue || 0), 0);
       setLoanTotal(total);
@@ -187,7 +185,7 @@ function LandingPage() {
 
   const fetchCryptoDetails = async (email) => {
     try {
-      const cryptos = await DynamoDBService.fetchAssets('Crypto', email);
+      const cryptos = await FirestoreAssetService.fetchAssets('Crypto', email);
       setCryptoList(cryptos);
       const total = cryptos.reduce((sum, crypto) => sum + parseFloat(crypto.total || 0), 0);
       setCryptoTotal(total);
@@ -198,8 +196,7 @@ function LandingPage() {
 
   const fetchCustomAssets = async (email) => {
     try {
-      const assets = await DynamoDBService.fetchAssets('CustomAssets', email);
-      console.log('Fetched custom assets:', assets); // Debugging log
+      const assets = await FirestoreAssetService.fetchAssets('CustomAssets', email);
       setCustomAssets(assets);
     } catch (error) {
       console.error('Error fetching custom assets:', error);
@@ -208,10 +205,10 @@ function LandingPage() {
 
   const updateAssetTotal = async (assetId, newTotal) => {
     try {
-      await DynamoDBService.updateAsset('CustomAssets', assetId, { totalValue: newTotal });
+      await FirestoreAssetService.updateAsset('CustomAssets', assetId, { totalValue: newTotal });
       setCustomAssets(prevAssets =>
-        prevAssets.map(asset =>
-          asset.id === assetId ? { ...asset, totalValue: newTotal } : asset
+        prevAssets.map((asset) =>
+          String(asset.id) === String(assetId) ? { ...asset, totalValue: newTotal } : asset
         )
       );
     } catch (error) {
@@ -223,18 +220,15 @@ function LandingPage() {
   const handleDeleteAsset = async (assetId) => {
     if (window.confirm('Are you sure you want to delete this asset?')) {
       try {
-        console.log('Deleting asset with ID:', assetId); // Debugging log
-        console.log('User email:', userEmail); // Debugging log
+        const id = assetId;
 
-        // Ensure the asset ID is a number
-        const id = Number(assetId);
-
-        // Call the deleteAsset function
-        const isDeleted = await DynamoDBService.deleteAsset('CustomAssets', id, userEmail);
+        const isDeleted = await FirestoreAssetService.deleteAsset('CustomAssets', id, userEmail);
 
         if (isDeleted) {
           console.log('Asset deleted successfully.');
-          setCustomAssets(prevAssets => prevAssets.filter(asset => asset.id !== id));
+          setCustomAssets(prevAssets =>
+            prevAssets.filter((asset) => String(asset.id) !== String(id))
+          );
           alert('Asset has been deleted.');
         } else {
           console.error('Failed to delete asset.');
@@ -417,7 +411,9 @@ function LandingPage() {
                 )}
               </div>
               <div className="advanced-analysis">
-                <button onClick={() => setSelectedAsset('analytics')}>Advanced Analysis</button>
+                <button type="button" className="vk-advanced-analysis" onClick={() => setSelectedAsset('analytics')}>
+                  Advanced analysis
+                </button>
               </div>
             </div>
           </Layout>
@@ -425,9 +421,8 @@ function LandingPage() {
       default:
         if (selectedAsset.startsWith('custom-')) {
           const assetId = selectedAsset.split('-')[1];
-          const asset = customAssets.find(a => a.id === Number(assetId));
-          console.log('Selected Asset:', asset); // Debugging log
-        
+          const asset = customAssets.find((a) => String(a.id) === String(assetId));
+
           if (asset) {
             return (
               <CustomAsset
@@ -437,10 +432,8 @@ function LandingPage() {
                 updateAssetTotal={updateAssetTotal}
               />
             );
-          } else {
-            console.error('Asset not found:', assetId); // Debugging log
-            return <div>Asset not found.</div>;
           }
+          return <div className="asset-form-container"><div className="asset-form-card">Asset not found.</div></div>;
         }
         return <div>Select an asset type from the sidebar</div>;
     }

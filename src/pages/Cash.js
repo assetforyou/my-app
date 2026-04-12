@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import LongTermGrowthChart from '../components/CashGrowth';
-import DynamoDBService from '../dynamoDBService';
+import FirestoreAssetService from '../firestoreAssetService';
 
 function Cash({ userEmail, cashList, setCashList, cashTotal, setCashTotal, fetchCashDetails }) {
   const [cashDetails, setCashDetails] = useState({
@@ -37,7 +37,7 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, setCashTotal, fetch
         id: Date.now() // Generate a unique ID as a number
       };
 
-      const savedCash = await DynamoDBService.addAsset('Cash', newCash);
+      const savedCash = await FirestoreAssetService.addAsset('Cash', newCash);
       
       // Update cash list and total
       setCashList(prev => [...prev, savedCash]);
@@ -65,8 +65,9 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, setCashTotal, fetch
   };
 
   const handleDeleteCash = async (cashId) => {
+    if (!window.confirm('Delete this cash entry?')) return;
     try {
-      const success = await DynamoDBService.deleteAsset('Cash', cashId, userEmail);
+      const success = await FirestoreAssetService.deleteAsset('Cash', cashId, userEmail);
       if (success) {
         console.log('Cash deleted successfully');
         fetchCashDetails(userEmail); // Refresh the cash list after deletion
@@ -154,7 +155,7 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, setCashTotal, fetch
 
   return (
     <Layout>
-      <div className="container-fluid px-4">
+      <div className="container-fluid vk-asset-page">
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">

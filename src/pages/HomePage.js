@@ -18,7 +18,7 @@ function HomePage() {
 
   const handleNavigation = (path) => {
     if (path === '/demo') {
-      contactRef.current.scrollIntoView({ behavior: 'smooth' });
+      contactRef.current?.scrollIntoView({ behavior: 'smooth' });
     } else {
       navigate(path);
     }
@@ -44,7 +44,7 @@ function HomePage() {
         },
         body: JSON.stringify({
           ...formData,
-          recipientEmail: 'assetforryou@gmail.com'
+          recipientEmail: process.env.REACT_APP_CONTACT_INBOX || undefined,
         }),
       });
   
@@ -75,11 +75,11 @@ function HomePage() {
     <div className="home-page">
       <header className="header">
         <div className="container">
-        <div className="title">
-          <img src={logo_transparent} alt="Vault Knight" className="custom-title-icon" />
-          Vault Knight
-        </div>
-          <nav className="nav">
+          <div className="title">
+            <img src={logo_transparent} alt="" className="custom-title-icon" aria-hidden />
+            Vault Knight
+          </div>
+          <nav className="nav" aria-label="Primary">
             <ul>
               {['About', 'Services', 'Solutions', 'Contact'].map((item) => (
                 <li key={item}>
@@ -89,37 +89,40 @@ function HomePage() {
             </ul>
           </nav>
           <div className="auth-buttons">
-            <button className="login-button" onClick={() => handleNavigation('/login')}>Login</button>
-            <button className="signup-button" onClick={() => handleNavigation('/signup')}>Sign Up</button>
+            <button type="button" className="login-button" onClick={() => handleNavigation('/login')}>Log in</button>
+            <button type="button" className="signup-button" onClick={() => handleNavigation('/signup')}>Sign up</button>
           </div>
         </div>
       </header>
 
       <motion.section className="hero" {...fadeInUp}>
         <div className="hero-content">
-          <h1>Secure Your Digital Fortune</h1>
-          <p>Advanced Asset Management for the Modern Investor</p>
-          <button className="cta-button" onClick={() => handleNavigation('/demo')}>
-            Request a Demo
+          <p className="hero-eyebrow">Institutional clarity · Personal control</p>
+          <h1>
+            Secure your <span>digital fortune</span>
+          </h1>
+          <p>
+            Advanced asset tracking, real-time insight, and a vault-grade experience—built for investors who expect more than a spreadsheet.
+          </p>
+          <button type="button" className="cta-button" onClick={() => handleNavigation('/demo')}>
+            Request a demo
           </button>
         </div>
       </motion.section>
 
-      <motion.section id="about" className="section about-section" {...fadeInUp}>
+      <motion.section id="about" className="section about-section" {...fadeInUp} style={{ scrollMarginTop: '80px' }}>
         <div className="container">
           <h2>About Vault Knight</h2>
-          <p>
-            At Vault Knight, we combine cutting-edge technology with financial expertise to provide a secure, 
-            comprehensive asset management platform. Our solution caters to both individual investors and 
-            financial institutions, offering unparalleled security and insights for your digital assets.
+          <p className="section-intro">
+            We combine disciplined engineering with thoughtful design so you can see every asset class in one calm, confident view—whether you are growing wealth or stewarding it.
           </p>
           <div className="feature-grid">
             {[
-              { icon: <FaShieldAlt />, title: 'Bank-Grade Security', description: 'Multi-layer encryption and advanced protocols' },
-              { icon: <FaChartLine />, title: 'Real-Time Analytics', description: 'Comprehensive dashboards and performance tracking' },
-              { icon: <FaLock />, title: 'Privacy First', description: 'Your data remains yours, always' }
+              { icon: <FaShieldAlt />, title: 'Bank-grade posture', description: 'Encryption in transit and at rest, with clear separation between identity and data.' },
+              { icon: <FaChartLine />, title: 'Live portfolio signal', description: 'Dashboards that surface what moved, what matters, and what needs attention next.' },
+              { icon: <FaLock />, title: 'Privacy by default', description: 'Your positions stay yours. No dark patterns—just transparent access and export.' }
             ].map((feature, index) => (
-              <motion.div key={index} className="feature-card" whileHover={{ scale: 1.05 }}>
+              <motion.div key={feature.title} className="feature-card" whileHover={{ scale: 1.02 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
                 {feature.icon}
                 <h3>{feature.title}</h3>
                 <p>{feature.description}</p>
@@ -129,16 +132,19 @@ function HomePage() {
         </div>
       </motion.section>
 
-      <motion.section id="services" className="section services-section" {...fadeInUp}>
+      <motion.section id="services" className="section services-section" {...fadeInUp} style={{ scrollMarginTop: '80px' }}>
         <div className="container">
-          <h2>Our Services</h2>
+          <h2>Capabilities</h2>
+          <p className="section-intro">
+            Everything you need to operate a serious personal balance sheet—without the noise of consumer finance apps.
+          </p>
           <div className="service-grid">
             {[
-              'Asset Tracking & Management',
-              'Portfolio Analysis',
-              'Secure Information Storage'
-            ].map((service, index) => (
-              <motion.div key={index} className="service-card" whileHover={{ scale: 1.05 }}>
+              'Multi-asset ledger & history',
+              'Scenario-ready analytics',
+              'Structured export for advisors'
+            ].map((service) => (
+              <motion.div key={service} className="service-card" whileHover={{ scale: 1.02 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
                 <h3>{service}</h3>
               </motion.div>
             ))}
@@ -146,40 +152,47 @@ function HomePage() {
         </div>
       </motion.section>
 
-      <motion.section id="solutions" className="section solutions-section" {...fadeInUp}>
+      <motion.section id="solutions" className="section solutions-section" {...fadeInUp} style={{ scrollMarginTop: '80px' }}>
         <div className="container">
-          <h2>Tailored Solutions</h2>
+          <h2>Who it is for</h2>
+          <p className="section-intro">
+            The same precision we bring to institutions—shaped for individuals and small teams who care about craft.
+          </p>
           <div className="solutions-grid">
-            <motion.div className="solution-card" whileHover={{ scale: 1.05 }}>
-              <FaUser className="solution-icon" />
-              <h3>For Individuals</h3>
+            <motion.div className="solution-card" whileHover={{ scale: 1.01 }} transition={{ type: 'spring', stiffness: 400, damping: 28 }}>
+              <FaUser className="solution-icon" aria-hidden />
+              <h3>Individuals</h3>
               <ul>
-                <li>Personal Asset Dashboard</li>
-                <li>Goal-based Planning</li>
+                <li>Unified net-worth canvas</li>
+                <li>Goals, cash flow, and risk in context</li>
               </ul>
             </motion.div>
-            <motion.div className="solution-card" whileHover={{ scale: 1.05 }}>
-              <FaBuilding className="solution-icon" />
-              <h3>For Institutions</h3>
+            <motion.div className="solution-card" whileHover={{ scale: 1.01 }} transition={{ type: 'spring', stiffness: 400, damping: 28 }}>
+              <FaBuilding className="solution-icon" aria-hidden />
+              <h3>Advisors & family offices</h3>
               <ul>
-                <li>Multi-User Access Control</li>
-                <li>Customized Reporting</li>
+                <li>Role-ready views (coming soon)</li>
+                <li>Audit-friendly record keeping</li>
               </ul>
             </motion.div>
           </div>
         </div>
       </motion.section>
 
-      <motion.section id="contact" className="section contact-section" {...fadeInUp} ref={contactRef}>
+      <motion.section id="contact" className="section contact-section" {...fadeInUp} ref={contactRef} style={{ scrollMarginTop: '80px' }}>
         <div className="container">
-          <h2>Get in Touch</h2>
+          <h2>Speak with us</h2>
+          <p className="section-intro">
+            Tell us what you are building. We read every message and respond within two business days.
+          </p>
           <form className="contact-form" onSubmit={handleSubmit}>
             <input
               type="text"
               name="fullName"
               value={formData.fullName}
               onChange={handleInputChange}
-              placeholder="Full Name"
+              placeholder="Full name"
+              autoComplete="name"
               required
             />
             <input
@@ -187,7 +200,8 @@ function HomePage() {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder="Email Address"
+              placeholder="Work email"
+              autoComplete="email"
               required
             />
             <select
@@ -196,19 +210,19 @@ function HomePage() {
               onChange={handleInputChange}
               required
             >
-              <option value="">Select Inquiry Type</option>
-              <option value="demo">Request Demo</option>
-              <option value="support">Technical Support</option>
+              <option value="">Inquiry type</option>
+              <option value="demo">Request demo</option>
+              <option value="support">Technical support</option>
             </select>
             <textarea
               name="message"
               value={formData.message}
               onChange={handleInputChange}
-              placeholder="Your Message"
+              placeholder="How can we help?"
               required
-            ></textarea>
+            />
             <button type="submit" disabled={formStatus === 'Sending message...'}>
-              {formStatus || 'Send Message'}
+              {formStatus === 'Sending message...' ? 'Sending…' : formStatus || 'Send message'}
             </button>
           </form>
         </div>
@@ -219,8 +233,8 @@ function HomePage() {
           <div className="footer-content">
             <div className="footer-logo">Vault Knight</div>
             <div className="footer-links">
-              <a href="/privacy">Privacy Policy</a>
-              <a href="/terms">Terms of Service</a>
+              <a href="/privacy">Privacy</a>
+              <a href="/terms">Terms</a>
               <a href="/careers">Careers</a>
             </div>
           </div>

@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import CustomAssetVisualization from '../components/CustomAssetVisualization';
-import DynamoDBService from '../dynamoDBService';
+import FirestoreAssetService from '../firestoreAssetService';
 
 function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) {
   const [assetItems, setAssetItems] = useState([]);
@@ -22,13 +22,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
   
   const fetchAssetItems = async () => {
     try {
-      // Fetch the asset definition from the CustomAssets table
-      const assetDefinition = await DynamoDBService.fetchAssetById('CustomAssets', asset.id);
-      console.log('Asset Definition:', assetDefinition);
-  
-      // Fetch all items for the custom asset from the CustomAssetItems table
-      const items = await DynamoDBService.fetchAssetItems('CustomAssetItems', asset.id);
-      console.log('Fetched Items:', items);
+      const items = await FirestoreAssetService.fetchAssetItems('CustomAssetItems', asset.id);
   
       setAssetItems(items);
       calculateTotalValue(items);
@@ -49,7 +43,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
       };
   
       // Save the item to the CustomAssetItems table
-      const savedItem = await DynamoDBService.addAssetItem('CustomAssetItems', newItemWithId);
+      const savedItem = await FirestoreAssetService.addAssetItem('CustomAssetItems', newItemWithId);
       setAssetItems(prev => [...prev, savedItem]);
       setNewItem({});
       setSaveButtonText('Added!');
@@ -79,18 +73,10 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
   const handleDeleteItem = async (itemId) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
-        console.log('Deleting item with ID:', itemId); // Debugging log
-        console.log('User email:', userEmail); // Debugging log
-  
-        // Ensure the item ID is a number
-        const id = Number(itemId);
-  
-        // Call the deleteAssetItem function
-        const isDeleted = await DynamoDBService.deleteAssetItem('CustomAssetItems', id, userEmail);
-  
+        const isDeleted = await FirestoreAssetService.deleteAssetItem('CustomAssetItems', itemId, userEmail);
+
         if (isDeleted) {
-          console.log('Item deleted successfully.');
-          setAssetItems(prev => prev.filter(item => item.id !== id));
+          setAssetItems((prev) => prev.filter((item) => String(item.id) !== String(itemId)));
           alert('Item deleted successfully.');
         } else {
           console.error('Failed to delete item.');
@@ -160,7 +146,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
 
   return (
     <Layout>
-      <div className="container-fluid px-4">
+      <div className="container-fluid vk-asset-page">
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">

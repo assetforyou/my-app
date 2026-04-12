@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import LoanGrowthChart from '../components/LoanGrowth';
-import DynamoDBService from '../dynamoDBService';
+import FirestoreAssetService from '../firestoreAssetService';
 
 function Loan({ userEmail, loanList, setLoanList, loanTotal, setLoanTotal, fetchLoanDetails }) {
   const [loanDetails, setLoanDetails] = useState({
@@ -63,7 +63,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, setLoanTotal, fetch
         id: Date.now() // Generate a unique ID as a number
       };
   
-      const savedLoan = await DynamoDBService.addAsset('Loans', newLoan);
+      const savedLoan = await FirestoreAssetService.addAsset('Loans', newLoan);
       setLoanList(prev => [...prev, savedLoan]);
       setLoanTotal(prev => prev + loanValueInSelectedCurrency); // Update the total loan value
   
@@ -92,7 +92,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, setLoanTotal, fetch
   const handleDeleteLoan = async (loanId) => {
     if (window.confirm('Are you sure you want to delete this loan entry?')) {
       try {
-        await DynamoDBService.deleteAsset('Loans', loanId, userEmail);
+        await FirestoreAssetService.deleteAsset('Loans', loanId, userEmail);
         setLoanList(prev => prev.filter(loan => loan.id !== loanId)); // Use setLoanList
         alert('Loan entry deleted successfully.');
         fetchLoanDetails(userEmail);
@@ -229,7 +229,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, setLoanTotal, fetch
 
   return (
     <Layout>
-      <div className="container-fluid px-4">
+      <div className="container-fluid vk-asset-page">
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">

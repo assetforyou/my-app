@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import AutoDepreciation from '../components/AutoDepreciation';
-import DynamoDBService from '../dynamoDBService';
+import FirestoreAssetService from '../firestoreAssetService';
 
 function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
   const [carDetails, setCarDetails] = useState({
@@ -36,7 +36,7 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
 
   const fetchCarDetails = async (email) => {
     try {
-      const cars = await DynamoDBService.fetchAssets('Autos', email);
+      const cars = await FirestoreAssetService.fetchAssets('Autos', email);
       setCarList(cars);
       const total = cars.reduce((sum, car) => sum + parseFloat(car.value || 0), 0);
       setAutoTotal(total);
@@ -65,9 +65,7 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
         id: Date.now() // Generate a unique ID as a number
       };
 
-      console.log('Saving car details:', newCar); // Debugging log
-
-      const savedCar = await DynamoDBService.addAsset('Autos', newCar);
+      const savedCar = await FirestoreAssetService.addAsset('Autos', newCar);
       
       // Update car list and total
       setCarList(prev => [...prev, savedCar]);
@@ -101,11 +99,9 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
   const handleDeleteCar = async (carId) => {
     if (window.confirm('Are you sure you want to delete this car?')) {
       try {
-        console.log('Deleting car with ID:', carId);
-        const isDeleted = await DynamoDBService.deleteAsset('Autos', carId, userEmail); // Pass userEmail
-    
+        const isDeleted = await FirestoreAssetService.deleteAsset('Autos', carId, userEmail);
+
         if (isDeleted) {
-          console.log('Car deleted successfully. Updating state...');
           const updatedCarList = carList.filter(car => car.id !== carId);
           setCarList(updatedCarList);
     
@@ -220,10 +216,10 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
 
   return (
     <Layout>
-      <div className="container-fluid px-4">
-        <div className="row g-4">
+      <div className="container-fluid vk-asset-page">
+        <div className="row g-3 g-lg-4 align-items-start">
           {/* Form Column */}
-          <div className="col-12 col-xl-4">
+          <div className="col-12 col-lg-5 col-xl-4">
             <Card className="h-100">
               <Card.Header className="d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">Enter Car Details</h5>
@@ -264,7 +260,7 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
           </div>
 
           {/* Table and Charts Column */}
-          <div className="col-12 col-xl-8">
+          <div className="col-12 col-lg-7 col-xl-8">
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Total Value: {new Intl.NumberFormat('en-US', { 
