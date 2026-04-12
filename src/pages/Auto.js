@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/AdLayout';
-import { Upload, Download, MoreVertical } from 'lucide-react';
+import { Upload, Download, MoreVertical, Car } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import AutoDepreciation from '../components/AutoDepreciation';
 import FirestoreAssetService from '../firestoreAssetService';
+import '../style/AssetPages.css';
 
 function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
   const [carDetails, setCarDetails] = useState({
@@ -217,6 +218,12 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
   return (
     <Layout>
       <div className="container-fluid vk-asset-page">
+        <div className="create-asset-header" style={{ marginBottom: '1.5rem' }}>
+          <Car size={32} style={{ color: 'var(--primary-500)', marginBottom: '0.5rem' }} />
+          <h1>Vehicle Assets</h1>
+          <p>Track your automobiles, fleet, and vehicle portfolio</p>
+        </div>
+
         <div className="row g-3 g-lg-4 align-items-start">
           {/* Form Column */}
           <div className="col-12 col-lg-5 col-xl-4">
@@ -261,14 +268,19 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
 
           {/* Table and Charts Column */}
           <div className="col-12 col-lg-7 col-xl-8">
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Total Value: {new Intl.NumberFormat('en-US', { 
-                  style: 'currency', 
-                  currency: 'USD' 
-                }).format(autoTotal)}</h5>
-              </Card.Header>
-            </Card>
+             <Card className="mb-4 total-value-card">
+               <Card.Header>
+                 <h5 className="mb-0">Total Vehicle Value</h5>
+               </Card.Header>
+               <Card.Body style={{ paddingTop: '0', paddingBottom: '1.5rem' }}>
+                 <div className="d-flex align-items-center gap-3">
+                   <Car size={32} style={{ color: 'var(--primary-500)' }} />
+                   <div>
+                     <div className="amount">${autoTotal.toFixed(2)}</div>
+                   </div>
+                 </div>
+               </Card.Body>
+             </Card>
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Auto Value Analysis</h5>

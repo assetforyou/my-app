@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/AdLayout';
-import { Upload, Download, MoreVertical } from 'lucide-react';
+import { Upload, Download, MoreVertical, Layers } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import CustomAssetVisualization from '../components/CustomAssetVisualization';
 import FirestoreAssetService from '../firestoreAssetService';
+import { useToast } from '../components/Toast';
+import '../style/AssetPages.css';
 
 function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) {
   const [assetItems, setAssetItems] = useState([]);
@@ -13,6 +15,7 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
   const [totalValue, setTotalValue] = useState(0);
   const [saveButtonText, setSaveButtonText] = useState('Add Item');
   const fileInputRef = useRef(null);
+  const { success, error: showError, warning } = useToast();
 
   useEffect(() => {
     if (asset) {
@@ -33,6 +36,17 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
   
   const handleAddItem = async () => {
     setSaveButtonText('Adding...');
+    
+    // Basic validation - check if required fields are filled
+    const requiredFields = asset.fields.filter(f => f.required);
+    for (const field of requiredFields) {
+      if (!newItem[field.name] || newItem[field.name].toString().trim() === '') {
+        showError(`Please fill in the required field: ${field.name}`);
+        setSaveButtonText('Add Item');
+        return;
+      }
+    }
+    
     try {
       const newItemWithId = {
         ...newItem,
@@ -41,16 +55,17 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
         id: Date.now().toString(), // Generate a unique ID for the item
         createdAt: new Date().toISOString()
       };
-  
+
       // Save the item to the CustomAssetItems table
       const savedItem = await FirestoreAssetService.addAssetItem('CustomAssetItems', newItemWithId);
       setAssetItems(prev => [...prev, savedItem]);
       setNewItem({});
+      success('Item added successfully!');
       setSaveButtonText('Added!');
       setTimeout(() => setSaveButtonText('Add Item'), 2000);
-    } catch (error) {
-      console.error('Error adding custom asset item:', error);
-      alert('Failed to add item.');
+    } catch (err) {
+      console.error('Error adding custom asset item:', err);
+      showError('Failed to add item. Please try again.');
       setSaveButtonText('Add Item');
     }
   };
@@ -77,33 +92,44 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
 
         if (isDeleted) {
           setAssetItems((prev) => prev.filter((item) => String(item.id) !== String(itemId)));
-          alert('Item deleted successfully.');
+          success('Item deleted successfully.');
         } else {
           console.error('Failed to delete item.');
+          showError('Failed to delete item. Please try again.');
         }
-      } catch (error) {
-        console.error('Error deleting custom asset item:', error);
-        alert('Failed to delete item.');
+      } catch (err) {
+        console.error('Error deleting custom asset item:', err);
+        showError('Failed to delete item. Please try again.');
       }
     }
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const bstr = evt.target.result;
-      const wb = XLSX.read(bstr, { type: 'binary' });
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws);
-      if (data.length > 0) {
-        const firstRow = data[0];
-        const newItemData = {};
-        asset.fields.forEach(field => {
-          newItemData[field.name] = firstRow[field.name] || '';
-        });
-        setNewItem(newItemData);
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        if (data.length > 0) {
+          const firstRow = data[0];
+          const newItemData = {};
+          asset.fields.forEach(field => {
+            newItemData[field.name] = firstRow[field.name] || '';
+          });
+          setNewItem(newItemData);
+          success('Data loaded from file successfully');
+        } else {
+          warning('No data found in the uploaded file');
+        }
+      } catch (err) {
+        console.error('Error reading file:', err);
+        showError('Failed to read the uploaded file. Please check the file format.');
       }
     };
     reader.readAsBinaryString(file);
@@ -190,11 +216,19 @@ function CustomAsset({ userEmail, asset, fetchCustomAssets, updateAssetTotal }) 
 
           {/* Table and Charts Column */}
           <div className="col-12 col-xl-8">
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Total Value: ${totalValue.toFixed(2)}</h5>
-              </Card.Header>
-            </Card>
+             <Card className="mb-4 total-value-card">
+               <Card.Header>
+                 <h5 className="mb-0">Total Asset Value</h5>
+               </Card.Header>
+               <Card.Body style={{ paddingTop: '0', paddingBottom: '1.5rem' }}>
+                 <div className="d-flex align-items-center gap-3">
+                   <Layers size={32} style={{ opacity: 0.9 }} />
+                   <div>
+                     <div className="amount">${totalValue.toFixed(2)}</div>
+                   </div>
+                 </div>
+               </Card.Body>
+             </Card>
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Value Analysis</h5>

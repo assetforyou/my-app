@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/AdLayout';
-import { Upload, Download, MoreVertical } from 'lucide-react';
+import { Upload, Download, MoreVertical, Gem } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import MetalsGrowthChart from '../components/MetalsGrowth';
 import FirestoreAssetService from '../firestoreAssetService';
+import '../style/AssetPages.css';
 
 const ALPHA_VANTAGE_API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY || '';
 
@@ -227,6 +228,12 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal,
   return (
     <Layout>
       <div className="container-fluid vk-asset-page">
+        <div className="create-asset-header" style={{ marginBottom: '1.5rem' }}>
+          <Gem size={32} style={{ color: 'var(--primary-500)', marginBottom: '0.5rem' }} />
+          <h1>Precious Metals Assets</h1>
+          <p>Track gold, silver, platinum and precious metal investments</p>
+        </div>
+
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">
@@ -285,11 +292,19 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal,
 
           {/* Table and Charts Column */}
           <div className="col-12 col-xl-8">
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Total Metal Value: ${metalTotal.toFixed(2)}</h5>
-              </Card.Header>
-            </Card>
+             <Card className="mb-4 total-value-card">
+               <Card.Header>
+                 <h5 className="mb-0">Total Metals Value</h5>
+               </Card.Header>
+               <Card.Body style={{ paddingTop: '0', paddingBottom: '1.5rem' }}>
+                 <div className="d-flex align-items-center gap-3">
+                   <Gem size={32} style={{ color: 'var(--primary-500)' }} />
+                   <div>
+                     <div className="amount">${metalTotal.toFixed(2)}</div>
+                   </div>
+                 </div>
+               </Card.Body>
+             </Card>
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Metals Value Analysis</h5>

@@ -1,12 +1,13 @@
 import React, { useState, useRef } from 'react';
 import Layout from '../components/AdLayout';
 import axios from 'axios';
-import { Upload, Download, MoreVertical } from 'lucide-react';
+import { Upload, Download, MoreVertical, Coins } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import CryptoProjection from '../components/CryptoProjection';
 import FirestoreAssetService from '../firestoreAssetService';
+import '../style/AssetPages.css';
 
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
@@ -215,6 +216,12 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTo
   return (
     <Layout>
       <div className="container-fluid vk-asset-page">
+        <div className="create-asset-header" style={{ marginBottom: '1.5rem' }}>
+          <Coins size={32} style={{ color: 'var(--primary-500)', marginBottom: '0.5rem' }} />
+          <h1>Cryptocurrency Assets</h1>
+          <p>Track your digital currency holdings and investments</p>
+        </div>
+
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">
@@ -296,11 +303,19 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTo
 
           {/* Table and Charts Column */}
           <div className="col-12 col-xl-8">
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Total Portfolio Value: ${cryptoTotal.toFixed(2)}</h5>
-              </Card.Header>
-            </Card>
+             <Card className="mb-4 total-value-card">
+               <Card.Header>
+                 <h5 className="mb-0">Total Crypto Value</h5>
+               </Card.Header>
+               <Card.Body style={{ paddingTop: '0', paddingBottom: '1.5rem' }}>
+                 <div className="d-flex align-items-center gap-3">
+                   <Coins size={32} style={{ color: 'var(--primary-500)' }} />
+                   <div>
+                     <div className="amount">${cryptoTotal.toFixed(2)}</div>
+                   </div>
+                 </div>
+               </Card.Body>
+             </Card>
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Cryptocurrency Value Analysis</h5>

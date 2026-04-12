@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/AdLayout';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
-import { Settings, X } from 'lucide-react';
+import { Settings, X, Search } from 'lucide-react';
+import { useToast } from '../components/Toast';
 import Auto from './Auto';
 import Cash from './Cash';
 import Stocks from './Stocks';
@@ -13,6 +14,7 @@ import Crypto from './Crypto';
 import CreateAsset from './CreateAsset';
 import CustomAsset from './CustomAsset';
 import AccountSettings from '../components/AccountSettings';
+import DashboardOverview from '../components/DashboardOverview';
 import '../style/LandingPage.css';
 import logo_transparent from '../images/logo_transparent.png';
 import AnalyticsDashboard from '../pages/AnalyticsDashboard';
@@ -38,12 +40,19 @@ function LandingPage() {
   const [cryptoTotal, setCryptoTotal] = useState(0);
   const [customAssets, setCustomAssets] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const settingsRef = useRef(null);
   const navigate = useNavigate();
+  const { success, error: showError, warning } = useToast();
 
   // Toggle settings dropdown
   const toggleSettings = () => {
     setIsSettingsOpen(!isSettingsOpen);
+  };
+
+  // Toggle search - dispatch event to GlobalSearch component
+  const toggleSearch = () => {
+    window.dispatchEvent(new CustomEvent('vaultknight-toggle-search'));
   };
 
   // Handle account settings navigation
@@ -56,10 +65,11 @@ function LandingPage() {
   const handleSignOut = () => {
     setIsSettingsOpen(false);
     auth.signOut().then(() => {
+      success('Signed out successfully');
       navigate('/login');
-    }).catch((error) => {
-      console.error('Sign out error:', error);
-      alert('Failed to sign out. Please try again.');
+    }).catch((err) => {
+      console.error('Sign out error:', err);
+      showError('Failed to sign out. Please try again.');
     });
   };
 
@@ -73,6 +83,16 @@ function LandingPage() {
   const setSelectedAssetAndCloseSettings = (asset) => {
     setSelectedAsset(asset);
     setIsSettingsOpen(false);
+  };
+
+  // Handle search selection
+  const handleSearchSelect = (item) => {
+    setIsSearchOpen(false);
+    if (item.action) {
+      setSelectedAsset(item.action);
+    } else if (item.path) {
+      navigate(item.path);
+    }
   };
 
   useEffect(() => {
@@ -89,11 +109,28 @@ function LandingPage() {
       }
     };
 
+    // Listen for navigation events from GlobalSearch and KeyboardShortcuts
+    const handleNavigationEvent = (event) => {
+      const { action } = event.detail;
+      if (action) {
+        setSelectedAsset(action);
+      }
+    };
+
+    // Listen for search toggle event
+    const handleSearchToggle = () => {
+      setIsSearchOpen(true);
+    };
+
+    window.addEventListener('vaultknight-navigate', handleNavigationEvent);
+    window.addEventListener('vaultknight-toggle-search', handleSearchToggle);
     document.addEventListener('mousedown', handleClickOutside);
 
     return () => {
       unsubscribe();
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('vaultknight-navigate', handleNavigationEvent);
+      window.removeEventListener('vaultknight-toggle-search', handleSearchToggle);
     };
   }, []);
 
@@ -109,9 +146,9 @@ function LandingPage() {
         fetchCryptoDetails(email),
         fetchCustomAssets(email),
       ]);
-    } catch (error) {
-      console.error('Error fetching asset details:', error);
-      alert('Failed to fetch asset details. Please try again.');
+    } catch (err) {
+      console.error('Error fetching asset details:', err);
+      showError('Failed to fetch asset details. Please try again.');
     }
   };
 
@@ -211,9 +248,9 @@ function LandingPage() {
           String(asset.id) === String(assetId) ? { ...asset, totalValue: newTotal } : asset
         )
       );
-    } catch (error) {
-      console.error('Error updating asset total:', error);
-      alert('Failed to update asset total. Please try again.');
+    } catch (err) {
+      console.error('Error updating asset total:', err);
+      showError('Failed to update asset total. Please try again.');
     }
   };
 
@@ -229,13 +266,14 @@ function LandingPage() {
           setCustomAssets(prevAssets =>
             prevAssets.filter((asset) => String(asset.id) !== String(id))
           );
-          alert('Asset has been deleted.');
+          success('Asset has been deleted.');
         } else {
           console.error('Failed to delete asset.');
+          showError('Failed to delete asset. Please try again.');
         }
-      } catch (error) {
-        console.error('Error deleting asset:', error);
-        alert('Failed to delete asset. Please try again.');
+      } catch (err) {
+        console.error('Error deleting asset:', err);
+        showError('Failed to delete asset. Please try again.');
       }
     }
   };
@@ -342,6 +380,21 @@ function LandingPage() {
             customAssets={customAssets}
           />
         );
+      case 'dashboard':
+        return (
+          <Layout>
+            <DashboardOverview
+              cashTotal={cashTotal}
+              stockTotal={stockTotal}
+              metalTotal={metalTotal}
+              propertyTotalPrice={propertyTotalPrice}
+              cryptoTotal={cryptoTotal}
+              loanTotal={loanTotal}
+              customAssets={customAssets}
+              userEmail={userEmail}
+            />
+          </Layout>
+        );
       case 'home':
         return (
           <Layout>
@@ -447,9 +500,21 @@ function LandingPage() {
           Vault Knight
         </div>
         <div className="settings-dropdown" ref={settingsRef}>
+          {/* Search Icon - vertical, to the left of settings */}
+          <button 
+            onClick={toggleSearch} 
+            className="search-icon-btn"
+            aria-label="Open search"
+            title="Search (Ctrl+K)"
+          >
+            <Search size={20} />
+          </button>
+          
+          {/* Settings Icon */}
           <button onClick={toggleSettings} className="settings-icon">
             <Settings size={24} />
           </button>
+          
           {isSettingsOpen && (
             <div className="settings-menu">
               <div className="user-email">{userEmail}</div>

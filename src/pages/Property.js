@@ -1,11 +1,13 @@
 import React, { useState, useRef, useCallback } from 'react';
 import Layout from '../components/AdLayout';
-import { Upload, Download, MoreVertical } from 'lucide-react';
+import { Upload, Download, MoreVertical, Home } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import PropertyGrowthChart from '../components/PropertyGrowth';
 import FirestoreAssetService from '../firestoreAssetService';
+import { useToast } from '../components/Toast';
+import '../style/AssetPages.css';
 
 function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, setPropertyTotalPrice, propertyTotalMonthlyCost, setPropertyTotalMonthlyCost, fetchPropertyDetails }) {
   const [propertyDetails, setPropertyDetails] = useState({
@@ -24,6 +26,7 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
   const [saveButtonText, setSaveButtonText] = useState('Save');
   const [suggestions, setSuggestions] = useState([]);
   const fileInputRef = useRef(null);
+  const { success, error: showError, warning } = useToast();
 
   const debounce = (func, delay) => {
     let timeoutId;
@@ -68,17 +71,26 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
 
   const handleSavePropertyDetails = async () => {
     setSaveButtonText('Saving...');
+    
+    // Validation
+    if (!propertyDetails.address.trim()) {
+      showError('Please enter a property address');
+      setSaveButtonText('Save');
+      return;
+    }
+    
+    if (!propertyDetails.price || parseFloat(propertyDetails.price) <= 0) {
+      showError('Please enter a valid property price');
+      setSaveButtonText('Save');
+      return;
+    }
+
     try {
       // Parse numeric fields
       const price = parseFloat(propertyDetails.price);
-      const mortgagePayment = parseFloat(propertyDetails.mortgagePayment);
-      const utilities = parseFloat(propertyDetails.utilities);
-      const otherExpenses = parseFloat(propertyDetails.otherExpenses);
-
-      // Validate numeric fields
-      if (isNaN(price) || isNaN(mortgagePayment) || isNaN(utilities) || isNaN(otherExpenses)) {
-        throw new Error('Invalid numeric values in property details.');
-      }
+      const mortgagePayment = parseFloat(propertyDetails.mortgagePayment) || 0;
+      const utilities = parseFloat(propertyDetails.utilities) || 0;
+      const otherExpenses = parseFloat(propertyDetails.otherExpenses) || 0;
 
       // Calculate total monthly cost
       const totalMonthlyCost = mortgagePayment + utilities + otherExpenses;
@@ -118,12 +130,13 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
         purchaseDate: ''
       });
 
+      success('Property added successfully!');
       setSaveButtonText('Saved!');
       setTimeout(() => setSaveButtonText('Save'), 2000);
-    } catch (error) {
-      console.error('Error saving property details:', error);
+    } catch (err) {
+      console.error('Error saving property details:', err);
       setSaveButtonText('Save');
-      alert('Failed to save property details. Please ensure all numeric fields are valid.');
+      showError('Failed to save property details. Please ensure all fields are valid.');
     }
   };
 
@@ -132,38 +145,48 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
       try {
         await FirestoreAssetService.deleteAsset('Properties', propertyId, userEmail); // Pass userEmail
         setPropertyList(prev => prev.filter(property => property.id !== propertyId));
-        alert('Property deleted successfully.');
+        success('Property deleted successfully.');
         fetchPropertyDetails(userEmail);
-      } catch (error) {
-        console.error('Error deleting property:', error);
-        alert('Failed to delete property.');
+      } catch (err) {
+        console.error('Error deleting property:', err);
+        showError('Failed to delete property. Please try again.');
       }
     }
   };
   
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const bstr = evt.target.result;
-      const wb = XLSX.read(bstr, { type: 'binary' });
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws);
-      if (data.length > 0) {
-        setPropertyDetails({
-          address: data[0].address || '',
-          bedrooms: data[0].bedrooms || '',
-          bathrooms: data[0].bathrooms || '',
-          basement: data[0].basement || '',
-          price: data[0].price || '',
-          mortgagePayment: data[0].mortgagePayment || '',
-          interestRate: data[0].interestRate || '',
-          utilities: data[0].utilities || '',
-          otherExpenses: data[0].otherExpenses || '',
-          currency: data[0].currency || 'USD',
-          purchaseDate: data[0].purchaseDate || ''
-        });
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        if (data.length > 0) {
+          setPropertyDetails({
+            address: data[0].address || '',
+            bedrooms: data[0].bedrooms || '',
+            bathrooms: data[0].bathrooms || '',
+            basement: data[0].basement || '',
+            price: data[0].price || '',
+            mortgagePayment: data[0].mortgagePayment || '',
+            interestRate: data[0].interestRate || '',
+            utilities: data[0].utilities || '',
+            otherExpenses: data[0].otherExpenses || '',
+            currency: data[0].currency || 'USD',
+            purchaseDate: data[0].purchaseDate || ''
+          });
+          success('Property data loaded from file successfully');
+        } else {
+          warning('No data found in the uploaded file');
+        }
+      } catch (err) {
+        console.error('Error reading file:', err);
+        showError('Failed to read the uploaded file. Please check the file format.');
       }
     };
     reader.readAsBinaryString(file);
@@ -222,6 +245,12 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
   return (
     <Layout>
       <div className="container-fluid vk-asset-page">
+        <div className="create-asset-header" style={{ marginBottom: '1.5rem' }}>
+          <Home size={32} style={{ color: 'var(--primary-500)', marginBottom: '0.5rem' }} />
+          <h1>Property Assets</h1>
+          <p>Track your real estate portfolio with complete details</p>
+        </div>
+
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">
@@ -288,13 +317,23 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
           </div>
 
           {/* Table and Charts Column */}
-          <div className="col-12 col-xl-8">
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Total Property Value: ${propertyTotalPrice.toFixed(2)}</h5>
-                <h5 className="mb-0">Total Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</h5>
-              </Card.Header>
-            </Card>
+           <div className="col-12 col-xl-8">
+             <Card className="mb-4 total-value-card">
+               <Card.Header>
+                 <h5 className="mb-0">Total Property Portfolio</h5>
+               </Card.Header>
+               <Card.Body style={{ paddingTop: '0', paddingBottom: '1.5rem' }}>
+                 <div className="d-flex align-items-center gap-3">
+                   <Home size={32} style={{ opacity: 0.9 }} />
+                   <div>
+                     <div className="amount">${propertyTotalPrice.toFixed(2)}</div>
+                     <p style={{ margin: 0, opacity: 0.8, fontSize: '0.875rem' }}>
+                       Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}
+                     </p>
+                   </div>
+                 </div>
+               </Card.Body>
+             </Card>
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Property Value Analysis</h5>

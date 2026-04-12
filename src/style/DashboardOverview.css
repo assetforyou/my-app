@@ -1,0 +1,250 @@
+/* Dashboard Overview Styles */
+.dashboard-overview {
+  padding: 20px;
+}
+
+/* Metric Cards */
+.metric-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  height: 100%;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.metric-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  margin-bottom: 12px;
+}
+
+.metric-icon.positive {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.metric-icon.negative {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.metric-content h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.metric-label {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Time Range Selector */
+.time-range-selector .form-select {
+  width: auto;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Chart Container */
+.chart-container {
+  position: relative;
+  width: 100%;
+  min-height: 300px;
+}
+
+/* Asset Allocation Legend */
+.allocation-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background-color: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.legend-item:hover {
+  background-color: #f3f4f6;
+  transform: scale(1.05);
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legend-item span {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.legend-value {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Goals List */
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.goal-item {
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #f9fafb;
+  border-left: 4px solid #3b82f6;
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.goal-title {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.goal-amount {
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+/* Alerts List */
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+
+.alert-item.warning {
+  background-color: #fef3c7;
+  border-left: 4px solid #f59e0b;
+}
+
+.alert-item.info {
+  background-color: #dbeafe;
+  border-left: 4px solid #3b82f6;
+}
+
+.alert-item.success {
+  background-color: #d1fae5;
+  border-left: 4px solid #10b981;
+}
+
+.alert-item strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #1f2937;
+}
+
+.alert-item p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .dashboard-overview {
+    padding: 10px;
+  }
+  
+  .metric-card {
+    margin-bottom: 12px;
+  }
+  
+  .allocation-legend {
+    gap: 8px;
+  }
+  
+  .legend-item {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .metric-content h4 {
+    color: #f9fafb;
+  }
+  
+  .metric-label {
+    color: #9ca3af;
+  }
+  
+  .legend-item {
+    background-color: #374151;
+  }
+  
+  .legend-item:hover {
+    background-color: #4b5563;
+  }
+  
+  .legend-item span {
+    color: #9ca3af;
+  }
+  
+  .legend-value {
+    color: #e5e7eb;
+  }
+  
+  .goal-item {
+    background-color: #374151;
+  }
+  
+  .goal-title {
+    color: #f9fafb;
+  }
+  
+  .alert-item {
+    background-color: #374151;
+  }
+  
+  .alert-item strong {
+    color: #f9fafb;
+  }
+  
+  .alert-item p {
+    color: #9ca3af;
+  }
+}

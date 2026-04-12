@@ -1,12 +1,14 @@
 import React, { useState, useRef } from 'react';
 import Layout from '../components/AdLayout';
 import axios from 'axios';
-import { Upload, Download, MoreVertical } from 'lucide-react';
+import { Upload, Download, MoreVertical, TrendingUp } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import StockProjection from '../components/StockProjection';
 import FirestoreAssetService from '../firestoreAssetService';
+import { useToast } from '../components/Toast';
+import '../style/AssetPages.css';
 
 const ALPHA_VANTAGE_API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY || '';
 
@@ -27,6 +29,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const fileInputRef = useRef(null);
+  const { success, error: showError, warning } = useToast();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -64,6 +67,20 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
 
   const handleSaveStockDetails = async () => {
     setSaveButtonText('Saving...');
+    
+    // Validation
+    if (!stockDetails.name.trim()) {
+      showError('Please enter a stock symbol');
+      setSaveButtonText('Save');
+      return;
+    }
+    
+    if (!stockDetails.number || parseFloat(stockDetails.number) <= 0) {
+      showError('Please enter a valid number of stocks');
+      setSaveButtonText('Save');
+      return;
+    }
+
     const livePrice = await fetchLiveStockPrice(stockDetails.name);
     if (livePrice) {
       const numberOfStocks = parseFloat(stockDetails.number);
@@ -94,16 +111,17 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
           reminderDate: ''
         });
 
+        success('Stock added successfully!');
         setSaveButtonText('Saved!');
         setTimeout(() => setSaveButtonText('Save'), 2000);
-      } catch (error) {
-        console.error('Error saving stock details:', error);
+      } catch (err) {
+        console.error('Error saving stock details:', err);
         setSaveButtonText('Save');
-        alert('Failed to save stock details.');
+        showError('Failed to save stock details. Please try again.');
       }
     } else {
       setSaveButtonText('Save');
-      alert('Failed to fetch live stock price.');
+      showError('Failed to fetch live stock price. Please check the stock symbol and try again.');
     }
   };
 
@@ -112,36 +130,46 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
       try {
         await FirestoreAssetService.deleteAsset('Stocks', stockId, userEmail);
         setStockList(prev => prev.filter(stock => stock.id !== stockId)); // Use setStockList
-        alert('Stock entry deleted successfully.');
+        success('Stock entry deleted successfully.');
         fetchStockDetails(userEmail);
-      } catch (error) {
-        console.error('Error deleting stock entry:', error);
-        alert('Failed to delete stock entry.');
+      } catch (err) {
+        console.error('Error deleting stock entry:', err);
+        showError('Failed to delete stock entry. Please try again.');
       }
     }
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const bstr = evt.target.result;
-      const wb = XLSX.read(bstr, { type: 'binary' });
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws);
-      if (data.length > 0) {
-        setStockDetails({
-          name: data[0].name || '',
-          number: data[0].number || '',
-          value: data[0].value || '',
-          currency: data[0].currency || 'USD',
-          purchaseDate: data[0].purchaseDate || '',
-          sector: data[0].sector || '',
-          dividendYield: data[0].dividendYield || '',
-          reminderNote: data[0].reminderNote || '',
-          reminderDate: data[0].reminderDate || ''
-        });
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        if (data.length > 0) {
+          setStockDetails({
+            name: data[0].name || '',
+            number: data[0].number || '',
+            value: data[0].value || '',
+            currency: data[0].currency || 'USD',
+            purchaseDate: data[0].purchaseDate || '',
+            sector: data[0].sector || '',
+            dividendYield: data[0].dividendYield || '',
+            reminderNote: data[0].reminderNote || '',
+            reminderDate: data[0].reminderDate || ''
+          });
+          success('Data loaded from file successfully');
+        } else {
+          warning('No data found in the uploaded file');
+        }
+      } catch (err) {
+        console.error('Error reading file:', err);
+        showError('Failed to read the uploaded file. Please check the file format.');
       }
     };
     reader.readAsBinaryString(file);
@@ -222,6 +250,12 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
   return (
     <Layout>
       <div className="container-fluid vk-asset-page">
+        <div className="create-asset-header" style={{ marginBottom: '1.5rem' }}>
+          <TrendingUp size={32} style={{ color: 'var(--primary-500)', marginBottom: '0.5rem' }} />
+          <h1>Stock Portfolio</h1>
+          <p>Track and manage your investment holdings with live market data</p>
+        </div>
+
         <div className="row g-4">
           {/* Form Column */}
           <div className="col-12 col-xl-4">
@@ -301,12 +335,20 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
           </div>
 
           {/* Table and Charts Column */}
-          <div className="col-12 col-xl-8">
-            <Card className="mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Total Portfolio Value: ${stockTotal.toFixed(2)}</h5>
-              </Card.Header>
-            </Card>
+           <div className="col-12 col-xl-8">
+             <Card className="mb-4 total-value-card">
+               <Card.Header>
+                 <h5 className="mb-0">Total Portfolio Value</h5>
+               </Card.Header>
+               <Card.Body style={{ paddingTop: '0', paddingBottom: '1.5rem' }}>
+                 <div className="d-flex align-items-center gap-3">
+                   <TrendingUp size={32} style={{ color: 'var(--primary-500)' }} />
+                   <div>
+                     <div className="amount">${stockTotal.toFixed(2)}</div>
+                   </div>
+                 </div>
+               </Card.Body>
+             </Card>
             <Card className="mb-4">
               <Card.Header>
                 <h5 className="mb-0">Stocks Value Analysis</h5>

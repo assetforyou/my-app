@@ -1,79 +1,245 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    
+    // Helper functions for security rules
     function isSignedIn() {
       return request.auth != null;
     }
-
+    
     function isOwnerEmail(emailField) {
       return isSignedIn()
         && emailField is string
         && request.auth.token.email == emailField;
     }
-
+    
     function createsWithOwnEmail() {
       return isSignedIn()
         && request.resource.data.userEmail is string
         && request.auth.token.email == request.resource.data.userEmail;
     }
-
+    
+    // Validation helper for numeric fields
+    function isValidNumber(value) {
+      return value is number && value >= 0;
+    }
+    
+    // Validation helper for non-empty strings
+    function isNonEmptyString(value) {
+      return value is string && value.size() > 0;
+    }
+    
+    // ==================== AUTOS ====================
+    function isValidAuto() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['make', 'model', 'year', 'value'])
+        && isNonEmptyString(request.resource.data.make)
+        && isNonEmptyString(request.resource.data.model)
+        && request.resource.data.year is number
+        && request.resource.data.year >= 1900
+        && request.resource.data.year <= 2100
+        && isValidNumber(request.resource.data.value);
+    }
+    
     match /autos/{docId} {
       allow read: if isOwnerEmail(resource.data.userEmail);
-      allow create: if createsWithOwnEmail();
-      allow update, delete: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidAuto();
+      allow update: if isOwnerEmail(resource.data.userEmail)
+        && request.resource.data.keys().hasOnly(['make', 'model', 'year', 'value', 'userEmail'])
+        && (request.resource.data.make == null || isNonEmptyString(request.resource.data.make))
+        && (request.resource.data.model == null || isNonEmptyString(request.resource.data.model))
+        && (request.resource.data.year == null || (request.resource.data.year >= 1900 && request.resource.data.year <= 2100))
+        && (request.resource.data.value == null || isValidNumber(request.resource.data.value));
+      allow delete: if isOwnerEmail(resource.data.userEmail);
     }
-
+    
+    // ==================== CASH ====================
+    function isValidCash() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['name', 'amount'])
+        && isNonEmptyString(request.resource.data.name)
+        && request.resource.data.name.size() <= 100
+        && isValidNumber(request.resource.data.amount);
+    }
+    
     match /cash/{docId} {
       allow read: if isOwnerEmail(resource.data.userEmail);
-      allow create: if createsWithOwnEmail();
-      allow update, delete: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidCash();
+      allow update: if isOwnerEmail(resource.data.userEmail)
+        && request.resource.data.keys().hasOnly(['name', 'amount', 'userEmail'])
+        && (request.resource.data.name == null || (isNonEmptyString(request.resource.data.name) && request.resource.data.name.size() <= 100))
+        && (request.resource.data.amount == null || isValidNumber(request.resource.data.amount));
+      allow delete: if isOwnerEmail(resource.data.userEmail);
     }
-
-    match /crypto/{docId} {
-      allow read: if isOwnerEmail(resource.data.userEmail);
-      allow create: if createsWithOwnEmail();
-      allow update, delete: if isOwnerEmail(resource.data.userEmail);
+    
+    // ==================== STOCKS ====================
+    function isValidStock() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['symbol', 'shares', 'price'])
+        && isNonEmptyString(request.resource.data.symbol)
+        && request.resource.data.symbol.size() <= 10
+        && request.resource.data.symbol.matches('^[a-zA-Z.]+$')
+        && isValidNumber(request.resource.data.shares)
+        && request.resource.data.shares > 0
+        && isValidNumber(request.resource.data.price);
     }
-
-    match /customAssets/{docId} {
-      allow read: if isOwnerEmail(resource.data.userEmail);
-      allow create: if createsWithOwnEmail();
-      allow update, delete: if isOwnerEmail(resource.data.userEmail);
-    }
-
-    match /customAssetItems/{docId} {
-      allow read: if isOwnerEmail(resource.data.userEmail);
-      allow create: if createsWithOwnEmail();
-      allow update, delete: if isOwnerEmail(resource.data.userEmail);
-    }
-
-    match /loans/{docId} {
-      allow read: if isOwnerEmail(resource.data.userEmail);
-      allow create: if createsWithOwnEmail();
-      allow update, delete: if isOwnerEmail(resource.data.userEmail);
-    }
-
-    match /metals/{docId} {
-      allow read: if isOwnerEmail(resource.data.userEmail);
-      allow create: if createsWithOwnEmail();
-      allow update, delete: if isOwnerEmail(resource.data.userEmail);
-    }
-
-    match /properties/{docId} {
-      allow read: if isOwnerEmail(resource.data.userEmail);
-      allow create: if createsWithOwnEmail();
-      allow update, delete: if isOwnerEmail(resource.data.userEmail);
-    }
-
+    
     match /stocks/{docId} {
       allow read: if isOwnerEmail(resource.data.userEmail);
-      allow create: if createsWithOwnEmail();
-      allow update, delete: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidStock();
+      allow update: if isOwnerEmail(resource.data.userEmail)
+        && request.resource.data.keys().hasOnly(['symbol', 'shares', 'price', 'total', 'userEmail'])
+        && (request.resource.data.symbol == null || (isNonEmptyString(request.resource.data.symbol) && request.resource.data.symbol.size() <= 10))
+        && (request.resource.data.shares == null || (isValidNumber(request.resource.data.shares) && request.resource.data.shares > 0))
+        && (request.resource.data.price == null || isValidNumber(request.resource.data.price));
+      allow delete: if isOwnerEmail(resource.data.userEmail);
     }
-
+    
+    // ==================== METALS ====================
+    function isValidMetal() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['type', 'weight', 'pricePerUnit', 'total'])
+        && isNonEmptyString(request.resource.data.type)
+        && isValidNumber(request.resource.data.weight)
+        && request.resource.data.weight > 0
+        && isValidNumber(request.resource.data.pricePerUnit)
+        && isValidNumber(request.resource.data.total);
+    }
+    
+    match /metals/{docId} {
+      allow read: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidMetal();
+      allow update: if isOwnerEmail(resource.data.userEmail)
+        && request.resource.data.keys().hasOnly(['type', 'weight', 'pricePerUnit', 'total', 'userEmail'])
+        && (request.resource.data.type == null || isNonEmptyString(request.resource.data.type))
+        && (request.resource.data.weight == null || (isValidNumber(request.resource.data.weight) && request.resource.data.weight > 0))
+        && (request.resource.data.pricePerUnit == null || isValidNumber(request.resource.data.pricePerUnit))
+        && (request.resource.data.total == null || isValidNumber(request.resource.data.total));
+      allow delete: if isOwnerEmail(resource.data.userEmail);
+    }
+    
+    // ==================== PROPERTIES ====================
+    function isValidProperty() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['address', 'price'])
+        && isNonEmptyString(request.resource.data.address)
+        && request.resource.data.address.size() <= 500
+        && isValidNumber(request.resource.data.price)
+        && request.resource.data.price > 0;
+    }
+    
+    match /properties/{docId} {
+      allow read: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidProperty();
+      allow update: if isOwnerEmail(resource.data.userEmail)
+        && request.resource.data.keys().hasOnly(['address', 'price', 'totalMonthlyCost', 'userEmail'])
+        && (request.resource.data.address == null || (isNonEmptyString(request.resource.data.address) && request.resource.data.address.size() <= 500))
+        && (request.resource.data.price == null || (isValidNumber(request.resource.data.price) && request.resource.data.price > 0))
+        && (request.resource.data.totalMonthlyCost == null || isValidNumber(request.resource.data.totalMonthlyCost));
+      allow delete: if isOwnerEmail(resource.data.userEmail);
+    }
+    
+    // ==================== LOANS ====================
+    function isValidLoan() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['name', 'loanValue', 'interestRate'])
+        && isNonEmptyString(request.resource.data.name)
+        && request.resource.data.name.size() <= 100
+        && isValidNumber(request.resource.data.loanValue)
+        && isValidNumber(request.resource.data.interestRate)
+        && request.resource.data.interestRate >= 0
+        && request.resource.data.interestRate <= 100;
+    }
+    
+    match /loans/{docId} {
+      allow read: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidLoan();
+      allow update: if isOwnerEmail(resource.data.userEmail)
+        && request.resource.data.keys().hasOnly(['name', 'loanValue', 'interestRate', 'userEmail'])
+        && (request.resource.data.name == null || (isNonEmptyString(request.resource.data.name) && request.resource.data.name.size() <= 100))
+        && (request.resource.data.loanValue == null || isValidNumber(request.resource.data.loanValue))
+        && (request.resource.data.interestRate == null || (isValidNumber(request.resource.data.interestRate) && request.resource.data.interestRate >= 0 && request.resource.data.interestRate <= 100));
+      allow delete: if isOwnerEmail(resource.data.userEmail);
+    }
+    
+    // ==================== CRYPTO ====================
+    function isValidCrypto() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['name', 'symbol', 'amount', 'price'])
+        && isNonEmptyString(request.resource.data.name)
+        && request.resource.data.name.size() <= 50
+        && isNonEmptyString(request.resource.data.symbol)
+        && request.resource.data.symbol.size() <= 10
+        && isValidNumber(request.resource.data.amount)
+        && request.resource.data.amount > 0
+        && isValidNumber(request.resource.data.price);
+    }
+    
+    match /crypto/{docId} {
+      allow read: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidCrypto();
+      allow update: if isOwnerEmail(resource.data.userEmail)
+        && request.resource.data.keys().hasOnly(['name', 'symbol', 'amount', 'price', 'total', 'userEmail'])
+        && (request.resource.data.name == null || (isNonEmptyString(request.resource.data.name) && request.resource.data.name.size() <= 50))
+        && (request.resource.data.symbol == null || (isNonEmptyString(request.resource.data.symbol) && request.resource.data.symbol.size() <= 10))
+        && (request.resource.data.amount == null || (isValidNumber(request.resource.data.amount) && request.resource.data.amount > 0))
+        && (request.resource.data.price == null || isValidNumber(request.resource.data.price));
+      allow delete: if isOwnerEmail(resource.data.userEmail);
+    }
+    
+    // ==================== CUSTOM ASSETS ====================
+    function isValidCustomAsset() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['name', 'totalValue'])
+        && isNonEmptyString(request.resource.data.name)
+        && request.resource.data.name.size() <= 100
+        && isValidNumber(request.resource.data.totalValue);
+    }
+    
+    match /customAssets/{docId} {
+      allow read: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidCustomAsset();
+      allow update: if isOwnerEmail(resource.data.userEmail)
+        && request.resource.data.keys().hasOnly(['name', 'totalValue', 'userEmail'])
+        && (request.resource.data.name == null || (isNonEmptyString(request.resource.data.name) && request.resource.data.name.size() <= 100))
+        && (request.resource.data.totalValue == null || isValidNumber(request.resource.data.totalValue));
+      allow delete: if isOwnerEmail(resource.data.userEmail);
+    }
+    
+    // ==================== CUSTOM ASSET ITEMS ====================
+    function isValidCustomAssetItem() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['assetId', 'name', 'value'])
+        && isNonEmptyString(request.resource.data.assetId)
+        && isNonEmptyString(request.resource.data.name)
+        && request.resource.data.name.size() <= 200
+        && isValidNumber(request.resource.data.value);
+    }
+    
+    match /customAssetItems/{docId} {
+      allow read: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidCustomAssetItem();
+      allow update: if isOwnerEmail(resource.data.userEmail)
+        && request.resource.data.keys().hasOnly(['assetId', 'name', 'value', 'userEmail'])
+        && (request.resource.data.name == null || (isNonEmptyString(request.resource.data.name) && request.resource.data.name.size() <= 200))
+        && (request.resource.data.value == null || isValidNumber(request.resource.data.value));
+      allow delete: if isOwnerEmail(resource.data.userEmail);
+    }
+    
+    // ==================== USERS ====================
+    function isValidUserProfile() {
+      return isSignedIn()
+        && request.auth.uid == userId;
+    }
+    
     match /users/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow read, write: if isValidUserProfile();
+    }
+    
+    // ==================== DEFAULT RULE ====================
+    // Deny all other access to any collections not explicitly defined above
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

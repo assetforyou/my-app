@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import Layout from '../components/AdLayout';
-import { Trash2, Upload, Download, MoreVertical } from 'lucide-react';
+import { Trash2, Upload, Download, MoreVertical, Plus, Sparkles } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Table, Dropdown } from 'react-bootstrap';
 import FirestoreAssetService from '../firestoreAssetService';
+import '../style/AssetPages.css';
 
 function CreateAsset({ userEmail, onAssetCreated }) {
   const [assetDetails, setAssetDetails] = useState({
@@ -118,20 +119,26 @@ function CreateAsset({ userEmail, onAssetCreated }) {
 
   return (
     <Layout>
-      <div className="container-fluid vk-asset-page mt-2">
+      <div className="container-fluid vk-asset-page">
+        <div className="create-asset-header">
+          <Sparkles size={32} style={{ color: 'var(--primary-500)', marginBottom: '0.5rem' }} />
+          <h1>Create Custom Asset</h1>
+          <p>Define your own asset type with custom fields to track exactly what matters</p>
+        </div>
+
         <Card className="mb-4 mx-auto" style={{ maxWidth: 720 }}>
-          <Card.Header as="h5" className="d-flex justify-content-between align-items-center">
-            Create Custom Asset
+          <Card.Header className="d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">Asset Configuration</h5>
             <Dropdown>
               <Dropdown.Toggle variant="secondary" id="dropdown-advanced">
                 <MoreVertical size={16} />
               </Dropdown.Toggle>
               <Dropdown.Menu>
                 <Dropdown.Item onClick={() => fileInputRef.current.click()}>
-                  <Upload size={16} className="mr-2" /> Upload Excel
+                  <Upload size={16} className="me-2" /> Upload Excel
                 </Dropdown.Item>
                 <Dropdown.Item onClick={handleDownloadTemplate}>
-                  <Download size={16} className="mr-2" /> Download Template
+                  <Download size={16} className="me-2" /> Download Template
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
@@ -161,8 +168,12 @@ function CreateAsset({ userEmail, onAssetCreated }) {
                 </Form.Select>
               </Form.Group>
               <h6>Fields</h6>
-              {assetDetails.fields.map((field, index) => (
-                <div key={index} className="d-flex mb-2">
+               <h6 style={{ marginBottom: '1rem', fontWeight: 600, color: 'var(--gray-700)' }}>
+                 Custom Fields
+               </h6>
+               
+               {assetDetails.fields.map((field, index) => (
+                 <div key={index} className="asset-field-row">
                   <Form.Control
                     type="text"
                     name="name"
@@ -187,14 +198,29 @@ function CreateAsset({ userEmail, onAssetCreated }) {
                   </Button>
                 </div>
               ))}
-              <Button variant="secondary" size="sm" onClick={addField} className="mb-3">
-                Add Field
-              </Button>
-              <div>
-                <Button variant="primary" onClick={handleCreateAsset}>
-                  {saveButtonText}
-                </Button>
-              </div>
+               <Button 
+                 variant="secondary" 
+                 size="sm" 
+                 onClick={addField} 
+                 className="mb-4"
+                 style={{ width: '100%', fontWeight: 500 }}
+               >
+                 <Plus size={16} className="me-2" /> Add New Field
+               </Button>
+               <div className="d-grid">
+                 <Button 
+                   variant="primary" 
+                   onClick={handleCreateAsset}
+                   size="lg"
+                   style={{ 
+                     marginTop: '0.5rem',
+                     fontSize: '1rem',
+                     fontWeight: 600
+                   }}
+                 >
+                   {saveButtonText}
+                 </Button>
+               </div>
             </Form>
           </Card.Body>
         </Card>

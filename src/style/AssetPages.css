@@ -1,0 +1,251 @@
+/* ================================================
+   MAX PERFORMANCE ASSET PAGES - NO LAG
+   ================================================ */
+
+:root {
+  --primary-500: #0ea5e9;
+  --primary-600: #0284c7;
+  --primary-700: #0369a1;
+
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+
+  --transition-fast: 120ms ease;
+
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+.vk-asset-page {
+  min-height: 100vh;
+  background: #ffffff;
+  padding: 1.5rem 1rem !important;
+  overflow-x: hidden;
+  padding-top: 1.5rem !important;
+}
+
+.vk-asset-page > .row:first-child {
+  margin-top: 0 !important;
+  align-items: flex-start !important;
+}
+
+.vk-asset-page .card.h-100 {
+  margin-top: 0 !important;
+}
+
+/* NO BACKGROUND EFFECTS */
+.vk-asset-page::before {
+  display: none !important;
+}
+
+/* CARDS - NO ANIMATIONS */
+.vk-asset-page .card {
+  border: none !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+  background: #ffffff !important;
+  overflow: hidden;
+  transition: box-shadow var(--transition-fast) !important;
+}
+
+.vk-asset-page .card:hover {
+  box-shadow: var(--shadow-md) !important;
+}
+
+.vk-asset-page .card-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--gray-100) !important;
+  padding: 1rem 1.25rem !important;
+}
+
+.vk-asset-page .card-header h5 {
+  font-weight: 600 !important;
+  color: var(--gray-800) !important;
+  font-size: 1rem !important;
+  margin: 0 !important;
+}
+
+.vk-asset-page .card-body {
+  padding: 1.25rem !important;
+}
+
+/* FORM ELEMENTS */
+.vk-asset-page .form-control,
+.vk-asset-page .form-select {
+  border: 1px solid var(--gray-200) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0.625rem 0.875rem !important;
+  font-size: 0.9375rem !important;
+  transition: all var(--transition-fast) !important;
+  background-color: #ffffff !important;
+}
+
+.vk-asset-page .form-control:focus,
+.vk-asset-page .form-select:focus {
+  border-color: var(--primary-500) !important;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1) !important;
+  outline: none !important;
+}
+
+.vk-asset-page .form-control::placeholder {
+  color: var(--gray-400) !important;
+}
+
+/* BUTTONS - NO EFFECTS */
+.vk-asset-page .btn {
+  border-radius: var(--radius-md) !important;
+  font-weight: 500 !important;
+  padding: 0.625rem 1rem !important;
+  transition: all var(--transition-fast) !important;
+  border: none !important;
+}
+
+.vk-asset-page .btn::before {
+  display: none !important;
+}
+
+.vk-asset-page .btn-primary {
+  background: var(--primary-600) !important;
+}
+
+.vk-asset-page .btn-primary:hover {
+  background: var(--primary-700) !important;
+}
+
+.vk-asset-page .btn-secondary {
+  background: var(--gray-100) !important;
+  color: var(--gray-700) !important;
+}
+
+.vk-asset-page .btn-secondary:hover {
+  background: var(--gray-200) !important;
+}
+
+.vk-asset-page .btn-danger {
+  background: #ef4444 !important;
+}
+
+/* DROPDOWNS */
+.vk-asset-page .dropdown-toggle {
+  background: transparent !important;
+  border: none !important;
+  padding: 0.375rem !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.vk-asset-page .dropdown-toggle:hover {
+  background: var(--gray-100) !important;
+}
+
+.vk-asset-page .dropdown-menu {
+  border: none !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md) !important;
+  padding: 0.375rem !important;
+}
+
+.vk-asset-page .dropdown-item {
+  border-radius: var(--radius-md) !important;
+  padding: 0.5rem 0.875rem !important;
+}
+
+/* TOTAL VALUE CARD - CONSISTENT WHITE STYLE */
+.vk-asset-page .total-value-card {
+  background: #ffffff !important;
+  color: var(--gray-900) !important;
+  border: 2px solid var(--primary-100) !important;
+}
+
+.vk-asset-page .total-value-card::before {
+  display: none !important;
+}
+
+.vk-asset-page .total-value-card .card-header {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+}
+
+.vk-asset-page .total-value-card h5 {
+  color: var(--gray-500) !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500 !important;
+}
+
+.vk-asset-page .total-value-card .amount {
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  margin: 0.25rem 0 0 0 !important;
+  color: var(--primary-600) !important;
+}
+
+/* REMOVE ALL ANIMATIONS */
+.vk-asset-page .card {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* FIELD ROWS */
+.asset-field-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+}
+
+/* CREATE ASSET HEADER - CONSISTENT ACROSS ALL PAGES */
+.create-asset-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: transparent;
+}
+
+.create-asset-header svg {
+  color: var(--primary-500) !important;
+  margin-bottom: 0.75rem !important;
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.create-asset-header h1 {
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  color: var(--gray-900) !important;
+  margin-bottom: 0.5rem !important;
+  margin-top: 0 !important;
+}
+
+.create-asset-header p {
+  color: var(--gray-500) !important;
+  font-size: 0.9375rem !important;
+  margin: 0 !important;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .vk-asset-page {
+    padding: 1rem 0.5rem !important;
+  }
+}
+
+/* BUTTON ACTIVE STATE */
+.vk-asset-page .btn:active {
+  transform: scale(0.98);
+}

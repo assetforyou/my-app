@@ -57,9 +57,13 @@
 
 .landing-page .settings-dropdown {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.landing-page .settings-icon {
+.landing-page .settings-icon,
+.landing-page .search-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -74,7 +78,8 @@
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
-.landing-page .settings-icon:hover {
+.landing-page .settings-icon:hover,
+.landing-page .search-icon-btn:hover {
   border-color: #cbd5e1;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
 }
