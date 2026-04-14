@@ -11,6 +11,7 @@ import SignUpPage from './pages/SignUpPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalSearch from './components/GlobalSearch';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
+import AssetChatBot from './components/AssetChatBot';
 
 // Lazy load heavy components for better initial load performance
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -44,6 +45,9 @@ function AppContent() {
       
       {/* Keyboard Shortcuts Handler */}
       <KeyboardShortcuts />
+      
+      {/* AI Chat Bot Assistant */}
+      {!isAuthPage && <AssetChatBot />}
       
       <Routes>
         <Route path="/" element={<HomePage />} />

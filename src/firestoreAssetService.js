@@ -23,6 +23,14 @@ const TABLE_MAP = {
   Crypto: 'crypto',
   CustomAssets: 'customAssets',
   CustomAssetItems: 'customAssetItems',
+  Savings: 'savings',
+  Retirement: 'retirement',
+  Bonds: 'bonds',
+  Commodities: 'commodities',
+  ArtCollectibles: 'artCollectibles',
+  LuxuryWatches: 'luxuryWatches',
+  PrivateEquity: 'privateEquity',
+  IntellectualProperty: 'intellectualProperty'
 };
 
 function requireUser() {

@@ -146,11 +146,20 @@ export const AssetProvider = ({ children }) => {
         userEmail
       });
       
-      // Map type to state key
-      const stateKey = type.toLowerCase() + 's';
+      // Map type to state key with correct pluralization and casing
+      const STATE_KEY_MAPPINGS = {
+        'Autos': 'cars',
+        'Properties': 'properties',
+        'CustomAssets': 'customAssets',
+        'LuxuryWatches': 'luxuryWatches',
+        'Savings': 'savings'
+      };
+      
+      const stateKey = STATE_KEY_MAPPINGS[type] || type.toLowerCase() + 's';
+      
       setAssets(prev => ({
         ...prev,
-        [stateKey]: [...prev[stateKey], newAsset]
+        [stateKey]: prev[stateKey] ? [...prev[stateKey], newAsset] : [newAsset]
       }));
       
       return newAsset;
