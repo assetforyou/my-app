@@ -55,6 +55,35 @@
   object-fit: contain;
 }
 
+.landing-page .asset-filter-dropdown {
+  margin-left: auto;
+  margin-right: 1rem;
+}
+
+.landing-page .asset-filter-select {
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: 12px;
+  color: var(--dash-ink);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.landing-page .asset-filter-select:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.landing-page .asset-filter-select:focus {
+  outline: none;
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
 .landing-page .settings-dropdown {
   position: relative;
   display: flex;

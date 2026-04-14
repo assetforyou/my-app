@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/AdLayout';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
-import { Settings, X, Search } from 'lucide-react';
+import { Settings, X, Search, User, Building2 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import Auto from './Auto';
 import Cash from './Cash';
@@ -14,6 +14,11 @@ import Crypto from './Crypto';
 import Bonds from './Bonds';
 import Retirement from './Retirement';
 import Savings from './Savings';
+import Commodities from './Commodities';
+import ArtCollectibles from './ArtCollectibles';
+import LuxuryWatches from './LuxuryWatches';
+import PrivateEquity from './PrivateEquity';
+import IntellectualProperty from './IntellectualProperty';
 import CreateAsset from './CreateAsset';
 import CustomAsset from './CustomAsset';
 import AccountSettings from '../components/AccountSettings';
@@ -25,6 +30,7 @@ import FirestoreAssetService from '../firestoreAssetService';
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('home');
+  const [assetFilter, setAssetFilter] = useState('all'); // 'all', 'personal', 'business'
   const [userEmail, setUserEmail] = useState('');
   const [carList, setCarList] = useState([]);
   const [autoTotal, setAutoTotal] = useState(0);
@@ -47,6 +53,16 @@ function LandingPage() {
   const [retirementTotal, setRetirementTotal] = useState(0);
   const [savingsList, setSavingsList] = useState([]);
   const [savingsTotal, setSavingsTotal] = useState(0);
+  const [commoditiesList, setCommoditiesList] = useState([]);
+  const [commoditiesTotal, setCommoditiesTotal] = useState(0);
+  const [artCollectiblesList, setArtCollectiblesList] = useState([]);
+  const [artCollectiblesTotal, setArtCollectiblesTotal] = useState(0);
+  const [luxuryWatchesList, setLuxuryWatchesList] = useState([]);
+  const [luxuryWatchesTotal, setLuxuryWatchesTotal] = useState(0);
+  const [privateEquityList, setPrivateEquityList] = useState([]);
+  const [privateEquityTotal, setPrivateEquityTotal] = useState(0);
+  const [intellectualPropertyList, setIntellectualPropertyList] = useState([]);
+  const [intellectualPropertyTotal, setIntellectualPropertyTotal] = useState(0);
   const [customAssets, setCustomAssets] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -157,6 +173,11 @@ function LandingPage() {
         fetchBondDetails(email),
         fetchRetirementDetails(email),
         fetchSavingsDetails(email),
+        fetchCommoditiesDetails(email),
+        fetchArtCollectiblesDetails(email),
+        fetchLuxuryWatchesDetails(email),
+        fetchPrivateEquityDetails(email),
+        fetchIntellectualPropertyDetails(email),
       ]);
     } catch (err) {
       console.error('Error fetching asset details:', err);
@@ -285,6 +306,61 @@ function LandingPage() {
     }
   };
 
+  const fetchCommoditiesDetails = async (email) => {
+    try {
+      const commodities = await FirestoreAssetService.fetchAssets('Commodities', email);
+      setCommoditiesList(commodities);
+      const total = commodities.reduce((sum, item) => sum + parseFloat(item.currentValue || 0), 0);
+      setCommoditiesTotal(total);
+    } catch (error) {
+      console.error('Error fetching commodities details:', error);
+    }
+  };
+
+  const fetchArtCollectiblesDetails = async (email) => {
+    try {
+      const items = await FirestoreAssetService.fetchAssets('ArtCollectibles', email);
+      setArtCollectiblesList(items);
+      const total = items.reduce((sum, item) => sum + parseFloat(item.estimatedValue || 0), 0);
+      setArtCollectiblesTotal(total);
+    } catch (error) {
+      console.error('Error fetching art collectibles details:', error);
+    }
+  };
+
+  const fetchLuxuryWatchesDetails = async (email) => {
+    try {
+      const items = await FirestoreAssetService.fetchAssets('LuxuryWatches', email);
+      setLuxuryWatchesList(items);
+      const total = items.reduce((sum, item) => sum + parseFloat(item.marketValue || 0), 0);
+      setLuxuryWatchesTotal(total);
+    } catch (error) {
+      console.error('Error fetching luxury watches details:', error);
+    }
+  };
+
+  const fetchPrivateEquityDetails = async (email) => {
+    try {
+      const items = await FirestoreAssetService.fetchAssets('PrivateEquity', email);
+      setPrivateEquityList(items);
+      const total = items.reduce((sum, item) => sum + parseFloat(item.investmentValue || 0), 0);
+      setPrivateEquityTotal(total);
+    } catch (error) {
+      console.error('Error fetching private equity details:', error);
+    }
+  };
+
+  const fetchIntellectualPropertyDetails = async (email) => {
+    try {
+      const items = await FirestoreAssetService.fetchAssets('IntellectualProperty', email);
+      setIntellectualPropertyList(items);
+      const total = items.reduce((sum, item) => sum + parseFloat(item.royaltyValue || 0), 0);
+      setIntellectualPropertyTotal(total);
+    } catch (error) {
+      console.error('Error fetching intellectual property details:', error);
+    }
+  };
+
   const updateAssetTotal = async (assetId, newTotal) => {
     try {
       await FirestoreAssetService.updateAsset('CustomAssets', assetId, { totalValue: newTotal });
@@ -322,6 +398,33 @@ function LandingPage() {
       }
     }
   };
+
+  // Asset Type Categorization
+  const personalAssetTypes = ['auto', 'cash', 'metals', 'crypto', 'artCollectibles', 'luxuryWatches'];
+  const businessAssetTypes = ['stocks', 'bonds', 'retirement', 'savings', 'property', 'privateEquity', 'intellectualProperty', 'commodities'];
+  
+  // Filter assets based on selection
+  const getFilteredAssets = (assetList, assetType) => {
+    if (assetFilter === 'all') return assetList;
+    if (assetFilter === 'personal' && personalAssetTypes.includes(assetType)) return assetList;
+    if (assetFilter === 'business' && businessAssetTypes.includes(assetType)) return assetList;
+    return [];
+  };
+  
+  // Calculate filtered totals
+  const filteredAutoTotal = getFilteredAssets(carList, 'auto').reduce((sum, item) => sum + parseFloat(item.value || 0), 0);
+  const filteredCashTotal = getFilteredAssets(cashList, 'cash').reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+  const filteredStockTotal = getFilteredAssets(stockList, 'stocks').reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
+  const filteredMetalTotal = getFilteredAssets(metalList, 'metals').reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
+  const filteredPropertyTotal = getFilteredAssets(propertyList, 'property').reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
+  const filteredCryptoTotal = getFilteredAssets(cryptoList, 'crypto').reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
+  const filteredBondTotal = getFilteredAssets(bondList, 'bonds').reduce((sum, item) => sum + parseFloat(item.currentValue || 0), 0);
+  const filteredRetirementTotal = getFilteredAssets(retirementList, 'retirement').reduce((sum, item) => sum + parseFloat(item.currentBalance || 0), 0);
+  const filteredSavingsTotal = getFilteredAssets(savingsList, 'savings').reduce((sum, item) => sum + parseFloat(item.currentBalance || 0), 0);
+
+  // Visibility checks for asset cards
+  const showPersonalAssets = assetFilter === 'all' || assetFilter === 'personal';
+  const showBusinessAssets = assetFilter === 'all' || assetFilter === 'business';
 
   const renderContent = () => {
     switch (selectedAsset) {
@@ -439,6 +542,46 @@ function LandingPage() {
             fetchSavingsDetails={fetchSavingsDetails}
           />
         );
+      case 'commodities':
+        return (
+          <Commodities
+            userEmail={userEmail}
+            commodityList={commoditiesList}
+            setCommodityList={setCommoditiesList}
+            commodityTotal={commoditiesTotal}
+            fetchCommoditiesDetails={fetchCommoditiesDetails}
+          />
+        );
+      case 'artCollectibles':
+        return (
+          <ArtCollectibles
+            userEmail={userEmail}
+            artCollectiblesList={artCollectiblesList}
+            setArtCollectiblesList={setArtCollectiblesList}
+            artCollectiblesTotal={artCollectiblesTotal}
+            fetchArtCollectiblesDetails={fetchArtCollectiblesDetails}
+          />
+        );
+      case 'privateEquity':
+        return (
+          <PrivateEquity
+            userEmail={userEmail}
+            privateEquityList={privateEquityList}
+            setPrivateEquityList={setPrivateEquityList}
+            privateEquityTotal={privateEquityTotal}
+            fetchPrivateEquityDetails={fetchPrivateEquityDetails}
+          />
+        );
+      case 'intellectualProperty':
+        return (
+          <IntellectualProperty
+            userEmail={userEmail}
+            intellectualPropertyList={intellectualPropertyList}
+            setIntellectualPropertyList={setIntellectualPropertyList}
+            intellectualPropertyTotal={intellectualPropertyTotal}
+            fetchIntellectualPropertyDetails={fetchIntellectualPropertyDetails}
+          />
+        );
       case 'createAsset':
         return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'analytics':
@@ -482,53 +625,83 @@ function LandingPage() {
                 <div className="summary-section">
                   <h2>Built-in Assets</h2>
                   <div className="built-in-assets">
-                    <div className="summary-box" onClick={() => setSelectedAsset('cash')}>
-                      <h3>Cash</h3>
-                      <p>Total Cash: ${cashTotal.toFixed(2)}</p>
-                    </div>
-                    <div className="summary-box" onClick={() => setSelectedAsset('stocks')}>
-                      <h3>Stocks</h3>
-                      <p>Total Value: ${stockTotal.toFixed(2)}</p>
-                    </div>
-                    <div className="summary-box" onClick={() => setSelectedAsset('metals')}>
-                      <h3>Metals</h3>
-                      <p>Total Value: ${metalTotal.toFixed(2)}</p>
-                    </div>
-                    <div className="summary-box" onClick={() => setSelectedAsset('auto')}>
-                      <h3>Autos</h3>
-                      <p>Total: {carList.length}</p>
-                      <p>Value: ${autoTotal.toFixed(2)}</p>
-                    </div>
-                    <div className="summary-box" onClick={() => setSelectedAsset('property')}>
-                      <h3>Properties</h3>
-                      <p>Total: {propertyList.length}</p>
-                      <p>Value: ${propertyTotalPrice.toFixed(2)}</p>
-                      <p>Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</p>
-                    </div>
+                    {showPersonalAssets && (
+                      <>
+                        <div className="summary-box" onClick={() => setSelectedAsset('cash')}>
+                          <h3>Cash</h3>
+                          <p>Total Cash: ${filteredCashTotal.toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('metals')}>
+                          <h3>Metals</h3>
+                          <p>Total Value: ${filteredMetalTotal.toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('auto')}>
+                          <h3>Autos</h3>
+                          <p>Total: {getFilteredAssets(carList, 'auto').length}</p>
+                          <p>Value: ${filteredAutoTotal.toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('crypto')}>
+                          <h3>Cryptocurrency</h3>
+                          <p>Total: {getFilteredAssets(cryptoList, 'crypto').length}</p>
+                          <p>Value: ${filteredCryptoTotal.toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('artCollectibles')}>
+                          <h3>Art & Collectibles</h3>
+                          <p>Total: {getFilteredAssets(artCollectiblesList, 'artCollectibles').length}</p>
+                          <p>Value: ${getFilteredAssets(artCollectiblesList, 'artCollectibles').reduce((sum, item) => sum + parseFloat(item.estimatedValue || 0), 0).toFixed(2)}</p>
+                        </div>
+                      </>
+                    )}
+                    
+                    {showBusinessAssets && (
+                      <>
+                        <div className="summary-box" onClick={() => setSelectedAsset('stocks')}>
+                          <h3>Stocks</h3>
+                          <p>Total Value: ${filteredStockTotal.toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('commodities')}>
+                          <h3>Commodities</h3>
+                          <p>Total: {getFilteredAssets(commoditiesList, 'commodities').length}</p>
+                          <p>Value: ${getFilteredAssets(commoditiesList, 'commodities').reduce((sum, item) => sum + parseFloat(item.currentValue || 0), 0).toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('property')}>
+                          <h3>Properties</h3>
+                          <p>Total: {getFilteredAssets(propertyList, 'property').length}</p>
+                          <p>Value: ${filteredPropertyTotal.toFixed(2)}</p>
+                          <p>Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('bonds')}>
+                          <h3>Bonds</h3>
+                          <p>Total: {getFilteredAssets(bondList, 'bonds').length}</p>
+                          <p>Value: ${filteredBondTotal.toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('retirement')}>
+                          <h3>Retirement</h3>
+                          <p>Total: {getFilteredAssets(retirementList, 'retirement').length}</p>
+                          <p>Value: ${filteredRetirementTotal.toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('savings')}>
+                          <h3>Savings</h3>
+                          <p>Total: {getFilteredAssets(savingsList, 'savings').length}</p>
+                          <p>Value: ${filteredSavingsTotal.toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('privateEquity')}>
+                          <h3>Private Equity</h3>
+                          <p>Total: {getFilteredAssets(privateEquityList, 'privateEquity').length}</p>
+                          <p>Value: ${getFilteredAssets(privateEquityList, 'privateEquity').reduce((sum, item) => sum + parseFloat(item.investmentValue || 0), 0).toFixed(2)}</p>
+                        </div>
+                        <div className="summary-box" onClick={() => setSelectedAsset('intellectualProperty')}>
+                          <h3>Intellectual Property</h3>
+                          <p>Total: {getFilteredAssets(intellectualPropertyList, 'intellectualProperty').length}</p>
+                          <p>Value: ${getFilteredAssets(intellectualPropertyList, 'intellectualProperty').reduce((sum, item) => sum + parseFloat(item.royaltyValue || 0), 0).toFixed(2)}</p>
+                        </div>
+                      </>
+                    )}
+
                     <div className="summary-box" onClick={() => setSelectedAsset('loan')}>
                       <h3>Loans</h3>
                       <p>Total: {loanList.length}</p>
                       <p>Value: ${loanTotal.toFixed(2)}</p>
-                    </div>
-                    <div className="summary-box" onClick={() => setSelectedAsset('crypto')}>
-                      <h3>Cryptocurrency</h3>
-                      <p>Total: {cryptoList.length}</p>
-                      <p>Value: ${cryptoTotal.toFixed(2)}</p>
-                    </div>
-                    <div className="summary-box" onClick={() => setSelectedAsset('bonds')}>
-                      <h3>Bonds</h3>
-                      <p>Total: {bondList.length}</p>
-                      <p>Value: ${bondTotal.toFixed(2)}</p>
-                    </div>
-                    <div className="summary-box" onClick={() => setSelectedAsset('retirement')}>
-                      <h3>Retirement</h3>
-                      <p>Total: {retirementList.length}</p>
-                      <p>Value: ${retirementTotal.toFixed(2)}</p>
-                    </div>
-                    <div className="summary-box" onClick={() => setSelectedAsset('savings')}>
-                      <h3>Savings</h3>
-                      <p>Total: {savingsList.length}</p>
-                      <p>Value: ${savingsTotal.toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
@@ -583,10 +756,23 @@ function LandingPage() {
   return (
     <div className="landing-page">
       <div className="top-bar">
-        <div className="title">
-          <img src={logo_transparent} alt="Vault Knight" className="custom-title-icon" />
-          Vault Knight
-        </div>
+         <div className="title">
+           <img src={logo_transparent} alt="Vault Knight" className="custom-title-icon" />
+           Vault Knight
+         </div>
+
+         {/* Personal / Business Filter Dropdown */}
+         <div className="asset-filter-dropdown">
+           <select 
+             className="asset-filter-select"
+             value={assetFilter}
+             onChange={(e) => setAssetFilter(e.target.value)}
+           >
+             <option value="all">🌐 All Assets</option>
+             <option value="personal">👤 Personal</option>
+             <option value="business">🏢 Business</option>
+           </select>
+         </div>
         <div className="settings-dropdown" ref={settingsRef}>
           {/* Search Icon - vertical, to the left of settings */}
           <button 
@@ -631,6 +817,10 @@ function LandingPage() {
                 <button onClick={() => setSelectedAsset('bonds')}>Bonds</button>
                 <button onClick={() => setSelectedAsset('retirement')}>Retirement</button>
                 <button onClick={() => setSelectedAsset('savings')}>Savings</button>
+                <button onClick={() => setSelectedAsset('commodities')}>Commodities</button>
+                <button onClick={() => setSelectedAsset('artCollectibles')}>Art & Collectibles</button>
+                <button onClick={() => setSelectedAsset('privateEquity')}>Private Equity</button>
+                <button onClick={() => setSelectedAsset('intellectualProperty')}>Intellectual Property</button>
                 {customAssets.map(asset => (
                   <button 
                     key={asset.id} 

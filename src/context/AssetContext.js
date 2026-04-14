@@ -33,7 +33,12 @@ export const AssetProvider = ({ children }) => {
     customAssets: [],
     bonds: [],
     retirement: [],
-    savings: []
+    savings: [],
+    commodities: [],
+    artCollectibles: [],
+    luxuryWatches: [],
+    privateEquity: [],
+    intellectualProperty: []
   });
   
   const [loading, setLoading] = useState(false);
@@ -54,7 +59,12 @@ export const AssetProvider = ({ children }) => {
       customAssets: assets.customAssets.reduce((sum, asset) => sum + parseFloat(asset.totalValue || 0), 0),
       bonds: assets.bonds.reduce((sum, bond) => sum + parseFloat(bond.currentValue || 0), 0),
       retirement: assets.retirement.reduce((sum, rt) => sum + parseFloat(rt.currentBalance || 0), 0),
-      savings: assets.savings.reduce((sum, sv) => sum + parseFloat(sv.currentBalance || 0), 0)
+      savings: assets.savings.reduce((sum, sv) => sum + parseFloat(sv.currentBalance || 0), 0),
+      commodities: assets.commodities.reduce((sum, item) => sum + parseFloat(item.currentValue || 0), 0),
+      artCollectibles: assets.artCollectibles.reduce((sum, item) => sum + parseFloat(item.estimatedValue || 0), 0),
+      luxuryWatches: assets.luxuryWatches.reduce((sum, item) => sum + parseFloat(item.marketValue || 0), 0),
+      privateEquity: assets.privateEquity.reduce((sum, item) => sum + parseFloat(item.investmentValue || 0), 0),
+      intellectualProperty: assets.intellectualProperty.reduce((sum, item) => sum + parseFloat(item.royaltyValue || 0), 0)
     };
   }, [assets]);
 
@@ -62,7 +72,9 @@ export const AssetProvider = ({ children }) => {
   const netWorth = useMemo(() => {
     const totalAssets = totals.auto + totals.cash + totals.stocks + totals.metals + 
                         totals.properties + totals.crypto + totals.customAssets +
-                        totals.bonds + totals.retirement + totals.savings;
+                        totals.bonds + totals.retirement + totals.savings +
+                        totals.commodities + totals.artCollectibles + totals.luxuryWatches +
+                        totals.privateEquity + totals.intellectualProperty;
     return totalAssets - totals.loans;
   }, [totals]);
 
@@ -76,7 +88,7 @@ export const AssetProvider = ({ children }) => {
     setError(null);
     
     try {
-      const [cars, cash, stocks, metals, properties, loans, crypto, customAssets, bonds, retirement, savings] = await Promise.all([
+      const [cars, cash, stocks, metals, properties, loans, crypto, customAssets, bonds, retirement, savings, commodities, artCollectibles, luxuryWatches, privateEquity, intellectualProperty] = await Promise.all([
         FirestoreAssetService.fetchAssets('Autos', email),
         FirestoreAssetService.fetchAssets('Cash', email),
         FirestoreAssetService.fetchAssets('Stocks', email),
@@ -87,7 +99,12 @@ export const AssetProvider = ({ children }) => {
         FirestoreAssetService.fetchAssets('CustomAssets', email),
         FirestoreAssetService.fetchAssets('Bonds', email),
         FirestoreAssetService.fetchAssets('Retirement', email),
-        FirestoreAssetService.fetchAssets('Savings', email)
+        FirestoreAssetService.fetchAssets('Savings', email),
+        FirestoreAssetService.fetchAssets('Commodities', email),
+        FirestoreAssetService.fetchAssets('ArtCollectibles', email),
+        FirestoreAssetService.fetchAssets('LuxuryWatches', email),
+        FirestoreAssetService.fetchAssets('PrivateEquity', email),
+        FirestoreAssetService.fetchAssets('IntellectualProperty', email)
       ]);
 
       setAssets({
@@ -101,7 +118,12 @@ export const AssetProvider = ({ children }) => {
         customAssets,
         bonds,
         retirement,
-        savings
+        savings,
+        commodities,
+        artCollectibles,
+        luxuryWatches,
+        privateEquity,
+        intellectualProperty
       });
     } catch (err) {
       console.error('Error fetching assets:', err);
@@ -217,7 +239,12 @@ export const AssetProvider = ({ children }) => {
           customAssets: [],
           bonds: [],
           retirement: [],
-          savings: []
+          savings: [],
+          commodities: [],
+          artCollectibles: [],
+          luxuryWatches: [],
+          privateEquity: [],
+          intellectualProperty: []
         });
       }
     });
@@ -253,7 +280,12 @@ export const AssetProvider = ({ children }) => {
     customAssets: assets.customAssets,
     bonds: assets.bonds,
     retirement: assets.retirement,
-    savings: assets.savings
+    savings: assets.savings,
+    commodities: assets.commodities,
+    artCollectibles: assets.artCollectibles,
+    luxuryWatches: assets.luxuryWatches,
+    privateEquity: assets.privateEquity,
+    intellectualProperty: assets.intellectualProperty
   };
 
   return (

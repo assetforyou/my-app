@@ -17,6 +17,11 @@ const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Bonds = lazy(() => import('./pages/Bonds'));
 const Retirement = lazy(() => import('./pages/Retirement'));
 const Savings = lazy(() => import('./pages/Savings'));
+const Commodities = lazy(() => import('./pages/Commodities'));
+const ArtCollectibles = lazy(() => import('./pages/ArtCollectibles'));
+const LuxuryWatches = lazy(() => import('./pages/LuxuryWatches'));
+const PrivateEquity = lazy(() => import('./pages/PrivateEquity'));
+const IntellectualProperty = lazy(() => import('./pages/IntellectualProperty'));
 
 // Toast wrapper component to handle global notifications
 function AppContent() {
@@ -47,6 +52,11 @@ function AppContent() {
         <Route path="/bonds" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Bonds /></Suspense></ProtectedRoute>} />
         <Route path="/retirement" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Retirement /></Suspense></ProtectedRoute>} />
         <Route path="/savings" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Savings /></Suspense></ProtectedRoute>} />
+        <Route path="/commodities" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Commodities /></Suspense></ProtectedRoute>} />
+        <Route path="/art-collectibles" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><ArtCollectibles /></Suspense></ProtectedRoute>} />
+        <Route path="/luxury-watches" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><LuxuryWatches /></Suspense></ProtectedRoute>} />
+        <Route path="/private-equity" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><PrivateEquity /></Suspense></ProtectedRoute>} />
+        <Route path="/intellectual-property" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><IntellectualProperty /></Suspense></ProtectedRoute>} />
         <Route
           path="/landing"
           element={
