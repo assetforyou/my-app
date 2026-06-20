@@ -1,0 +1,124 @@
+.vk-onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(11, 18, 32, 0.65);
+  backdrop-filter: blur(6px);
+}
+
+.vk-onboarding-modal {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: 2rem 1.75rem 1.75rem;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.2);
+  text-align: center;
+}
+
+.vk-onboarding-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.35rem;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.vk-onboarding-close:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.vk-onboarding-progress {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.vk-onboarding-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.vk-onboarding-dot.active {
+  background: #0d9488;
+  transform: scale(1.15);
+}
+
+.vk-onboarding-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.15), rgba(13, 148, 136, 0.05));
+  color: #0d9488;
+}
+
+.vk-onboarding-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.vk-onboarding-body {
+  margin: 0 0 1.75rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.vk-onboarding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+}
+
+.vk-onboarding-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.65rem 1.15rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.vk-onboarding-btn--primary {
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: #fff;
+}
+
+.vk-onboarding-btn--primary:hover {
+  background: linear-gradient(135deg, #0f766e, #115e59);
+  transform: translateY(-1px);
+}
+
+.vk-onboarding-btn--ghost {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.vk-onboarding-btn--ghost:hover {
+  background: #e2e8f0;
+}

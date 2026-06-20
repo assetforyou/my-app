@@ -182,6 +182,33 @@
   color: #6b7280;
 }
 
+.dashboard-placeholder-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 260px;
+  padding: 2rem 1rem;
+  color: #64748b;
+}
+
+.dashboard-placeholder-chart svg {
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.dashboard-placeholder-chart p {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.dashboard-placeholder-chart small {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .dashboard-overview {

@@ -1,0 +1,112 @@
+.vk-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  max-width: 480px;
+  margin: 2rem auto;
+}
+
+.vk-empty-state__icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(13, 148, 136, 0.04));
+  color: #0d9488;
+  margin-bottom: 1.25rem;
+}
+
+.vk-empty-state__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.vk-empty-state__desc {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.vk-empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.vk-empty-state__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.vk-empty-state__btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.vk-empty-state__btn--primary {
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  border-color: transparent;
+  color: #fff;
+}
+
+.vk-empty-state__btn--primary:hover {
+  background: linear-gradient(135deg, #0f766e, #115e59);
+  border-color: transparent;
+}
+
+.vk-net-worth-hero {
+  text-align: center;
+  padding: 2rem 1rem 2.5rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #0b1220 0%, #1e293b 100%);
+  border-radius: 20px;
+  color: #fff;
+}
+
+.vk-net-worth-hero__label {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.vk-net-worth-hero__value {
+  margin: 0;
+  font-family: var(--vk-font-display, Georgia, serif);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.vk-net-worth-hero__sub {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.vk-net-worth-hero__sub span {
+  color: #5eead4;
+  font-weight: 600;
+}

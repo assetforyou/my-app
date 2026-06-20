@@ -173,6 +173,12 @@ const AssetChatBot = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener('vaultknight-open-chatbot', handleOpen);
+    return () => window.removeEventListener('vaultknight-open-chatbot', handleOpen);
+  }, []);
+
   const processMessage = useCallback(async (userMessage) => {
     setIsTyping(true);
     

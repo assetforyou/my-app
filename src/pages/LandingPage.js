@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/AdLayout';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
-import { Settings, X, Search, User, Building2 } from 'lucide-react';
+import { Settings, X, Search, LayoutDashboard, LayoutGrid, BarChart3, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import Auto from './Auto';
 import Cash from './Cash';
@@ -27,9 +27,15 @@ import '../style/LandingPage.css';
 import logo_transparent from '../images/logo_transparent.png';
 import AnalyticsDashboard from '../pages/AnalyticsDashboard';
 import FirestoreAssetService from '../firestoreAssetService';
+import OnboardingModal from '../components/OnboardingModal';
+import EmptyState, { PORTFOLIO_EMPTY_ACTIONS } from '../components/EmptyState';
+import LoadingSkeleton from '../components/LoadingSkeleton';
+import { SIDEBAR_PRIMARY, SIDEBAR_ASSET_GROUPS } from '../data/sidebarConfig';
+import { calculatePortfolioTotals, countTotalAssets, formatCurrency } from '../utils/portfolioUtils';
+import '../style/EmptyState.css';
 
 function LandingPage() {
-  const [selectedAsset, setSelectedAsset] = useState('home');
+  const [selectedAsset, setSelectedAsset] = useState('dashboard');
   const [assetFilter, setAssetFilter] = useState('all'); // 'all', 'personal', 'business'
   const [userEmail, setUserEmail] = useState('');
   const [carList, setCarList] = useState([]);
@@ -64,6 +70,9 @@ function LandingPage() {
   const [intellectualPropertyList, setIntellectualPropertyList] = useState([]);
   const [intellectualPropertyTotal, setIntellectualPropertyTotal] = useState(0);
   const [customAssets, setCustomAssets] = useState([]);
+  const [isPortfolioLoading, setIsPortfolioLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState({});
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const settingsRef = useRef(null);
@@ -160,6 +169,7 @@ function LandingPage() {
   }, []);
 
   const fetchAllAssetDetails = async (email) => {
+    setIsPortfolioLoading(true);
     try {
       await Promise.all([
         fetchCarDetails(email),
@@ -182,7 +192,54 @@ function LandingPage() {
     } catch (err) {
       console.error('Error fetching asset details:', err);
       showError('Failed to fetch asset details. Please try again.');
+    } finally {
+      setIsPortfolioLoading(false);
     }
+  };
+
+  const portfolioLists = {
+    carList, cashList, stockList, metalList, propertyList, loanList,
+    cryptoList, bondList, retirementList, savingsList, commoditiesList,
+    artCollectiblesList, luxuryWatchesList, privateEquityList,
+    intellectualPropertyList, customAssets,
+  };
+
+  const totalAssetCount = countTotalAssets(portfolioLists);
+
+  useEffect(() => {
+    if (!isPortfolioLoading && userEmail && totalAssetCount === 0) {
+      const completed = localStorage.getItem('vk_onboarding_complete');
+      if (!completed) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [isPortfolioLoading, userEmail, totalAssetCount]);
+
+  useEffect(() => {
+    SIDEBAR_ASSET_GROUPS.forEach((group) => {
+      if (group.items.some((item) => item.id === selectedAsset)) {
+        setExpandedGroups((prev) => ({ ...prev, [group.label]: true }));
+      }
+    });
+    if (selectedAsset.startsWith('custom-')) {
+      setExpandedGroups((prev) => ({ ...prev, Custom: true }));
+    }
+  }, [selectedAsset]);
+
+  const PRIMARY_ICONS = {
+    dashboard: LayoutDashboard,
+    home: LayoutGrid,
+    analytics: BarChart3,
+  };
+
+  const handleNavigate = (action) => setSelectedAsset(action);
+
+  const handleOpenChat = () => {
+    window.dispatchEvent(new CustomEvent('vaultknight-open-chatbot'));
+  };
+
+  const toggleSidebarGroup = (label) => {
+    setExpandedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
   const fetchCarDetails = async (email) => {
@@ -422,6 +479,31 @@ function LandingPage() {
   const filteredRetirementTotal = getFilteredAssets(retirementList, 'retirement').reduce((sum, item) => sum + parseFloat(item.currentBalance || 0), 0);
   const filteredSavingsTotal = getFilteredAssets(savingsList, 'savings').reduce((sum, item) => sum + parseFloat(item.currentBalance || 0), 0);
 
+  const portfolioSummary = calculatePortfolioTotals({
+    cashTotal: filteredCashTotal,
+    stockTotal: filteredStockTotal,
+    metalTotal: filteredMetalTotal,
+    propertyTotalPrice: filteredPropertyTotal,
+    cryptoTotal: filteredCryptoTotal,
+    autoTotal: filteredAutoTotal,
+    bondTotal: filteredBondTotal,
+    retirementTotal: filteredRetirementTotal,
+    savingsTotal: filteredSavingsTotal,
+    commoditiesTotal: getFilteredAssets(commoditiesList, 'commodities').reduce((s, i) => s + parseFloat(i.currentValue || 0), 0),
+    artCollectiblesTotal: getFilteredAssets(artCollectiblesList, 'artCollectibles').reduce((s, i) => s + parseFloat(i.estimatedValue || 0), 0),
+    luxuryWatchesTotal: getFilteredAssets(luxuryWatchesList, 'luxuryWatches').reduce((s, i) => s + parseFloat(i.marketValue || 0), 0),
+    privateEquityTotal: getFilteredAssets(privateEquityList, 'privateEquity').reduce((s, i) => s + parseFloat(i.investmentValue || 0), 0),
+    intellectualPropertyTotal: getFilteredAssets(intellectualPropertyList, 'intellectualProperty').reduce((s, i) => s + parseFloat(i.royaltyValue || 0), 0),
+    loanTotal,
+    customAssets,
+  });
+
+  const emptyActions = PORTFOLIO_EMPTY_ACTIONS({
+    onAddAsset: () => setSelectedAsset('cash'),
+    onImport: () => setSelectedAsset('createAsset'),
+    onChat: handleOpenChat,
+  });
+
   // Visibility checks for asset cards
   const showPersonalAssets = assetFilter === 'all' || assetFilter === 'personal';
   const showBusinessAssets = assetFilter === 'all' || assetFilter === 'business';
@@ -602,7 +684,9 @@ function LandingPage() {
           />
         );
       case 'dashboard':
-        return (
+        return isPortfolioLoading ? (
+          <Layout><LoadingSkeleton type="metrics" /></Layout>
+        ) : (
           <Layout>
             <DashboardOverview
               cashTotal={cashTotal}
@@ -610,16 +694,46 @@ function LandingPage() {
               metalTotal={metalTotal}
               propertyTotalPrice={propertyTotalPrice}
               cryptoTotal={cryptoTotal}
+              autoTotal={autoTotal}
+              bondTotal={bondTotal}
+              retirementTotal={retirementTotal}
+              savingsTotal={savingsTotal}
+              commoditiesTotal={commoditiesTotal}
+              artCollectiblesTotal={artCollectiblesTotal}
+              luxuryWatchesTotal={luxuryWatchesTotal}
+              privateEquityTotal={privateEquityTotal}
+              intellectualPropertyTotal={intellectualPropertyTotal}
               loanTotal={loanTotal}
               customAssets={customAssets}
-              userEmail={userEmail}
+              onNavigate={handleNavigate}
             />
           </Layout>
         );
       case 'home':
+        if (isPortfolioLoading) {
+          return <Layout><LoadingSkeleton type="card" count={6} /></Layout>;
+        }
+        if (totalAssetCount === 0) {
+          return (
+            <Layout>
+              <EmptyState
+                title="Your vault is empty"
+                description="Start building your portfolio by adding assets manually, importing a spreadsheet, or chatting with the assistant."
+                actions={emptyActions}
+              />
+            </Layout>
+          );
+        }
         return (
           <Layout>
             <div className="home-content">
+              <div className="vk-net-worth-hero">
+                <p className="vk-net-worth-hero__label">Net Worth</p>
+                <p className="vk-net-worth-hero__value">{formatCurrency(portfolioSummary.netWorth)}</p>
+                <p className="vk-net-worth-hero__sub">
+                  {totalAssetCount} asset{totalAssetCount !== 1 ? 's' : ''} tracked
+                </p>
+              </div>
               <h2 className="summary-title">Asset Summary</h2>
               <div className="summary-container">
                 <div className="summary-section">
@@ -801,35 +915,107 @@ function LandingPage() {
       <div className="sidebar">
         <div className="sidebar-content">
           <div className="sidebar-buttons">
-            <button onClick={() => setSelectedAssetAndCloseSettings('home')}>Home</button>
-            <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('createAsset')}>Create Asset</button>
-            <button className="create-asset-btn" onClick={() => setSelectedAssetAndCloseSettings('analytics')}>Advanced Analysis</button>
-            <div className="dropdown">
-              <button className="dropbtn">Assets</button>
-              <div className="dropdown-content">
-                <button onClick={() => setSelectedAssetAndCloseSettings('auto')}>Auto</button>
-                <button onClick={() => setSelectedAssetAndCloseSettings('cash')}>Cash</button>
-                <button onClick={() => setSelectedAssetAndCloseSettings('stocks')}>Stocks</button>
-                <button onClick={() => setSelectedAsset('metals')}>Metals</button>
-                <button onClick={() => setSelectedAsset('property')}>Property</button>
-                <button onClick={() => setSelectedAsset('loan')}>Loan</button>
-                <button onClick={() => setSelectedAsset('crypto')}>Crypto</button>
-                <button onClick={() => setSelectedAsset('bonds')}>Bonds</button>
-                <button onClick={() => setSelectedAsset('retirement')}>Retirement</button>
-                <button onClick={() => setSelectedAsset('savings')}>Savings</button>
-                <button onClick={() => setSelectedAsset('commodities')}>Commodities</button>
-                <button onClick={() => setSelectedAsset('artCollectibles')}>Art & Collectibles</button>
-                <button onClick={() => setSelectedAsset('privateEquity')}>Private Equity</button>
-                <button onClick={() => setSelectedAsset('intellectualProperty')}>Intellectual Property</button>
-                {customAssets.map(asset => (
-                  <button 
-                    key={asset.id} 
-                    onClick={() => setSelectedAsset(`custom-${asset.id}`)} // Set selectedAsset to custom-<assetId>
+            <button
+              type="button"
+              className="sidebar-cta"
+              onClick={() => setSelectedAssetAndCloseSettings('createAsset')}
+            >
+              <Plus size={18} strokeWidth={2.5} />
+              Create Asset
+            </button>
+
+            <nav className="sidebar-primary" aria-label="Main navigation">
+              {SIDEBAR_PRIMARY.map((item) => {
+                const Icon = PRIMARY_ICONS[item.id];
+                const isActive = selectedAsset === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`sidebar-primary-link${isActive ? ' is-active' : ''}`}
+                    onClick={() => setSelectedAssetAndCloseSettings(item.id)}
+                    aria-current={isActive ? 'page' : undefined}
                   >
-                    {asset.name}
+                    {Icon && <Icon size={18} strokeWidth={2} className="sidebar-primary-link__icon" />}
+                    <span>{item.label}</span>
                   </button>
-                ))}
-              </div>
+                );
+              })}
+            </nav>
+
+            <div className="sidebar-divider">
+              <span className="sidebar-divider__label">Asset categories</span>
+            </div>
+
+            <div className="sidebar-asset-groups">
+              {SIDEBAR_ASSET_GROUPS.map((group) => {
+                const isOpen = !!expandedGroups[group.label];
+                const hasActiveChild = group.items.some((item) => item.id === selectedAsset);
+                return (
+                  <div key={group.label} className={`sidebar-asset-group${isOpen ? ' is-open' : ''}${hasActiveChild ? ' has-active' : ''}`}>
+                    <button
+                      type="button"
+                      className="sidebar-group-toggle"
+                      onClick={() => toggleSidebarGroup(group.label)}
+                      aria-expanded={isOpen}
+                    >
+                      <span className="sidebar-group-toggle__label">{group.label}</span>
+                      {isOpen ? (
+                        <ChevronDown size={16} className="sidebar-group-toggle__chevron" aria-hidden />
+                      ) : (
+                        <ChevronRight size={16} className="sidebar-group-toggle__chevron" aria-hidden />
+                      )}
+                    </button>
+                    {isOpen && (
+                      <div className="sidebar-group-items" role="group" aria-label={group.label}>
+                        {group.items.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            className={`sidebar-nav-item${selectedAsset === item.id ? ' is-active' : ''}`}
+                            onClick={() => setSelectedAssetAndCloseSettings(item.id)}
+                            aria-current={selectedAsset === item.id ? 'page' : undefined}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {customAssets.length > 0 && (
+                <div className={`sidebar-asset-group${expandedGroups.Custom ? ' is-open' : ''}`}>
+                  <button
+                    type="button"
+                    className="sidebar-group-toggle"
+                    onClick={() => toggleSidebarGroup('Custom')}
+                    aria-expanded={!!expandedGroups.Custom}
+                  >
+                    <span className="sidebar-group-toggle__label">Custom</span>
+                    {expandedGroups.Custom ? (
+                      <ChevronDown size={16} className="sidebar-group-toggle__chevron" aria-hidden />
+                    ) : (
+                      <ChevronRight size={16} className="sidebar-group-toggle__chevron" aria-hidden />
+                    )}
+                  </button>
+                  {expandedGroups.Custom && (
+                    <div className="sidebar-group-items" role="group" aria-label="Custom assets">
+                      {customAssets.map((asset) => (
+                        <button
+                          key={asset.id}
+                          type="button"
+                          className={`sidebar-nav-item${selectedAsset === `custom-${asset.id}` ? ' is-active' : ''}`}
+                          onClick={() => setSelectedAsset(`custom-${asset.id}`)}
+                        >
+                          {asset.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <div className="sidebar-footer">
@@ -842,6 +1028,19 @@ function LandingPage() {
       <div className="content">
         {renderContent()}
       </div>
+
+      {showOnboarding && (
+        <OnboardingModal
+          onComplete={() => {
+            setShowOnboarding(false);
+            setSelectedAsset('dashboard');
+          }}
+          onAddAsset={() => {
+            setShowOnboarding(false);
+            setSelectedAsset('cash');
+          }}
+        />
+      )}
     </div>
   );
 }
