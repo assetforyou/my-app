@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Send, X, Sparkles, ChevronDown, Check, Loader2, PlusCircle, TrendingUp } from 'lucide-react';
 import { useAssets } from '../context/AssetContext';
+import AssetScopeSelect from './AssetScopeSelect';
+import { ASSET_SCOPE } from '../utils/assetScope';
 import '../style/AssetChatBot.css';
 
 // Asset type mappings with keywords and field definitions
@@ -162,6 +164,7 @@ const AssetChatBot = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [pendingAsset, setPendingAsset] = useState(null);
+  const [pendingScope, setPendingScope] = useState(ASSET_SCOPE.PERSONAL);
   const messagesEndRef = useRef(null);
   const { addAsset } = useAssets();
 
@@ -190,6 +193,7 @@ const AssetChatBot = () => {
 
     if (response.canAdd) {
       setPendingAsset({ type: assetType, data: extractedValues });
+      setPendingScope(ASSET_SCOPE.PERSONAL);
     }
 
     setMessages(prev => [...prev, { role: 'assistant', ...response }]);
@@ -228,7 +232,7 @@ const AssetChatBot = () => {
     try {
       setIsTyping(true);
       const collectionName = COLLECTION_MAPPINGS[pendingAsset.type] || pendingAsset.type;
-      await addAsset(collectionName, pendingAsset.data);
+      await addAsset(collectionName, { ...pendingAsset.data, scope: pendingScope });
       
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -238,6 +242,7 @@ const AssetChatBot = () => {
       }]);
       
       setPendingAsset(null);
+      setPendingScope(ASSET_SCOPE.PERSONAL);
     } catch (error) {
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -352,15 +357,23 @@ const AssetChatBot = () => {
                     )}
 
                     {msg.canAdd && pendingAsset && (
-                      <motion.button
-                        className="add-asset-btn"
-                        onClick={handleAddAsset}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <PlusCircle size={18} />
-                        Add This Asset
-                      </motion.button>
+                      <div className="chatbot-confirm-actions">
+                        <AssetScopeSelect
+                          value={pendingScope}
+                          onChange={setPendingScope}
+                          name="chat-scope"
+                          id="chat-scope"
+                        />
+                        <motion.button
+                          className="add-asset-btn"
+                          onClick={handleAddAsset}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <PlusCircle size={18} />
+                          Add This Asset
+                        </motion.button>
+                      </div>
                     )}
                   </div>
                 </motion.div>

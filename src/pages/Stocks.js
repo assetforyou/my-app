@@ -7,12 +7,15 @@ import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import StockProjection from '../components/StockProjection';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import { useToast } from '../components/Toast';
 import '../style/AssetPages.css';
 
 const ALPHA_VANTAGE_API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY || '';
 
-function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal, fetchStockDetails }) {
+function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal, fetchStockDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [stockDetails, setStockDetails] = useState({
     name: '',
     number: '',
@@ -89,6 +92,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
       const newStock = {
         ...stockDetails,
         userEmail,
+        scope,
         value: livePrice,
         total: totalValue,
         id: Date.now() // Generate a unique ID as a number
@@ -255,6 +259,7 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
           <h1>Stock Portfolio</h1>
           <p>Track and manage your investment holdings with live market data</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -278,6 +283,9 @@ function Stocks({ userEmail, stockList, setStockList, stockTotal, setStockTotal,
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {/* Stock Symbol Search */}
                   <div className="col-12">
                     <Form.Control

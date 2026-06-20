@@ -6,9 +6,12 @@ import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import LongTermGrowthChart from '../components/CashGrowth';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
-function Cash({ userEmail, cashList, setCashList, cashTotal, setCashTotal, fetchCashDetails }) {
+function Cash({ userEmail, cashList, setCashList, cashTotal, setCashTotal, fetchCashDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [cashDetails, setCashDetails] = useState({
     amount: '',
     currency: 'USD',
@@ -34,6 +37,7 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, setCashTotal, fetch
       const newCash = {
         ...cashDetails,
         userEmail,
+        scope,
         amount: amountInSelectedCurrency,
         id: Date.now() // Generate a unique ID as a number
       };
@@ -162,6 +166,7 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, setCashTotal, fetch
           <h1>Cash Assets</h1>
           <p>Track your cash, savings, and liquid assets</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -185,6 +190,9 @@ function Cash({ userEmail, cashList, setCashList, cashTotal, setCashTotal, fetch
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {Object.entries(cashDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
                       {renderFormControl(key, value)}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/AdLayout';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
-import { Settings, X, Search, LayoutDashboard, LayoutGrid, BarChart3, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { Settings, X, Search, LayoutDashboard, LayoutGrid, BarChart3, ChevronDown, ChevronRight, Plus, Menu } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import Auto from './Auto';
 import Cash from './Cash';
@@ -29,10 +29,15 @@ import AnalyticsDashboard from '../pages/AnalyticsDashboard';
 import FirestoreAssetService from '../firestoreAssetService';
 import OnboardingModal from '../components/OnboardingModal';
 import EmptyState, { PORTFOLIO_EMPTY_ACTIONS } from '../components/EmptyState';
-import LoadingSkeleton from '../components/LoadingSkeleton';
+import MobileNav from '../components/MobileNav';
+import PortfolioLoading from '../components/PortfolioLoading';
+import '../style/MobileNav.css';
 import { SIDEBAR_PRIMARY, SIDEBAR_ASSET_GROUPS } from '../data/sidebarConfig';
 import { calculatePortfolioTotals, countTotalAssets, formatCurrency } from '../utils/portfolioUtils';
+import { filterByScope, scopeLabel, SCOPE_FILTER } from '../utils/assetScope';
+import { buildPortfolioSearchItems } from '../utils/portfolioSearch';
 import '../style/EmptyState.css';
+import '../style/AssetScopeSelect.css';
 
 function LandingPage() {
   const [selectedAsset, setSelectedAsset] = useState('dashboard');
@@ -72,6 +77,7 @@ function LandingPage() {
   const [customAssets, setCustomAssets] = useState([]);
   const [isPortfolioLoading, setIsPortfolioLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState({});
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -111,12 +117,6 @@ function LandingPage() {
   const handleBackToWebsite = () => {
     setIsSettingsOpen(false);
     navigate('/');
-  };
-
-  // Set selected asset and close settings
-  const setSelectedAssetAndCloseSettings = (asset) => {
-    setSelectedAsset(asset);
-    setIsSettingsOpen(false);
   };
 
   // Handle search selection
@@ -167,6 +167,11 @@ function LandingPage() {
       window.removeEventListener('vaultknight-toggle-search', handleSearchToggle);
     };
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
 
   const fetchAllAssetDetails = async (email) => {
     setIsPortfolioLoading(true);
@@ -232,7 +237,16 @@ function LandingPage() {
     analytics: BarChart3,
   };
 
-  const handleNavigate = (action) => setSelectedAsset(action);
+  const handleNavigate = (action) => {
+    setSelectedAsset(action);
+    setMobileMenuOpen(false);
+  };
+
+  const setSelectedAssetAndCloseSettings = (asset) => {
+    setSelectedAsset(asset);
+    setIsSettingsOpen(false);
+    setMobileMenuOpen(false);
+  };
 
   const handleOpenChat = () => {
     window.dispatchEvent(new CustomEvent('vaultknight-open-chatbot'));
@@ -456,28 +470,61 @@ function LandingPage() {
     }
   };
 
-  // Asset Type Categorization
-  const personalAssetTypes = ['auto', 'cash', 'metals', 'crypto', 'artCollectibles', 'luxuryWatches'];
-  const businessAssetTypes = ['stocks', 'bonds', 'retirement', 'savings', 'property', 'privateEquity', 'intellectualProperty', 'commodities'];
-  
-  // Filter assets based on selection
-  const getFilteredAssets = (assetList, assetType) => {
-    if (assetFilter === 'all') return assetList;
-    if (assetFilter === 'personal' && personalAssetTypes.includes(assetType)) return assetList;
-    if (assetFilter === 'business' && businessAssetTypes.includes(assetType)) return assetList;
-    return [];
-  };
-  
-  // Calculate filtered totals
-  const filteredAutoTotal = getFilteredAssets(carList, 'auto').reduce((sum, item) => sum + parseFloat(item.value || 0), 0);
-  const filteredCashTotal = getFilteredAssets(cashList, 'cash').reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
-  const filteredStockTotal = getFilteredAssets(stockList, 'stocks').reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
-  const filteredMetalTotal = getFilteredAssets(metalList, 'metals').reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
-  const filteredPropertyTotal = getFilteredAssets(propertyList, 'property').reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
-  const filteredCryptoTotal = getFilteredAssets(cryptoList, 'crypto').reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
-  const filteredBondTotal = getFilteredAssets(bondList, 'bonds').reduce((sum, item) => sum + parseFloat(item.currentValue || 0), 0);
-  const filteredRetirementTotal = getFilteredAssets(retirementList, 'retirement').reduce((sum, item) => sum + parseFloat(item.currentBalance || 0), 0);
-  const filteredSavingsTotal = getFilteredAssets(savingsList, 'savings').reduce((sum, item) => sum + parseFloat(item.currentBalance || 0), 0);
+  // Per-record personal / business scope filtering
+  const scopeList = (list, typeKey) => filterByScope(list, assetFilter, typeKey);
+
+  const scopedCarList = scopeList(carList, 'auto');
+  const scopedCashList = scopeList(cashList, 'cash');
+  const scopedStockList = scopeList(stockList, 'stocks');
+  const scopedMetalList = scopeList(metalList, 'metals');
+  const scopedPropertyList = scopeList(propertyList, 'property');
+  const scopedLoanList = scopeList(loanList, 'loan');
+  const scopedCryptoList = scopeList(cryptoList, 'crypto');
+  const scopedBondList = scopeList(bondList, 'bonds');
+  const scopedRetirementList = scopeList(retirementList, 'retirement');
+  const scopedSavingsList = scopeList(savingsList, 'savings');
+  const scopedCommoditiesList = scopeList(commoditiesList, 'commodities');
+  const scopedArtList = scopeList(artCollectiblesList, 'artCollectibles');
+  const scopedWatchesList = scopeList(luxuryWatchesList, 'luxuryWatches');
+  const scopedPEList = scopeList(privateEquityList, 'privateEquity');
+  const scopedIPList = scopeList(intellectualPropertyList, 'intellectualProperty');
+  const scopedCustomAssets = assetFilter === SCOPE_FILTER.ALL
+    ? customAssets
+    : customAssets.filter((a) => filterByScope([a], assetFilter, null).length > 0);
+
+  const sumField = (list, field) => list.reduce((s, item) => s + parseFloat(item[field] || 0), 0);
+
+  const filteredAutoTotal = sumField(scopedCarList, 'value');
+  const filteredCashTotal = sumField(scopedCashList, 'amount');
+  const filteredStockTotal = sumField(scopedStockList, 'total');
+  const filteredMetalTotal = sumField(scopedMetalList, 'total');
+  const filteredPropertyTotal = sumField(scopedPropertyList, 'price');
+  const filteredCryptoTotal = sumField(scopedCryptoList, 'total');
+  const filteredBondTotal = sumField(scopedBondList, 'currentValue');
+  const filteredRetirementTotal = sumField(scopedRetirementList, 'currentBalance');
+  const filteredSavingsTotal = sumField(scopedSavingsList, 'currentBalance');
+  const filteredLoanTotal = sumField(scopedLoanList, 'loanValue');
+  const filteredCommoditiesTotal = sumField(scopedCommoditiesList, 'currentValue');
+  const filteredArtTotal = sumField(scopedArtList, 'estimatedValue');
+  const filteredWatchesTotal = sumField(scopedWatchesList, 'marketValue');
+  const filteredPETotal = sumField(scopedPEList, 'investmentValue');
+  const filteredIPTotal = sumField(scopedIPList, 'royaltyValue');
+
+  useEffect(() => {
+    if (isPortfolioLoading) return;
+    const items = buildPortfolioSearchItems({
+      cashList, stockList, cryptoList, propertyList, carList, metalList,
+      loanList, bondList, retirementList, savingsList, commoditiesList,
+      artCollectiblesList, luxuryWatchesList, privateEquityList,
+      intellectualPropertyList, customAssets,
+    });
+    window.dispatchEvent(new CustomEvent('vaultknight-portfolio-search', { detail: { items } }));
+  }, [
+    isPortfolioLoading, cashList, stockList, cryptoList, propertyList, carList,
+    metalList, loanList, bondList, retirementList, savingsList, commoditiesList,
+    artCollectiblesList, luxuryWatchesList, privateEquityList, intellectualPropertyList,
+    customAssets,
+  ]);
 
   const portfolioSummary = calculatePortfolioTotals({
     cashTotal: filteredCashTotal,
@@ -489,14 +536,32 @@ function LandingPage() {
     bondTotal: filteredBondTotal,
     retirementTotal: filteredRetirementTotal,
     savingsTotal: filteredSavingsTotal,
-    commoditiesTotal: getFilteredAssets(commoditiesList, 'commodities').reduce((s, i) => s + parseFloat(i.currentValue || 0), 0),
-    artCollectiblesTotal: getFilteredAssets(artCollectiblesList, 'artCollectibles').reduce((s, i) => s + parseFloat(i.estimatedValue || 0), 0),
-    luxuryWatchesTotal: getFilteredAssets(luxuryWatchesList, 'luxuryWatches').reduce((s, i) => s + parseFloat(i.marketValue || 0), 0),
-    privateEquityTotal: getFilteredAssets(privateEquityList, 'privateEquity').reduce((s, i) => s + parseFloat(i.investmentValue || 0), 0),
-    intellectualPropertyTotal: getFilteredAssets(intellectualPropertyList, 'intellectualProperty').reduce((s, i) => s + parseFloat(i.royaltyValue || 0), 0),
-    loanTotal,
-    customAssets,
+    commoditiesTotal: filteredCommoditiesTotal,
+    artCollectiblesTotal: filteredArtTotal,
+    luxuryWatchesTotal: filteredWatchesTotal,
+    privateEquityTotal: filteredPETotal,
+    intellectualPropertyTotal: filteredIPTotal,
+    loanTotal: filteredLoanTotal,
+    customAssets: scopedCustomAssets,
   });
+
+  const scopedAssetCount = countTotalAssets({
+    carList: scopedCarList, cashList: scopedCashList, stockList: scopedStockList,
+    metalList: scopedMetalList, propertyList: scopedPropertyList, loanList: scopedLoanList,
+    cryptoList: scopedCryptoList, bondList: scopedBondList, retirementList: scopedRetirementList,
+    savingsList: scopedSavingsList, commoditiesList: scopedCommoditiesList,
+    artCollectiblesList: scopedArtList, luxuryWatchesList: scopedWatchesList,
+    privateEquityList: scopedPEList, intellectualPropertyList: scopedIPList,
+    customAssets: scopedCustomAssets,
+  });
+
+  const scopeFilterBanner = assetFilter !== SCOPE_FILTER.ALL && (
+    <p className="asset-scope-filter-hint">
+      Showing <strong>{scopeLabel(assetFilter)}</strong> assets only — change via the filter in the top bar.
+    </p>
+  );
+
+  const pageProps = { assetFilter, scopeFilterBanner };
 
   const emptyActions = PORTFOLIO_EMPTY_ACTIONS({
     onAddAsset: () => setSelectedAsset('cash'),
@@ -504,21 +569,45 @@ function LandingPage() {
     onChat: handleOpenChat,
   });
 
-  // Visibility checks for asset cards
-  const showPersonalAssets = assetFilter === 'all' || assetFilter === 'personal';
-  const showBusinessAssets = assetFilter === 'all' || assetFilter === 'business';
+  const homeSummaryCards = [
+    { id: 'cash', title: 'Cash', count: scopedCashList.length, value: filteredCashTotal },
+    { id: 'stocks', title: 'Stocks', count: scopedStockList.length, value: filteredStockTotal },
+    { id: 'crypto', title: 'Cryptocurrency', count: scopedCryptoList.length, value: filteredCryptoTotal },
+    { id: 'property', title: 'Properties', count: scopedPropertyList.length, value: filteredPropertyTotal, extra: propertyTotalMonthlyCost > 0 ? `Monthly: $${propertyTotalMonthlyCost.toFixed(2)}` : null },
+    { id: 'auto', title: 'Autos', count: scopedCarList.length, value: filteredAutoTotal },
+    { id: 'metals', title: 'Metals', count: scopedMetalList.length, value: filteredMetalTotal },
+    { id: 'bonds', title: 'Bonds', count: scopedBondList.length, value: filteredBondTotal },
+    { id: 'retirement', title: 'Retirement', count: scopedRetirementList.length, value: filteredRetirementTotal },
+    { id: 'savings', title: 'Savings', count: scopedSavingsList.length, value: filteredSavingsTotal },
+    { id: 'commodities', title: 'Commodities', count: scopedCommoditiesList.length, value: filteredCommoditiesTotal },
+    { id: 'artCollectibles', title: 'Art & Collectibles', count: scopedArtList.length, value: filteredArtTotal },
+    { id: 'luxuryWatches', title: 'Luxury Watches', count: scopedWatchesList.length, value: filteredWatchesTotal },
+    { id: 'privateEquity', title: 'Private Equity', count: scopedPEList.length, value: filteredPETotal },
+    { id: 'intellectualProperty', title: 'Intellectual Property', count: scopedIPList.length, value: filteredIPTotal },
+    { id: 'loan', title: 'Loans', count: scopedLoanList.length, value: filteredLoanTotal },
+  ].filter((card) => assetFilter === SCOPE_FILTER.ALL || card.count > 0);
 
   const renderContent = () => {
+    if (isPortfolioLoading && selectedAsset !== 'accountSettings') {
+      const skeletonType = selectedAsset === 'home' ? 'card' : selectedAsset === 'dashboard' ? 'metrics' : 'table';
+      return (
+        <Layout>
+          <PortfolioLoading type={skeletonType} />
+        </Layout>
+      );
+    }
+
     switch (selectedAsset) {
       case 'accountSettings':
         return <AccountSettings userEmail={userEmail} />;
       case 'auto':
         return (
           <Auto
+            {...pageProps}
             userEmail={userEmail}
-            carList={carList}
+            carList={scopedCarList}
             setCarList={setCarList}
-            autoTotal={autoTotal}
+            autoTotal={filteredAutoTotal}
             setAutoTotal={setAutoTotal}
             fetchCarDetails={fetchCarDetails}
           />
@@ -526,10 +615,11 @@ function LandingPage() {
       case 'cash':
         return (
           <Cash
+            {...pageProps}
             userEmail={userEmail}
-            cashList={cashList}
+            cashList={scopedCashList}
             setCashList={setCashList}
-            cashTotal={cashTotal}
+            cashTotal={filteredCashTotal}
             setCashTotal={setCashTotal}
             fetchCashDetails={fetchCashDetails}
           />
@@ -537,10 +627,11 @@ function LandingPage() {
       case 'stocks':
         return (
           <Stocks
+            {...pageProps}
             userEmail={userEmail}
-            stockList={stockList}
+            stockList={scopedStockList}
             setStockList={setStockList}
-            stockTotal={stockTotal}
+            stockTotal={filteredStockTotal}
             setStockTotal={setStockTotal}
             fetchStockDetails={fetchStockDetails}
           />
@@ -548,10 +639,11 @@ function LandingPage() {
       case 'metals':
         return (
           <Metals
+            {...pageProps}
             userEmail={userEmail}
-            metalList={metalList}
+            metalList={scopedMetalList}
             setMetalList={setMetalList}
-            metalTotal={metalTotal}
+            metalTotal={filteredMetalTotal}
             setMetalTotal={setMetalTotal}
             fetchMetalDetails={fetchMetalDetails}
           />
@@ -559,10 +651,11 @@ function LandingPage() {
       case 'property':
         return (
           <Property
+            {...pageProps}
             userEmail={userEmail}
-            propertyList={propertyList}
+            propertyList={scopedPropertyList}
             setPropertyList={setPropertyList}
-            propertyTotalPrice={propertyTotalPrice}
+            propertyTotalPrice={filteredPropertyTotal}
             setPropertyTotalPrice={setPropertyTotalPrice}
             propertyTotalMonthlyCost={propertyTotalMonthlyCost}
             setPropertyTotalMonthlyCost={setPropertyTotalMonthlyCost}
@@ -572,10 +665,11 @@ function LandingPage() {
       case 'loan':
         return (
           <Loan
+            {...pageProps}
             userEmail={userEmail}
-            loanList={loanList}
+            loanList={scopedLoanList}
             setLoanList={setLoanList}
-            loanTotal={loanTotal}
+            loanTotal={filteredLoanTotal}
             setLoanTotal={setLoanTotal}
             fetchLoanDetails={fetchLoanDetails}
           />
@@ -583,10 +677,11 @@ function LandingPage() {
       case 'crypto':
         return (
           <Crypto
+            {...pageProps}
             userEmail={userEmail}
-            cryptoList={cryptoList}
+            cryptoList={scopedCryptoList}
             setCryptoList={setCryptoList}
-            cryptoTotal={cryptoTotal}
+            cryptoTotal={filteredCryptoTotal}
             setCryptoTotal={setCryptoTotal}
             fetchCryptoDetails={fetchCryptoDetails}
           />
@@ -594,10 +689,11 @@ function LandingPage() {
       case 'bonds':
         return (
           <Bonds
+            {...pageProps}
             userEmail={userEmail}
-            bondList={bondList}
+            bondList={scopedBondList}
             setBondList={setBondList}
-            bondTotal={bondTotal}
+            bondTotal={filteredBondTotal}
             setBondTotal={setBondTotal}
             fetchBondDetails={fetchBondDetails}
           />
@@ -605,10 +701,11 @@ function LandingPage() {
       case 'retirement':
         return (
           <Retirement
+            {...pageProps}
             userEmail={userEmail}
-            retirementList={retirementList}
+            retirementList={scopedRetirementList}
             setRetirementList={setRetirementList}
-            retirementTotal={retirementTotal}
+            retirementTotal={filteredRetirementTotal}
             setRetirementTotal={setRetirementTotal}
             fetchRetirementDetails={fetchRetirementDetails}
           />
@@ -616,10 +713,11 @@ function LandingPage() {
       case 'savings':
         return (
           <Savings
+            {...pageProps}
             userEmail={userEmail}
-            savingsList={savingsList}
+            savingsList={scopedSavingsList}
             setSavingsList={setSavingsList}
-            savingsTotal={savingsTotal}
+            savingsTotal={filteredSavingsTotal}
             setSavingsTotal={setSavingsTotal}
             fetchSavingsDetails={fetchSavingsDetails}
           />
@@ -627,92 +725,94 @@ function LandingPage() {
       case 'commodities':
         return (
           <Commodities
+            {...pageProps}
             userEmail={userEmail}
-            commodityList={commoditiesList}
+            commodityList={scopedCommoditiesList}
             setCommodityList={setCommoditiesList}
-            commodityTotal={commoditiesTotal}
+            commodityTotal={filteredCommoditiesTotal}
             fetchCommoditiesDetails={fetchCommoditiesDetails}
           />
         );
       case 'artCollectibles':
         return (
           <ArtCollectibles
+            {...pageProps}
             userEmail={userEmail}
-            artCollectiblesList={artCollectiblesList}
+            artCollectiblesList={scopedArtList}
             setArtCollectiblesList={setArtCollectiblesList}
-            artCollectiblesTotal={artCollectiblesTotal}
+            artCollectiblesTotal={filteredArtTotal}
             fetchArtCollectiblesDetails={fetchArtCollectiblesDetails}
           />
         );
       case 'privateEquity':
         return (
           <PrivateEquity
+            {...pageProps}
             userEmail={userEmail}
-            privateEquityList={privateEquityList}
+            privateEquityList={scopedPEList}
             setPrivateEquityList={setPrivateEquityList}
-            privateEquityTotal={privateEquityTotal}
+            privateEquityTotal={filteredPETotal}
             fetchPrivateEquityDetails={fetchPrivateEquityDetails}
           />
         );
       case 'intellectualProperty':
         return (
           <IntellectualProperty
+            {...pageProps}
             userEmail={userEmail}
-            intellectualPropertyList={intellectualPropertyList}
+            intellectualPropertyList={scopedIPList}
             setIntellectualPropertyList={setIntellectualPropertyList}
-            intellectualPropertyTotal={intellectualPropertyTotal}
+            intellectualPropertyTotal={filteredIPTotal}
             fetchIntellectualPropertyDetails={fetchIntellectualPropertyDetails}
           />
         );
       case 'createAsset':
-        return <CreateAsset userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
+        return <CreateAsset {...pageProps} userEmail={userEmail} onAssetCreated={fetchCustomAssets} />;
       case 'analytics':
         return (
           <AnalyticsDashboard
-            cashList={cashList}
-            stockList={stockList}
-            metalList={metalList}
-            propertyList={propertyList}
-            cryptoList={cryptoList}
-            cashTotal={cashTotal}
-            stockTotal={stockTotal}
-            metalTotal={metalTotal}
-            propertyTotalPrice={propertyTotalPrice}
-            cryptoTotal={cryptoTotal}
+            {...pageProps}
+            cashList={scopedCashList}
+            stockList={scopedStockList}
+            metalList={scopedMetalList}
+            propertyList={scopedPropertyList}
+            cryptoList={scopedCryptoList}
+            cashTotal={filteredCashTotal}
+            stockTotal={filteredStockTotal}
+            metalTotal={filteredMetalTotal}
+            propertyTotalPrice={filteredPropertyTotal}
+            cryptoTotal={filteredCryptoTotal}
             userEmail={userEmail}
-            customAssets={customAssets}
+            customAssets={scopedCustomAssets}
+            loanList={scopedLoanList}
           />
         );
       case 'dashboard':
-        return isPortfolioLoading ? (
-          <Layout><LoadingSkeleton type="metrics" /></Layout>
-        ) : (
+        return (
           <Layout>
+            {scopeFilterBanner}
             <DashboardOverview
-              cashTotal={cashTotal}
-              stockTotal={stockTotal}
-              metalTotal={metalTotal}
-              propertyTotalPrice={propertyTotalPrice}
-              cryptoTotal={cryptoTotal}
-              autoTotal={autoTotal}
-              bondTotal={bondTotal}
-              retirementTotal={retirementTotal}
-              savingsTotal={savingsTotal}
-              commoditiesTotal={commoditiesTotal}
-              artCollectiblesTotal={artCollectiblesTotal}
-              luxuryWatchesTotal={luxuryWatchesTotal}
-              privateEquityTotal={privateEquityTotal}
-              intellectualPropertyTotal={intellectualPropertyTotal}
-              loanTotal={loanTotal}
-              customAssets={customAssets}
+              cashTotal={filteredCashTotal}
+              stockTotal={filteredStockTotal}
+              metalTotal={filteredMetalTotal}
+              propertyTotalPrice={filteredPropertyTotal}
+              cryptoTotal={filteredCryptoTotal}
+              autoTotal={filteredAutoTotal}
+              bondTotal={filteredBondTotal}
+              retirementTotal={filteredRetirementTotal}
+              savingsTotal={filteredSavingsTotal}
+              commoditiesTotal={filteredCommoditiesTotal}
+              artCollectiblesTotal={filteredArtTotal}
+              luxuryWatchesTotal={filteredWatchesTotal}
+              privateEquityTotal={filteredPETotal}
+              intellectualPropertyTotal={filteredIPTotal}
+              loanTotal={filteredLoanTotal}
+              customAssets={scopedCustomAssets}
               onNavigate={handleNavigate}
             />
           </Layout>
         );
       case 'home':
-        if (isPortfolioLoading) {
-          return <Layout><LoadingSkeleton type="card" count={6} /></Layout>;
-        }
         if (totalAssetCount === 0) {
           return (
             <Layout>
@@ -724,106 +824,51 @@ function LandingPage() {
             </Layout>
           );
         }
+        if (scopedAssetCount === 0) {
+          return (
+            <Layout>
+              {scopeFilterBanner}
+              <EmptyState
+                title={`No ${scopeLabel(assetFilter).toLowerCase()} assets`}
+                description={`Switch to "All Assets" or add a new ${scopeLabel(assetFilter).toLowerCase()} holding.`}
+                actions={[
+                  { label: 'Show all assets', onClick: () => setAssetFilter(SCOPE_FILTER.ALL) },
+                  { label: 'Add asset', primary: true, onClick: () => setSelectedAsset('cash') },
+                ]}
+              />
+            </Layout>
+          );
+        }
         return (
           <Layout>
             <div className="home-content">
+              {scopeFilterBanner}
               <div className="vk-net-worth-hero">
-                <p className="vk-net-worth-hero__label">Net Worth</p>
+                <p className="vk-net-worth-hero__label">Net Worth{assetFilter !== SCOPE_FILTER.ALL ? ` · ${scopeLabel(assetFilter)}` : ''}</p>
                 <p className="vk-net-worth-hero__value">{formatCurrency(portfolioSummary.netWorth)}</p>
                 <p className="vk-net-worth-hero__sub">
-                  {totalAssetCount} asset{totalAssetCount !== 1 ? 's' : ''} tracked
+                  {scopedAssetCount} asset{scopedAssetCount !== 1 ? 's' : ''} tracked
                 </p>
               </div>
               <h2 className="summary-title">Asset Summary</h2>
               <div className="summary-container">
                 <div className="summary-section">
-                  <h2>Built-in Assets</h2>
                   <div className="built-in-assets">
-                    {showPersonalAssets && (
-                      <>
-                        <div className="summary-box" onClick={() => setSelectedAsset('cash')}>
-                          <h3>Cash</h3>
-                          <p>Total Cash: ${filteredCashTotal.toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('metals')}>
-                          <h3>Metals</h3>
-                          <p>Total Value: ${filteredMetalTotal.toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('auto')}>
-                          <h3>Autos</h3>
-                          <p>Total: {getFilteredAssets(carList, 'auto').length}</p>
-                          <p>Value: ${filteredAutoTotal.toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('crypto')}>
-                          <h3>Cryptocurrency</h3>
-                          <p>Total: {getFilteredAssets(cryptoList, 'crypto').length}</p>
-                          <p>Value: ${filteredCryptoTotal.toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('artCollectibles')}>
-                          <h3>Art & Collectibles</h3>
-                          <p>Total: {getFilteredAssets(artCollectiblesList, 'artCollectibles').length}</p>
-                          <p>Value: ${getFilteredAssets(artCollectiblesList, 'artCollectibles').reduce((sum, item) => sum + parseFloat(item.estimatedValue || 0), 0).toFixed(2)}</p>
-                        </div>
-                      </>
-                    )}
-                    
-                    {showBusinessAssets && (
-                      <>
-                        <div className="summary-box" onClick={() => setSelectedAsset('stocks')}>
-                          <h3>Stocks</h3>
-                          <p>Total Value: ${filteredStockTotal.toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('commodities')}>
-                          <h3>Commodities</h3>
-                          <p>Total: {getFilteredAssets(commoditiesList, 'commodities').length}</p>
-                          <p>Value: ${getFilteredAssets(commoditiesList, 'commodities').reduce((sum, item) => sum + parseFloat(item.currentValue || 0), 0).toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('property')}>
-                          <h3>Properties</h3>
-                          <p>Total: {getFilteredAssets(propertyList, 'property').length}</p>
-                          <p>Value: ${filteredPropertyTotal.toFixed(2)}</p>
-                          <p>Monthly Cost: ${propertyTotalMonthlyCost.toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('bonds')}>
-                          <h3>Bonds</h3>
-                          <p>Total: {getFilteredAssets(bondList, 'bonds').length}</p>
-                          <p>Value: ${filteredBondTotal.toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('retirement')}>
-                          <h3>Retirement</h3>
-                          <p>Total: {getFilteredAssets(retirementList, 'retirement').length}</p>
-                          <p>Value: ${filteredRetirementTotal.toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('savings')}>
-                          <h3>Savings</h3>
-                          <p>Total: {getFilteredAssets(savingsList, 'savings').length}</p>
-                          <p>Value: ${filteredSavingsTotal.toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('privateEquity')}>
-                          <h3>Private Equity</h3>
-                          <p>Total: {getFilteredAssets(privateEquityList, 'privateEquity').length}</p>
-                          <p>Value: ${getFilteredAssets(privateEquityList, 'privateEquity').reduce((sum, item) => sum + parseFloat(item.investmentValue || 0), 0).toFixed(2)}</p>
-                        </div>
-                        <div className="summary-box" onClick={() => setSelectedAsset('intellectualProperty')}>
-                          <h3>Intellectual Property</h3>
-                          <p>Total: {getFilteredAssets(intellectualPropertyList, 'intellectualProperty').length}</p>
-                          <p>Value: ${getFilteredAssets(intellectualPropertyList, 'intellectualProperty').reduce((sum, item) => sum + parseFloat(item.royaltyValue || 0), 0).toFixed(2)}</p>
-                        </div>
-                      </>
-                    )}
-
-                    <div className="summary-box" onClick={() => setSelectedAsset('loan')}>
-                      <h3>Loans</h3>
-                      <p>Total: {loanList.length}</p>
-                      <p>Value: ${loanTotal.toFixed(2)}</p>
-                    </div>
+                    {homeSummaryCards.map((card) => (
+                      <div key={card.id} className="summary-box" onClick={() => setSelectedAsset(card.id)}>
+                        <h3>{card.title}</h3>
+                        <p>{card.count} item{card.count !== 1 ? 's' : ''}</p>
+                        <p>Value: ${card.value.toFixed(2)}</p>
+                        {card.extra && <p>{card.extra}</p>}
+                      </div>
+                    ))}
                   </div>
                 </div>
-                {customAssets.length > 0 && (
+                {scopedCustomAssets.length > 0 && (
                   <div className="summary-section">
                     <h2>Custom Assets</h2>
                     <div className="custom-assets">
-                      {customAssets.map(asset => (
+                      {scopedCustomAssets.map(asset => (
                         <div 
                           key={asset.id} 
                           className="custom-asset-card"
@@ -870,21 +915,30 @@ function LandingPage() {
   return (
     <div className="landing-page">
       <div className="top-bar">
+         <button
+           type="button"
+           className="vk-mobile-menu-btn"
+           onClick={() => setMobileMenuOpen(true)}
+           aria-label="Open navigation menu"
+         >
+           <Menu size={22} />
+         </button>
          <div className="title">
            <img src={logo_transparent} alt="Vault Knight" className="custom-title-icon" />
            Vault Knight
          </div>
 
          {/* Personal / Business Filter Dropdown */}
-         <div className="asset-filter-dropdown">
+         <div className={`asset-filter-dropdown asset-filter-dropdown--${assetFilter}`}>
            <select 
              className="asset-filter-select"
              value={assetFilter}
              onChange={(e) => setAssetFilter(e.target.value)}
+             aria-label="Filter by ownership"
            >
-             <option value="all">🌐 All Assets</option>
-             <option value="personal">👤 Personal</option>
-             <option value="business">🏢 Business</option>
+             <option value="all">All Assets</option>
+             <option value="personal">Personal</option>
+             <option value="business">Business</option>
            </select>
          </div>
         <div className="settings-dropdown" ref={settingsRef}>
@@ -912,7 +966,14 @@ function LandingPage() {
           )}
         </div>
       </div>
-      <div className="sidebar">
+      {mobileMenuOpen && (
+        <div
+          className="vk-sidebar-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden
+        />
+      )}
+      <div className={`sidebar${mobileMenuOpen ? ' is-mobile-open' : ''}`}>
         <div className="sidebar-content">
           <div className="sidebar-buttons">
             <button
@@ -1028,6 +1089,14 @@ function LandingPage() {
       <div className="content">
         {renderContent()}
       </div>
+
+      <MobileNav
+        activeView={['dashboard', 'home'].includes(selectedAsset) ? selectedAsset : 'other'}
+        onNavigate={handleNavigate}
+        onAdd={() => setSelectedAssetAndCloseSettings('createAsset')}
+        onSearch={toggleSearch}
+        onMenu={() => setMobileMenuOpen(true)}
+      />
 
       {showOnboarding && (
         <OnboardingModal

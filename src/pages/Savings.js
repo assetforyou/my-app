@@ -5,9 +5,12 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
-function Savings({ userEmail, savingsList, setSavingsList, savingsTotal, setSavingsTotal, fetchSavingsDetails }) {
+function Savings({ userEmail, savingsList, setSavingsList, savingsTotal, setSavingsTotal, fetchSavingsDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [savingsDetails, setSavingsDetails] = useState({
     accountName: '',
     bankName: '',
@@ -43,6 +46,7 @@ function Savings({ userEmail, savingsList, setSavingsList, savingsTotal, setSavi
       const newSavings = {
         ...savingsDetails,
         userEmail,
+        scope,
         id: Date.now()
       };
 
@@ -209,6 +213,7 @@ function Savings({ userEmail, savingsList, setSavingsList, savingsTotal, setSavi
           <h1>Savings & Deposits</h1>
           <p>Track savings accounts, CDs, GICs and high yield deposits</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -232,6 +237,9 @@ function Savings({ userEmail, savingsList, setSavingsList, savingsTotal, setSavi
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {Object.entries(savingsDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
                       {renderFormControl(key, value)}

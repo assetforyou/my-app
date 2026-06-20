@@ -3,35 +3,40 @@
    ================================================ */
 
 :root {
-  --primary-500: #0ea5e9;
-  --primary-600: #0284c7;
-  --primary-700: #0369a1;
+  --primary-500: #0d9488;
+  --primary-600: #0f766e;
+  --primary-700: #115e59;
 
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+  --dash-bg: #f1f5f9;
+  --dash-surface: #ffffff;
+  --dash-ink: #0f172a;
+  --dash-muted: #64748b;
+  --dash-border: #e2e8f0;
+  --dash-accent: #0d9488;
 
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+
+  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --shadow-sm: 0 4px 20px rgb(15 23 42 / 0.04);
 
   --transition-fast: 120ms ease;
 
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 }
 
 .vk-asset-page {
-  min-height: 100vh;
-  background: #ffffff;
-  padding: 1.5rem 1rem !important;
+  min-height: auto;
+  background: transparent;
+  padding: 0 !important;
   overflow-x: hidden;
-  padding-top: 1.5rem !important;
 }
 
 .vk-asset-page > .row:first-child {
@@ -50,12 +55,49 @@
 
 /* CARDS - NO ANIMATIONS */
 .vk-asset-page .card {
-  border: none !important;
+  border: 1px solid var(--dash-border) !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-sm) !important;
-  background: #ffffff !important;
+  background: var(--dash-surface) !important;
   overflow: hidden;
   transition: box-shadow var(--transition-fast) !important;
+}
+
+.vk-asset-page .card-header {
+  background: var(--dash-surface) !important;
+  border-bottom: 1px solid var(--dash-border) !important;
+  font-weight: 600;
+  color: var(--dash-ink);
+}
+
+.vk-asset-page .create-asset-header {
+  margin-bottom: 1.25rem !important;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--dash-border);
+}
+
+.vk-asset-page .create-asset-header h1 {
+  font-family: var(--vk-font-display, Georgia, serif);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 600;
+  color: var(--dash-ink);
+  margin: 0 0 0.35rem;
+}
+
+.vk-asset-page .create-asset-header p {
+  margin: 0;
+  color: var(--dash-muted);
+  font-size: 0.95rem;
+}
+
+.vk-asset-page .btn-primary {
+  background: var(--dash-accent) !important;
+  border-color: var(--dash-accent) !important;
+}
+
+.vk-asset-page .btn-primary:hover {
+  background: var(--primary-600) !important;
+  border-color: var(--primary-600) !important;
 }
 
 .vk-asset-page .card:hover {

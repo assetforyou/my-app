@@ -3,11 +3,14 @@ import { Modal, Button, Form, ProgressBar, Table } from 'react-bootstrap';
 import { Upload, X, Check, AlertCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from './AssetScopeSelect';
+import { ASSET_SCOPE } from '../utils/assetScope';
 
 const CSVImportModal = ({ show, onHide, userEmail, onImportComplete }) => {
   const [file, setFile] = useState(null);
   const [parsedData, setParsedData] = useState([]);
   const [selectedType, setSelectedType] = useState('custom');
+  const [scope, setScope] = useState(ASSET_SCOPE.PERSONAL);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState({ success: 0, failed: 0, errors: [] });
@@ -59,6 +62,7 @@ const CSVImportModal = ({ show, onHide, userEmail, onImportComplete }) => {
         const asset = {
           ...parsedData[i],
           userEmail,
+          scope,
           id: Date.now() + i
         };
         
@@ -84,6 +88,7 @@ const CSVImportModal = ({ show, onHide, userEmail, onImportComplete }) => {
     setFile(null);
     setParsedData([]);
     setSelectedType('custom');
+    setScope(ASSET_SCOPE.PERSONAL);
     setProgress(0);
     setResults({ success: 0, failed: 0, errors: [] });
   };
@@ -143,6 +148,8 @@ const CSVImportModal = ({ show, onHide, userEmail, onImportComplete }) => {
                 ))}
               </Form.Select>
             </Form.Group>
+
+            <AssetScopeSelect value={scope} onChange={setScope} name="import-scope" id="import-scope" />
 
             <div className="preview-table-container mb-3">
               <h6>Preview</h6>

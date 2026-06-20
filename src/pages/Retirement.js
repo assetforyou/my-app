@@ -5,9 +5,12 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
-function Retirement({ userEmail, retirementList, setRetirementList, retirementTotal, setRetirementTotal, fetchRetirementDetails }) {
+function Retirement({ userEmail, retirementList, setRetirementList, retirementTotal, setRetirementTotal, fetchRetirementDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [retirementDetails, setRetirementDetails] = useState({
     accountName: '',
     accountType: '',
@@ -44,6 +47,7 @@ function Retirement({ userEmail, retirementList, setRetirementList, retirementTo
       const newRetirement = {
         ...retirementDetails,
         userEmail,
+        scope,
         id: Date.now()
       };
 
@@ -212,6 +216,7 @@ function Retirement({ userEmail, retirementList, setRetirementList, retirementTo
           <h1>Retirement Accounts</h1>
           <p>Track 401k, IRA, RRSP, pensions and retirement savings</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -235,6 +240,9 @@ function Retirement({ userEmail, retirementList, setRetirementList, retirementTo
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {Object.entries(retirementDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
                       {renderFormControl(key, value)}

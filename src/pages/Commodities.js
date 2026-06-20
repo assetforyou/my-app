@@ -5,11 +5,14 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
 const ALPHA_VANTAGE_API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY || '';
 
-function Commodities({ userEmail, commodityList, setCommodityList, commodityTotal, fetchCommodityDetails }) {
+function Commodities({ userEmail, commodityList, setCommodityList, commodityTotal, fetchCommodityDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [commodityDetails, setCommodityDetails] = useState({
     type: '',
     quantity: '',
@@ -121,6 +124,7 @@ function Commodities({ userEmail, commodityList, setCommodityList, commodityTota
       const newCommodity = {
         ...commodityDetails,
         userEmail,
+        scope,
         id: Date.now()
       };
 
@@ -246,6 +250,7 @@ function Commodities({ userEmail, commodityList, setCommodityList, commodityTota
           <h1>Commodities</h1>
           <p>Track oil, natural gas, wheat, corn, agriculture and other commodities</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -269,6 +274,9 @@ function Commodities({ userEmail, commodityList, setCommodityList, commodityTota
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   <div className="col-12">
                     <Form.Select
                       value={commodityDetails.type}

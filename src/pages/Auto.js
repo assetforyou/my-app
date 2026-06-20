@@ -6,9 +6,12 @@ import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import AutoDepreciation from '../components/AutoDepreciation';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
-function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
+function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [carDetails, setCarDetails] = useState({
     make: '',
     mileage: '',
@@ -61,6 +64,7 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
       const newCar = {
         ...carDetails,
         userEmail, // Ensure userEmail is included
+        scope,
         value: carValue,
         purchaseDate: carDetails.purchaseDate || new Date().toISOString().split('T')[0],
         id: Date.now() // Generate a unique ID as a number
@@ -223,6 +227,7 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
           <h1>Vehicle Assets</h1>
           <p>Track your automobiles, fleet, and vehicle portfolio</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-3 g-lg-4 align-items-start">
           {/* Form Column */}
@@ -246,6 +251,9 @@ function Auto({ userEmail, carList, setCarList, autoTotal, setAutoTotal }) {
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {Object.entries(carDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
                       {renderFormControl(key, value)}

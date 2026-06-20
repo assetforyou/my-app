@@ -121,6 +121,7 @@ const FirestoreAssetService = {
       ...rest,
       id: newRef.id,
       userEmail,
+      scope: asset.scope === 'business' ? 'business' : 'personal',
     };
     await setDoc(newRef, payload);
     return payload;

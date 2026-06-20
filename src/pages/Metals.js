@@ -6,11 +6,14 @@ import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import MetalsGrowthChart from '../components/MetalsGrowth';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
 const ALPHA_VANTAGE_API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY || '';
 
-function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal, fetchMetalDetails }) {
+function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal, fetchMetalDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [metalDetails, setMetalDetails] = useState({
     type: '',
     grams: '',
@@ -109,6 +112,7 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal,
       const newMetal = {
         ...metalDetails,
         userEmail,
+        scope,
         id: Date.now() // Generate a unique ID as a number
       };
 
@@ -233,6 +237,7 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal,
           <h1>Precious Metals Assets</h1>
           <p>Track gold, silver, platinum and precious metal investments</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -256,6 +261,9 @@ function Metals({ userEmail, metalList, setMetalList, metalTotal, setMetalTotal,
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   <div className="col-12">
                     <Form.Select
                       value={metalDetails.type}

@@ -5,9 +5,12 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
-function PrivateEquity({ userEmail, privateEquityList, setPrivateEquityList, privateEquityTotal, fetchPrivateEquityDetails }) {
+function PrivateEquity({ userEmail, privateEquityList, setPrivateEquityList, privateEquityTotal, fetchPrivateEquityDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [equityDetails, setEquityDetails] = useState({
     businessName: '',
     industry: '',
@@ -46,6 +49,7 @@ function PrivateEquity({ userEmail, privateEquityList, setPrivateEquityList, pri
       const newEquity = {
         ...equityDetails,
         userEmail,
+        scope,
         id: Date.now()
       };
 
@@ -259,6 +263,7 @@ function PrivateEquity({ userEmail, privateEquityList, setPrivateEquityList, pri
           <h1>Private Business Equity</h1>
           <p>Track private business investments, partnerships and ownership stakes</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -282,6 +287,9 @@ function PrivateEquity({ userEmail, privateEquityList, setPrivateEquityList, pri
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {Object.entries(equityDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
                       {renderFormControl(key, value)}

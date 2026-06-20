@@ -7,11 +7,14 @@ import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import CryptoProjection from '../components/CryptoProjection';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
-function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTotal, fetchCryptoDetails }) {
+function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTotal, fetchCryptoDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [cryptoDetails, setCryptoDetails] = useState({
     name: '',
     symbol: '',
@@ -68,6 +71,7 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTo
       const newCrypto = {
         ...cryptoDetails,
         userEmail,
+        scope,
         value: livePrice,
         total: totalValue,
         id: Date.now() // Generate a unique ID as a number
@@ -221,6 +225,7 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTo
           <h1>Cryptocurrency Assets</h1>
           <p>Track your digital currency holdings and investments</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -244,6 +249,9 @@ function Crypto({ userEmail, cryptoList, setCryptoList, cryptoTotal, setCryptoTo
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {/* Crypto Search */}
                   <div className="col-12">
                     <Form.Control

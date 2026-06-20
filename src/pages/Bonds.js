@@ -5,9 +5,12 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
-function Bonds({ userEmail, bondList, setBondList, bondTotal, setBondTotal, fetchBondDetails }) {
+function Bonds({ userEmail, bondList, setBondList, bondTotal, setBondTotal, fetchBondDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [bondDetails, setBondDetails] = useState({
     issuer: '',
     bondType: '',
@@ -74,6 +77,7 @@ function Bonds({ userEmail, bondList, setBondList, bondTotal, setBondTotal, fetc
       const newBond = {
         ...bondDetails,
         userEmail,
+        scope,
         id: Date.now()
       };
 
@@ -258,6 +262,7 @@ function Bonds({ userEmail, bondList, setBondList, bondTotal, setBondTotal, fetc
           <h1>Bonds & Fixed Income</h1>
           <p>Track bonds, CDs, treasuries and fixed income investments</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -281,6 +286,9 @@ function Bonds({ userEmail, bondList, setBondList, bondTotal, setBondTotal, fetc
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {Object.entries(bondDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
                       {renderFormControl(key, value)}

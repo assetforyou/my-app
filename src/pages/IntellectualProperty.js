@@ -5,9 +5,12 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
-function IntellectualProperty({ userEmail, intellectualPropertyList, setIntellectualPropertyList, intellectualPropertyTotal, fetchIntellectualPropertyDetails }) {
+function IntellectualProperty({ userEmail, intellectualPropertyList, setIntellectualPropertyList, intellectualPropertyTotal, fetchIntellectualPropertyDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [ipDetails, setIpDetails] = useState({
     name: '',
     type: '',
@@ -45,6 +48,7 @@ function IntellectualProperty({ userEmail, intellectualPropertyList, setIntellec
       const newIp = {
         ...ipDetails,
         userEmail,
+        scope,
         id: Date.now()
       };
 
@@ -243,6 +247,7 @@ function IntellectualProperty({ userEmail, intellectualPropertyList, setIntellec
           <h1>Intellectual Property / Royalties</h1>
           <p>Track patents, trademarks, copyrights, royalties and intellectual property assets</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -266,6 +271,9 @@ function IntellectualProperty({ userEmail, intellectualPropertyList, setIntellec
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {Object.entries(ipDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
                       {renderFormControl(key, value)}

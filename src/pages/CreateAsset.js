@@ -4,9 +4,12 @@ import { Trash2, Upload, Download, MoreVertical, Plus, Sparkles } from 'lucide-r
 import * as XLSX from 'xlsx';
 import { Card, Form, Button, Table, Dropdown } from 'react-bootstrap';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
-function CreateAsset({ userEmail, onAssetCreated }) {
+function CreateAsset({ userEmail, onAssetCreated, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [assetDetails, setAssetDetails] = useState({
     name: '',
     fields: [{ name: '', type: 'text' }],
@@ -59,6 +62,7 @@ function CreateAsset({ userEmail, onAssetCreated }) {
       const assetData = {
         ...assetDetails,
         userEmail,
+        scope,
         id: Date.now().toString(), // Generate a unique ID for the asset
         totalValue: 0,
         createdAt: new Date().toISOString()
@@ -125,6 +129,7 @@ function CreateAsset({ userEmail, onAssetCreated }) {
           <h1>Create Custom Asset</h1>
           <p>Define your own asset type with custom fields to track exactly what matters</p>
         </div>
+        {scopeFilterBanner}
 
         <Card className="mb-4 mx-auto" style={{ maxWidth: 720 }}>
           <Card.Header className="d-flex justify-content-between align-items-center">
@@ -145,6 +150,7 @@ function CreateAsset({ userEmail, onAssetCreated }) {
           </Card.Header>
           <Card.Body>
             <Form>
+              <AssetScopeSelect value={scope} onChange={setScope} />
               <Form.Group className="mb-3">
                 <Form.Control
                   type="text"

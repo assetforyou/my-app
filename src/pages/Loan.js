@@ -6,9 +6,12 @@ import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import LoanGrowthChart from '../components/LoanGrowth';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
-function Loan({ userEmail, loanList, setLoanList, loanTotal, setLoanTotal, fetchLoanDetails }) {
+function Loan({ userEmail, loanList, setLoanList, loanTotal, setLoanTotal, fetchLoanDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [loanDetails, setLoanDetails] = useState({
     type: '',
     loanValue: '',
@@ -59,6 +62,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, setLoanTotal, fetch
       const newLoan = {
         ...loanDetails,
         userEmail,
+        scope,
         loanValue: loanValueInSelectedCurrency, // Ensure this is a valid number
         repaymentPerMonth: repaymentPerMonth, // Ensure this is a valid number
         id: Date.now() // Generate a unique ID as a number
@@ -236,6 +240,7 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, setLoanTotal, fetch
           <h1>Loan & Liabilities</h1>
           <p>Track loans, mortgages, and outstanding debt obligations</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -259,6 +264,9 @@ function Loan({ userEmail, loanList, setLoanList, loanTotal, setLoanTotal, fetch
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {Object.entries(loanDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
                       {renderFormControl(key, value)}

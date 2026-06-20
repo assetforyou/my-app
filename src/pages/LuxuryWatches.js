@@ -5,9 +5,12 @@ import * as XLSX from 'xlsx';
 import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import '../style/AssetPages.css';
 
-function LuxuryWatches({ userEmail, luxuryWatchesList, setLuxuryWatchesList, luxuryWatchesTotal, fetchLuxuryWatchesDetails }) {
+function LuxuryWatches({ userEmail, luxuryWatchesList, setLuxuryWatchesList, luxuryWatchesTotal, fetchLuxuryWatchesDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [watchDetails, setWatchDetails] = useState({
     brand: '',
     model: '',
@@ -50,6 +53,7 @@ function LuxuryWatches({ userEmail, luxuryWatchesList, setLuxuryWatchesList, lux
       const newWatch = {
         ...watchDetails,
         userEmail,
+        scope,
         id: Date.now()
       };
 
@@ -251,6 +255,7 @@ function LuxuryWatches({ userEmail, luxuryWatchesList, setLuxuryWatchesList, lux
           <h1>Watches & Luxury Goods</h1>
           <p>Track luxury watches, jewelry, handbags and high value accessories</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -274,6 +279,9 @@ function LuxuryWatches({ userEmail, luxuryWatchesList, setLuxuryWatchesList, lux
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   {Object.entries(watchDetails).map(([key, value]) => (
                     <div className="col-12" key={key}>
                       {renderFormControl(key, value)}

@@ -6,10 +6,13 @@ import { Card, Form, Button, Dropdown } from 'react-bootstrap';
 import ResponsiveTable from '../components/ResponsiveTable';
 import PropertyGrowthChart from '../components/PropertyGrowth';
 import FirestoreAssetService from '../firestoreAssetService';
+import AssetScopeSelect from '../components/AssetScopeSelect';
+import { useAssetScope } from '../utils/useAssetScope';
 import { useToast } from '../components/Toast';
 import '../style/AssetPages.css';
 
-function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, setPropertyTotalPrice, propertyTotalMonthlyCost, setPropertyTotalMonthlyCost, fetchPropertyDetails }) {
+function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice, setPropertyTotalPrice, propertyTotalMonthlyCost, setPropertyTotalMonthlyCost, fetchPropertyDetails, assetFilter = 'all', scopeFilterBanner }) {
+  const [scope, setScope] = useAssetScope(assetFilter);
   const [propertyDetails, setPropertyDetails] = useState({
     address: '',
     bedrooms: '',
@@ -99,6 +102,7 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
       const newProperty = {
         ...propertyDetails,
         userEmail,
+        scope,
         price,
         mortgagePayment,
         utilities,
@@ -250,6 +254,7 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
           <h1>Property Assets</h1>
           <p>Track your real estate portfolio with complete details</p>
         </div>
+        {scopeFilterBanner}
 
         <div className="row g-4">
           {/* Form Column */}
@@ -273,6 +278,9 @@ function Property({ userEmail, propertyList, setPropertyList, propertyTotalPrice
               </Card.Header>
               <Card.Body>
                 <Form className="row g-3">
+                  <div className="col-12">
+                    <AssetScopeSelect value={scope} onChange={setScope} />
+                  </div>
                   <div className="col-12">
                     <Form.Control
                       type="text"
