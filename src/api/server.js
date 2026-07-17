@@ -54,6 +54,46 @@ app.post('/api/send-email', async (req, res) => {
   }
 });
 
+/**
+ * Batch import endpoint (optional). This endpoint is a secure stub: to enable
+ * server-side imports you must set `IMPORT_ADMIN_SECRET` and provide a
+ * `FIREBASE_SERVICE_ACCOUNT` (JSON string or path) so the server can initialize
+ * the Firebase Admin SDK. Without these env vars the endpoint returns 501.
+ *
+ * Expected body: { adminSecret: string, collection: string, items: [ ... ] }
+ */
+app.post('/api/import-batch', async (req, res) => {
+  const { adminSecret, collection: colName, items } = req.body || {};
+  if (!process.env.IMPORT_ADMIN_SECRET || !process.env.FIREBASE_SERVICE_ACCOUNT) {
+    return res.status(501).json({ message: 'Server-side import not configured. Set IMPORT_ADMIN_SECRET and FIREBASE_SERVICE_ACCOUNT.' });
+  }
+  if (adminSecret !== process.env.IMPORT_ADMIN_SECRET) {
+    return res.status(403).json({ message: 'Unauthorized' });
+  }
+
+  // Lazy-load firebase-admin to avoid requiring it in the client dev flow
+  try {
+    // eslint-disable-next-line global-require
+    const admin = require('firebase-admin');
+    if (!admin.apps.length) {
+      const svc = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      admin.initializeApp({ credential: admin.credential.cert(svc) });
+    }
+    const dbAdmin = admin.firestore();
+    const colRef = dbAdmin.collection(colName || 'customAssets');
+    const results = [];
+    for (const item of items || []) {
+      const docRef = colRef.doc();
+      await docRef.set({ ...item, id: docRef.id });
+      results.push({ ok: true });
+    }
+    return res.json({ ok: true, imported: results.length });
+  } catch (err) {
+    console.error('import-batch error', err);
+    return res.status(500).json({ message: 'Import failed', error: String(err) });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Mail API listening on http://localhost:${PORT}`);
 });

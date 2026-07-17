@@ -47,7 +47,7 @@ function AppContent() {
       <KeyboardShortcuts />
       
       {/* AI Chat Bot Assistant */}
-      {!isAuthPage && <AssetChatBot />}
+        {!isAuthPage && <AssetChatBot />}
       
       <Routes>
         <Route path="/" element={<HomePage />} />

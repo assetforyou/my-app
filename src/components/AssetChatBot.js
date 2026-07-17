@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Send, X, Sparkles, ChevronDown, Check, Loader2, PlusCircle, TrendingUp } from 'lucide-react';
+import { Bot, Send, X, Sparkles, ChevronDown, Check, Loader2, PlusCircle, TrendingUp, MessageCircle } from 'lucide-react';
+import { useToast } from './Toast';
+import { trackEvent } from '../utils/analytics';
+import '../style/FeedbackWidget.css';
 import { useAssets } from '../context/AssetContext';
 import AssetScopeSelect from './AssetScopeSelect';
 import { ASSET_SCOPE } from '../utils/assetScope';
@@ -167,6 +170,7 @@ const AssetChatBot = () => {
   const [pendingScope, setPendingScope] = useState(ASSET_SCOPE.PERSONAL);
   const messagesEndRef = useRef(null);
   const { addAsset } = useAssets();
+  const { success, error: showError } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -254,6 +258,45 @@ const AssetChatBot = () => {
     }
   };
 
+  // Feedback integration
+  const [mode, setMode] = useState('chat'); // 'chat' or 'feedback'
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackSending, setFeedbackSending] = useState(false);
+
+  const openFeedback = () => {
+    trackEvent('open_feedback_from_chat');
+    setMode('feedback');
+    setFeedbackOpen(true);
+  };
+
+  const submitFeedback = async () => {
+    if (!feedbackMessage.trim()) {
+      showError('Please enter feedback before submitting.');
+      return;
+    }
+    setFeedbackSending(true);
+    trackEvent('feedback_submit_attempt');
+    try {
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName: 'App user', email: 'noreply@vaultknight.local', inquiryType: 'Feedback', message: feedbackMessage }),
+      });
+      success('Thanks — your feedback was sent.');
+      trackEvent('feedback_submitted');
+      setFeedbackMessage('');
+      setFeedbackOpen(false);
+      setMode('chat');
+    } catch (err) {
+      console.error('Feedback send error', err);
+      showError('Failed to send feedback. Try again later.');
+      trackEvent('feedback_submit_failed', { error: String(err) });
+    } finally {
+      setFeedbackSending(false);
+    }
+  };
+
   const handleSuggestion = (suggestion) => {
     setInput(suggestion);
   };
@@ -292,14 +335,19 @@ const AssetChatBot = () => {
                   <span>AI-powered asset entry</span>
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} className="close-btn">
-                <X size={18} />
-              </button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button onClick={openFeedback} className="feedback-btn" title="Send feedback">
+                  <MessageCircle size={18} />
+                </button>
+                <button onClick={() => setIsOpen(false)} className="close-btn">
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
             <div className="chatbot-messages">
-              {messages.length === 0 && (
+              {messages.length === 0 && mode === 'chat' && (
                 <motion.div 
                   className="welcome-message"
                   initial={{ opacity: 0 }}
@@ -323,7 +371,7 @@ const AssetChatBot = () => {
                 </motion.div>
               )}
 
-              {messages.map((msg, idx) => (
+              {mode === 'chat' && messages.map((msg, idx) => (
                 <motion.div
                   key={idx}
                   className={`message ${msg.role}`}
@@ -385,6 +433,28 @@ const AssetChatBot = () => {
                     <span></span>
                     <span></span>
                     <span></span>
+                  </div>
+                </div>
+              )}
+
+              {/* Feedback UI */}
+              {mode === 'feedback' && (
+                <div className="vk-feedback-modal chatbot-feedback" role="dialog" aria-label="Feedback form" style={{ padding: 16 }}>
+                  <h5>Send feedback</h5>
+                  <textarea
+                    aria-label="Feedback message"
+                    value={feedbackMessage}
+                    onChange={(e) => setFeedbackMessage(e.target.value)}
+                    placeholder="Share a bug, idea, or what you like..."
+                    style={{ width: '100%', minHeight: 160, marginTop: 8 }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+                    <button type="button" className="vk-feedback-cancel" onClick={() => { setMode('chat'); setFeedbackOpen(false); }}>
+                      Cancel
+                    </button>
+                    <button type="button" className="vk-feedback-send" onClick={submitFeedback} disabled={feedbackSending}>
+                      {feedbackSending ? 'Sending…' : 'Send feedback'}
+                    </button>
                   </div>
                 </div>
               )}

@@ -1,0 +1,35 @@
+.vk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--vk-radius-sm);
+  border: 1px solid var(--vk-border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  color: var(--vk-text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms var(--vk-ease-out), box-shadow 120ms var(--vk-ease-out);
+}
+
+.vk-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.vk-btn--primary {
+  background: linear-gradient(180deg, #2563eb, #1e40af);
+  color: white;
+  border: none;
+  box-shadow: var(--vk-shadow-sm);
+}
+
+.vk-btn--ghost {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--vk-text);
+}
+
+.vk-btn:active {
+  transform: translateY(1px);
+}

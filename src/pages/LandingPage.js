@@ -28,6 +28,7 @@ import logo_transparent from '../images/logo_transparent.png';
 import AnalyticsDashboard from '../pages/AnalyticsDashboard';
 import FirestoreAssetService from '../firestoreAssetService';
 import OnboardingModal from '../components/OnboardingModal';
+import CSVImportModal from '../components/CSVImportModal';
 import EmptyState, { PORTFOLIO_EMPTY_ACTIONS } from '../components/EmptyState';
 import MobileNav from '../components/MobileNav';
 import PortfolioLoading from '../components/PortfolioLoading';
@@ -78,6 +79,7 @@ function LandingPage() {
   const [isPortfolioLoading, setIsPortfolioLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState({});
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -565,7 +567,7 @@ function LandingPage() {
 
   const emptyActions = PORTFOLIO_EMPTY_ACTIONS({
     onAddAsset: () => setSelectedAsset('cash'),
-    onImport: () => setSelectedAsset('createAsset'),
+    onImport: () => setShowImportModal(true),
     onChat: handleOpenChat,
   });
 
@@ -1107,6 +1109,19 @@ function LandingPage() {
           onAddAsset={() => {
             setShowOnboarding(false);
             setSelectedAsset('cash');
+          }}
+        />
+      )}
+
+      {showImportModal && (
+        <CSVImportModal
+          show={showImportModal}
+          onHide={() => setShowImportModal(false)}
+          userEmail={userEmail}
+          onImportComplete={() => {
+            setShowImportModal(false);
+            fetchAllAssetDetails(userEmail);
+            setSelectedAsset('dashboard');
           }}
         />
       )}

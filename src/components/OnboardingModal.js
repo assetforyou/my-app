@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Wallet, Target, BarChart3, ChevronRight, ChevronLeft } from 'lucide-react';
 import '../style/OnboardingModal.css';
+import { trackEvent } from '../utils/analytics';
 
 const STEPS = [
   {
@@ -25,21 +26,43 @@ const OnboardingModal = ({ onComplete, onAddAsset }) => {
   const current = STEPS[step];
   const Icon = current.icon;
   const isLast = step === STEPS.length - 1;
+  const closeBtnRef = useRef(null);
+  const primaryBtnRef = useRef(null);
+
+  useEffect(() => {
+    // focus the primary action when modal opens
+    if (primaryBtnRef.current) primaryBtnRef.current.focus();
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        handleFinish();
+      } else if (e.key === 'ArrowRight') {
+        if (!isLast) setStep((s) => Math.min(s + 1, STEPS.length - 1));
+      } else if (e.key === 'ArrowLeft') {
+        if (step > 0) setStep((s) => Math.max(s - 1, 0));
+      }
+    };
+
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isLast, step]);
 
   const handleFinish = () => {
     localStorage.setItem('vk_onboarding_complete', 'true');
+    trackEvent('onboarding_complete', { step });
     onComplete?.();
   };
 
   const handleAddAndFinish = () => {
     handleFinish();
+    trackEvent('onboarding_add_asset', { step });
     onAddAsset?.();
   };
 
   return (
     <div className="vk-onboarding-overlay" role="dialog" aria-modal="true" aria-labelledby="vk-onboarding-title">
       <div className="vk-onboarding-modal">
-        <button type="button" className="vk-onboarding-close" onClick={handleFinish} aria-label="Skip onboarding">
+        <button ref={closeBtnRef} type="button" className="vk-onboarding-close" onClick={handleFinish} aria-label="Skip onboarding">
           <X size={20} />
         </button>
 
@@ -64,7 +87,7 @@ const OnboardingModal = ({ onComplete, onAddAsset }) => {
             </button>
           )}
           {!isLast ? (
-            <button type="button" className="vk-onboarding-btn vk-onboarding-btn--primary" onClick={() => setStep(step + 1)}>
+            <button ref={primaryBtnRef} type="button" className="vk-onboarding-btn vk-onboarding-btn--primary" onClick={() => setStep(step + 1)}>
               Next
               <ChevronRight size={18} />
             </button>
@@ -73,7 +96,7 @@ const OnboardingModal = ({ onComplete, onAddAsset }) => {
               <button type="button" className="vk-onboarding-btn vk-onboarding-btn--ghost" onClick={handleFinish}>
                 Explore dashboard
               </button>
-              <button type="button" className="vk-onboarding-btn vk-onboarding-btn--primary" onClick={handleAddAndFinish}>
+              <button ref={primaryBtnRef} type="button" className="vk-onboarding-btn vk-onboarding-btn--primary" onClick={handleAddAndFinish}>
                 Add first asset
                 <ChevronRight size={18} />
               </button>
