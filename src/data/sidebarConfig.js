@@ -6,6 +6,19 @@ export const SIDEBAR_PRIMARY = [
 
 export const SIDEBAR_ASSET_GROUPS = [
   {
+    label: 'Financial Wellness',
+    items: [
+      { id: 'financialHealth', label: 'Health Score' },
+      { id: 'expenses', label: 'Expenses & Cash Flow' },
+      { id: 'alerts', label: 'Alerts & Insights' },
+      { id: 'goals', label: 'Goals' },
+      { id: 'investments', label: 'Investment Advice' },
+      { id: 'debtPayoff', label: 'Debt Payoff' },
+      { id: 'bills', label: 'Bills & Subscriptions' },
+      { id: 'tax', label: 'Tax Report' },
+    ],
+  },
+  {
     label: 'Investments',
     items: [
       { id: 'stocks', label: 'Stocks' },

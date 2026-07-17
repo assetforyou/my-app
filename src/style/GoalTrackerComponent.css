@@ -1,0 +1,127 @@
+.goal-tracker {
+  padding: 2rem 0;
+}
+
+.goals-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.summary-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+  border: 1px solid #e9ecef;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.summary-card h6 {
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.summary-card h3 {
+  font-weight: 700;
+  color: #212529;
+}
+
+.goals-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.goal-card {
+  border: 1px solid #e9ecef;
+  background: #fff;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.goal-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+}
+
+.goal-card h5 {
+  font-weight: 600;
+  color: #212529;
+}
+
+.goal-card .badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.375rem 0.75rem;
+}
+
+.progress-section {
+  border-radius: 0.375rem;
+  padding: 0.75rem 0;
+}
+
+.goal-progress {
+  height: 24px;
+  border-radius: 0.25rem;
+  background: #e9ecef;
+}
+
+.goal-progress .progress-bar {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.deadline-info {
+  background: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  border-left: 3px solid #0dcaf0;
+}
+
+.deadline-info .badge {
+  font-size: 0.7rem;
+}
+
+.required-monthly {
+  border-left: 3px solid #0d6efd;
+}
+
+.required-monthly h6 {
+  font-weight: 600;
+}
+
+.input-group-sm {
+  gap: 0.5rem;
+}
+
+.input-group-sm .form-control {
+  border-radius: 0.25rem;
+}
+
+.input-group-sm .btn {
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .goal-tracker {
+    padding: 1rem 0;
+  }
+
+  .goals-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .goals-list {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card h3 {
+    font-size: 1.5rem;
+  }
+}

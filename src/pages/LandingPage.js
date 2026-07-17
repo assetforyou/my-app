@@ -34,6 +34,14 @@ import MobileNav from '../components/MobileNav';
 import PortfolioLoading from '../components/PortfolioLoading';
 import '../style/MobileNav.css';
 import { SIDEBAR_PRIMARY, SIDEBAR_ASSET_GROUPS } from '../data/sidebarConfig';
+import FinancialHealthDashboard from '../components/FinancialHealthDashboard';
+import ExpenseTracker from '../components/ExpenseTracker';
+import AlertsPanel from '../components/AlertsPanel';
+import TaxReport from '../components/TaxReport';
+import DebtPayoffScenario from '../components/DebtPayoffScenario';
+import BillTracker from '../components/BillTracker';
+import InvestmentRecommendationsComponent from '../components/InvestmentRecommendationsComponent';
+import GoalTrackerComponent from '../components/GoalTrackerComponent';
 import { calculatePortfolioTotals, countTotalAssets, formatCurrency } from '../utils/portfolioUtils';
 import { filterByScope, scopeLabel, SCOPE_FILTER } from '../utils/assetScope';
 import { buildPortfolioSearchItems } from '../utils/portfolioSearch';
@@ -812,6 +820,90 @@ function LandingPage() {
               customAssets={scopedCustomAssets}
               onNavigate={handleNavigate}
             />
+          </Layout>
+        );
+      case 'financialHealth':
+        return (
+          <Layout>
+            {scopeFilterBanner}
+            <FinancialHealthDashboard
+              portfolio={[
+                ...scopedStockList,
+                ...scopedCryptoList,
+                ...scopedBondList,
+                ...scopedCashList,
+                ...scopedSavingsList,
+              ]}
+              monthlyIncome={0}
+              monthlyExpenses={0}
+              userEmail={userEmail}
+            />
+          </Layout>
+        );
+      case 'expenses':
+        return (
+          <Layout>
+            {scopeFilterBanner}
+            <ExpenseTracker userEmail={userEmail} />
+          </Layout>
+        );
+      case 'alerts':
+        return (
+          <Layout>
+            {scopeFilterBanner}
+            <AlertsPanel
+              userEmail={userEmail}
+              portfolio={[
+                ...scopedStockList,
+                ...scopedCryptoList,
+                ...scopedBondList,
+                ...scopedCashList,
+                ...scopedPropertyList,
+              ]}
+              monthlyIncome={0}
+              monthlyExpenses={0}
+            />
+          </Layout>
+        );
+      case 'tax':
+        return (
+          <Layout>
+            {scopeFilterBanner}
+            <TaxReport portfolio={[
+              ...scopedStockList,
+              ...scopedCryptoList,
+              ...scopedBondList,
+              ...scopedCashList,
+              ...scopedPropertyList,
+            ]} />
+          </Layout>
+        );
+      case 'debtPayoff':
+        return (
+          <Layout>
+            {scopeFilterBanner}
+            <DebtPayoffScenario />
+          </Layout>
+        );
+      case 'bills':
+        return (
+          <Layout>
+            {scopeFilterBanner}
+            <BillTracker userEmail={userEmail} />
+          </Layout>
+        );
+      case 'investments':
+        return (
+          <Layout>
+            {scopeFilterBanner}
+            <InvestmentRecommendationsComponent />
+          </Layout>
+        );
+      case 'goals':
+        return (
+          <Layout>
+            {scopeFilterBanner}
+            <GoalTrackerComponent userEmail={userEmail} />
           </Layout>
         );
       case 'home':
