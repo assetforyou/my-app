@@ -225,7 +225,42 @@ service cloud.firestore {
         && (request.resource.data.value == null || isValidNumber(request.resource.data.value));
       allow delete: if isOwnerEmail(resource.data.userEmail);
     }
-    
+
+    // ==================== EXPENSES ====================
+    function isValidExpense() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['name', 'amount', 'category', 'date'])
+        && isNonEmptyString(request.resource.data.name)
+        && request.resource.data.name.size() <= 200
+        && isValidNumber(request.resource.data.amount)
+        && isNonEmptyString(request.resource.data.category)
+        && isNonEmptyString(request.resource.data.date);
+    }
+
+    match /expenses/{docId} {
+      allow read: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidExpense();
+      allow update: if isOwnerEmail(resource.data.userEmail);
+      allow delete: if isOwnerEmail(resource.data.userEmail);
+    }
+
+    // ==================== INCOME ====================
+    function isValidIncome() {
+      return createsWithOwnEmail()
+        && request.resource.data.keys().hasAll(['name', 'amount', 'date'])
+        && isNonEmptyString(request.resource.data.name)
+        && request.resource.data.name.size() <= 200
+        && isValidNumber(request.resource.data.amount)
+        && isNonEmptyString(request.resource.data.date);
+    }
+
+    match /income/{docId} {
+      allow read: if isOwnerEmail(resource.data.userEmail);
+      allow create: if isValidIncome();
+      allow update: if isOwnerEmail(resource.data.userEmail);
+      allow delete: if isOwnerEmail(resource.data.userEmail);
+    }
+
     // ==================== USERS ====================
     function isValidUserProfile() {
       return isSignedIn()

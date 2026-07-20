@@ -19,10 +19,13 @@ function AlertsPanel({ userEmail, portfolio, monthlyIncome, monthlyExpenses }) {
 
   useEffect(() => {
     fetchAlerts();
+  }, [userEmail]);
+
+  useEffect(() => {
     // Regenerate alerts periodically
     const timer = setInterval(() => generateAlerts(), 3600000); // hourly
     return () => clearInterval(timer);
-  }, [userEmail, portfolio, monthlyIncome, monthlyExpenses]);
+  }, [userEmail, portfolio?.length, monthlyIncome, monthlyExpenses]);
 
   const fetchAlerts = async () => {
     if (!userEmail) {
@@ -99,7 +102,7 @@ function AlertsPanel({ userEmail, portfolio, monthlyIncome, monthlyExpenses }) {
     return 'info';
   };
 
-  if (loading) return <p>Loading alerts...</p>;
+
 
   return (
     <div className="alerts-panel">
@@ -116,16 +119,22 @@ function AlertsPanel({ userEmail, portfolio, monthlyIncome, monthlyExpenses }) {
           size="sm"
           onClick={() => setShowAddModal(true)}
           className="d-flex align-items-center gap-2"
+          disabled={loading}
         >
           <Plus size={16} /> Add Alert
         </Button>
 
-        <Button variant="outline-secondary" size="sm" onClick={generateAlerts}>
-          Refresh Alerts
+        <Button variant="outline-secondary" size="sm" onClick={generateAlerts} disabled={loading}>
+          {loading ? 'Refreshing...' : 'Refresh Alerts'}
         </Button>
       </div>
 
-      {alerts.length === 0 ? (
+      {loading && alerts.length === 0 ? (
+        <div className="text-center p-4 text-muted">
+          <div className="spinner-border spinner-border-sm text-primary me-2" role="status" />
+          Loading alerts...
+        </div>
+      ) : alerts.length === 0 ? (
         <Card className="text-center text-muted p-4">
           <CheckCircle size={32} className="mb-2 text-success mx-auto" />
           <p>No active alerts — great job! 🎉</p>
@@ -213,11 +222,11 @@ function AlertsPanel({ userEmail, portfolio, monthlyIncome, monthlyExpenses }) {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+          <Button variant="secondary" onClick={() => setShowAddModal(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleAddAlert}>
-            Save Alert
+          <Button variant="primary" onClick={handleAddAlert} disabled={loading}>
+            {loading ? 'Saving...' : 'Save Alert'}
           </Button>
         </Modal.Footer>
       </Modal>

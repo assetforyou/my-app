@@ -41,23 +41,30 @@ function ExpenseTracker({ userEmail }) {
 
     if (isSaving) return;
 
+    if (!userEmail) {
+      console.error('[ExpenseTracker] User not authenticated');
+      showError('User not authenticated');
+      return;
+    }
+    if (!formData.name || !formData.amount) {
+      console.error('[ExpenseTracker] Validation failed', { name: formData.name, amount: formData.amount });
+      showError('Please fill in all fields');
+      return;
+    }
+
+    const parsedAmount = parseFloat(formData.amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      console.error('[ExpenseTracker] Invalid amount', { amount: formData.amount });
+      showError('Please enter a valid amount greater than 0');
+      return;
+    }
+
     setIsSaving(true);
     try {
-      if (!userEmail) {
-        console.error('[ExpenseTracker] User not authenticated');
-        showError('User not authenticated');
-        return;
-      }
-      if (!formData.name || !formData.amount) {
-        console.error('[ExpenseTracker] Validation failed', { name: formData.name, amount: formData.amount });
-        showError('Please fill in all fields');
-        return;
-      }
-
       if (modalMode === 'expense') {
         const exp = await ExpenseService.addExpense({
           name: formData.name,
-          amount: parseFloat(formData.amount),
+          amount: parsedAmount,
           category: formData.category || 'Other',
           date: formData.date,
           userEmail,
@@ -68,7 +75,7 @@ function ExpenseTracker({ userEmail }) {
       } else {
         const inc = await ExpenseService.addIncome({
           name: formData.name,
-          amount: parseFloat(formData.amount),
+          amount: parsedAmount,
           date: formData.date,
           userEmail,
         });
@@ -142,6 +149,7 @@ function ExpenseTracker({ userEmail }) {
         <Button
           variant="outline-success"
           onClick={() => {
+            setFormData({ name: '', amount: '', category: '', date: new Date().toISOString().split('T')[0] });
             setModalMode('income');
             setShowModal(true);
           }}
@@ -151,6 +159,7 @@ function ExpenseTracker({ userEmail }) {
         <Button
           variant="outline-danger"
           onClick={() => {
+            setFormData({ name: '', amount: '', category: '', date: new Date().toISOString().split('T')[0] });
             setModalMode('expense');
             setShowModal(true);
           }}
@@ -227,7 +236,7 @@ function ExpenseTracker({ userEmail }) {
           <Modal.Title>{modalMode === 'expense' ? 'Add Expense' : 'Add Income'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
+          <Form onSubmit={(e) => { e.preventDefault(); handleAddEntry(); }}>
             <Form.Group className="mb-3">
               <Form.Label>Description</Form.Label>
               <Form.Control
