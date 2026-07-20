@@ -6,16 +6,21 @@ const BillTrackerService = {
   // Add recurring bill/subscription
   addBill: async (bill) => {
     const user = auth.currentUser;
-    if (!user?.email) throw new Error('User not authenticated');
+    const userEmail = bill?.userEmail || user?.email;
+    if (!userEmail) throw new Error('User not authenticated');
+
     const colRef = collection(db, 'bills');
     const newRef = doc(colRef);
+
     const payload = {
       ...bill,
       id: newRef.id,
-      userEmail: user.email,
+      userEmail,
       createdAt: new Date().toISOString(),
       status: 'active', // active, paused, cancelled
+      amount: Number(bill?.amount ?? 0),
     };
+
     await setDoc(newRef, payload);
     return payload;
   },

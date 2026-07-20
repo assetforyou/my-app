@@ -8,6 +8,13 @@ import '../style/AlertsPanel.css';
 function AlertsPanel({ userEmail, portfolio, monthlyIncome, monthlyExpenses }) {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newAlert, setNewAlert] = useState({
+    title: '',
+    description: '',
+    severity: 'medium',
+    link: '',
+  });
   const { success, error: showError } = useToast();
 
   useEffect(() => {
@@ -18,6 +25,12 @@ function AlertsPanel({ userEmail, portfolio, monthlyIncome, monthlyExpenses }) {
   }, [userEmail, portfolio, monthlyIncome, monthlyExpenses]);
 
   const fetchAlerts = async () => {
+    if (!userEmail) {
+      setAlerts([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const activeAlerts = await AlertsService.fetchActiveAlerts(userEmail);
@@ -25,6 +38,7 @@ function AlertsPanel({ userEmail, portfolio, monthlyIncome, monthlyExpenses }) {
     } catch (err) {
       console.error('Error fetching alerts:', err);
       showError('Error loading alerts');
+      setAlerts([]);
     } finally {
       setLoading(false);
     }
@@ -42,6 +56,29 @@ function AlertsPanel({ userEmail, portfolio, monthlyIncome, monthlyExpenses }) {
     } catch (err) {
       console.error('Error generating alerts:', err);
       showError('Error generating alerts');
+    }
+  };
+
+  const handleAddAlert = async () => {
+    if (!newAlert.title.trim() || !newAlert.description.trim()) {
+      showError('Please add a title and description');
+      return;
+    }
+
+    try {
+      await AlertsService.addAlert({
+        ...newAlert,
+        userEmail,
+        // keep schema-friendly fields
+        severity: newAlert.severity || 'medium',
+      });
+      setShowAddModal(false);
+      setNewAlert({ title: '', description: '', severity: 'medium', link: '' });
+      await fetchAlerts();
+      success('Alert added');
+    } catch (err) {
+      console.error('Error adding alert:', err);
+      showError('Error adding alert');
     }
   };
 
@@ -72,6 +109,21 @@ function AlertsPanel({ userEmail, portfolio, monthlyIncome, monthlyExpenses }) {
           {alerts.length}
         </Badge>
       </h5>
+
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <Button
+          variant="outline-primary"
+          size="sm"
+          onClick={() => setShowAddModal(true)}
+          className="d-flex align-items-center gap-2"
+        >
+          <Plus size={16} /> Add Alert
+        </Button>
+
+        <Button variant="outline-secondary" size="sm" onClick={generateAlerts}>
+          Refresh Alerts
+        </Button>
+      </div>
 
       {alerts.length === 0 ? (
         <Card className="text-center text-muted p-4">
@@ -111,9 +163,64 @@ function AlertsPanel({ userEmail, portfolio, monthlyIncome, monthlyExpenses }) {
         </div>
       )}
 
-      <Button variant="outline-secondary" size="sm" onClick={generateAlerts} className="mt-3">
-        Refresh Alerts
-      </Button>
+      {/* Add Alert Modal */}
+      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Add Alert</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                value={newAlert.title}
+                onChange={(e) => setNewAlert({ ...newAlert, title: e.target.value })}
+                placeholder="e.g., High spending this month"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={newAlert.description}
+                onChange={(e) => setNewAlert({ ...newAlert, description: e.target.value })}
+                placeholder="e.g., Consider reducing entertainment spending"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Severity</Form.Label>
+              <Form.Select
+                value={newAlert.severity}
+                onChange={(e) => setNewAlert({ ...newAlert, severity: e.target.value })}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </Form.Select>
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Link (optional)</Form.Label>
+              <Form.Control
+                value={newAlert.link}
+                onChange={(e) => setNewAlert({ ...newAlert, link: e.target.value })}
+                placeholder="e.g., /expenses"
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleAddAlert}>
+            Save Alert
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

@@ -67,9 +67,13 @@ function BillTracker({ userEmail }) {
     }
   };
 
-  const monthlyTotal = BillTrackerService.calculateMonthlyBills(bills);
+  // Defensive defaults to avoid hard crashes when data is missing/invalid
+  const normalizedBills = Array.isArray(bills) ? bills : [];
 
-  const reductionOpportunities = BillTrackerService.findReductionOpportunities(bills);
+  const monthlyTotal = BillTrackerService.calculateMonthlyBills(normalizedBills);
+
+  const reductionOpportunities = BillTrackerService.findReductionOpportunities(normalizedBills);
+
 
   const frequencyLabel = {
     daily: '/day',

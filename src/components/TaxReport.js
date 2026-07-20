@@ -23,23 +23,32 @@ function TaxReport({ portfolio = [] }) {
         return;
       }
       
-      const report = generateTaxReport(selectedYear, portfolio);
-      const opportunities = generateTaxHarvestingOpportunities(portfolio);
+      const safePortfolio = Array.isArray(portfolio) ? portfolio : [];
+
+      const report = generateTaxReport(selectedYear, safePortfolio);
+      const opportunities = generateTaxHarvestingOpportunities(safePortfolio);
       
       // Ensure report has required fields
       const enrichedReport = {
         year: report.year,
         longTermGains: report.longTermGains || 0,
         shortTermGains: report.shortTermGains || 0,
-        longTermCount: portfolio.filter(a => a.type?.includes('Stock') || a.type?.includes('ETF')).length,
+        longTermCount: safePortfolio.filter(a => a?.type?.includes('Stock') || a?.type?.includes('ETF')).length,
         shortTermCount: 0,
-        gains: portfolio.map((a, idx) => ({
-          symbol: a.symbol || a.name || `Asset ${idx}`,
-          costBasis: a.purchasePrice ? (a.purchasePrice * (a.quantity || 1)) : 0,
-          currentValue: a.value || 0,
-          gain: (a.value || 0) - (a.purchasePrice ? (a.purchasePrice * (a.quantity || 1)) : 0),
-          type: a.soldDate ? 'long-term' : 'long-term',
-        })),
+        gains: safePortfolio.map((a, idx) => {
+          const quantity = Number(a?.quantity || 1);
+          const purchasePrice = Number(a?.purchasePrice || 0);
+          const costBasis = purchasePrice * quantity;
+          const currentValue = Number(a?.value || 0);
+          const gain = currentValue - costBasis;
+          return {
+            symbol: a?.symbol || a?.name || `Asset ${idx}`,
+            costBasis: costBasis || 0,
+            currentValue: currentValue || 0,
+            gain: gain || 0,
+            type: a?.soldDate ? 'long-term' : 'long-term',
+          };
+        }),
       };
       
       setTaxReport(enrichedReport);

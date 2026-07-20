@@ -12,8 +12,10 @@ function FinancialHealthDashboard({ portfolio, monthlyIncome, monthlyExpenses, u
   const [expenses, setExpenses] = useState(monthlyExpenses || 0);
 
   useEffect(() => {
+    // Recompute when inputs change (portfolio / manual income-expense overrides)
     calculateHealth();
-  }, [portfolio, income, expenses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portfolio, income, expenses, userEmail]);
 
   const calculateHealth = async () => {
     try {
@@ -44,6 +46,9 @@ function FinancialHealthDashboard({ portfolio, monthlyIncome, monthlyExpenses, u
         setHealthData(data);
         setIncome(finalIncome);
         setExpenses(finalExpenses);
+      } else {
+        // Avoid leaving the user stuck on “loading” when there are no assets.
+        setHealthData(null);
       }
     } catch (err) {
       console.error('Error calculating health:', err);

@@ -11,7 +11,9 @@ function ExpenseTracker({ userEmail }) {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('expense'); // 'expense' or 'income'
   const [formData, setFormData] = useState({ name: '', amount: '', category: '', date: new Date().toISOString().split('T')[0] });
+  const [isSaving, setIsSaving] = useState(false);
   const { success, error: showError } = useToast();
+
 
   const EXPENSE_CATEGORIES = ['Housing', 'Food', 'Transportation', 'Entertainment', 'Utilities', 'Healthcare', 'Other'];
 
@@ -35,12 +37,23 @@ function ExpenseTracker({ userEmail }) {
   };
 
   const handleAddEntry = async () => {
-    if (!formData.name || !formData.amount) {
-      showError('Please fill in all fields');
-      return;
-    }
+    console.log('[ExpenseTracker] handleAddEntry fired', { modalMode, formData, userEmail, isSaving });
 
+    if (isSaving) return;
+
+    setIsSaving(true);
     try {
+      if (!userEmail) {
+        console.error('[ExpenseTracker] User not authenticated');
+        showError('User not authenticated');
+        return;
+      }
+      if (!formData.name || !formData.amount) {
+        console.error('[ExpenseTracker] Validation failed', { name: formData.name, amount: formData.amount });
+        showError('Please fill in all fields');
+        return;
+      }
+
       if (modalMode === 'expense') {
         const exp = await ExpenseService.addExpense({
           name: formData.name,
@@ -49,7 +62,8 @@ function ExpenseTracker({ userEmail }) {
           date: formData.date,
           userEmail,
         });
-        setExpenses([...expenses, exp]);
+        console.log('[ExpenseTracker] addExpense result', exp);
+        setExpenses((prev) => [...prev, exp]);
         success('Expense added');
       } else {
         const inc = await ExpenseService.addIncome({
@@ -58,13 +72,21 @@ function ExpenseTracker({ userEmail }) {
           date: formData.date,
           userEmail,
         });
-        setIncome([...income, inc]);
+        console.log('[ExpenseTracker] addIncome result', inc);
+        setIncome((prev) => [...prev, inc]);
         success('Income added');
       }
+
       setFormData({ name: '', amount: '', category: '', date: new Date().toISOString().split('T')[0] });
       setShowModal(false);
+
+      // Refresh so the newly saved item is guaranteed to appear
+      await fetchData();
     } catch (err) {
+      console.error('[ExpenseTracker] Failed to add entry:', err);
       showError('Failed to add entry');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -137,7 +159,7 @@ function ExpenseTracker({ userEmail }) {
         </Button>
       </div>
 
-      {/* Expenses Table */}
+      {/* Recent Expenses */}
       <Card className="mb-4">
         <Card.Header>Recent Expenses</Card.Header>
         <Table striped size="sm">
@@ -162,6 +184,36 @@ function ExpenseTracker({ userEmail }) {
               <tr>
                 <td colSpan={4} className="text-center text-muted">
                   No expenses this month
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+      </Card>
+
+      {/* Recent Income */}
+      <Card className="mb-4">
+        <Card.Header>Recent Income</Card.Header>
+        <Table striped size="sm">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {income.map((i) => (
+              <tr key={i.id}>
+                <td>{new Date(i.date).toLocaleDateString()}</td>
+                <td>{i.name}</td>
+                <td className="text-success">${(i.amount || 0).toFixed(2)}</td>
+              </tr>
+            ))}
+            {income.length === 0 && (
+              <tr>
+                <td colSpan={3} className="text-center text-muted">
+                  No income this month
                 </td>
               </tr>
             )}
@@ -227,8 +279,8 @@ function ExpenseTracker({ userEmail }) {
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleAddEntry}>
-            Save
+          <Button variant="primary" onClick={handleAddEntry} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save'}
           </Button>
         </Modal.Footer>
       </Modal>

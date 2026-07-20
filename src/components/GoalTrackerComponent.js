@@ -260,8 +260,8 @@ function GoalTracker({ userEmail }) {
                     <Button
                       variant="outline-secondary"
                       size="sm"
-                      onClick={() => {
-                        const input = event.target.parentElement.querySelector('input');
+                      onClick={(e) => {
+                        const input = e.currentTarget.parentElement.querySelector('input');
                         handleUpdateProgress(goal.id, Number(input.value));
                       }}
                     >

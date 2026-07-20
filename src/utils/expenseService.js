@@ -6,15 +6,20 @@ const ExpenseService = {
   // Save expense record
   addExpense: async (expense) => {
     const user = auth.currentUser;
-    if (!user?.email) throw new Error('User not authenticated');
+    const userEmail = expense?.userEmail || user?.email;
+    if (!userEmail) throw new Error('User not authenticated');
+
     const colRef = collection(db, 'expenses');
     const newRef = doc(colRef);
+
     const payload = {
       ...expense,
       id: newRef.id,
-      userEmail: user.email,
+      userEmail,
       createdAt: new Date().toISOString(),
+      amount: Number(expense?.amount ?? 0),
     };
+
     await setDoc(newRef, payload);
     return payload;
   },
@@ -51,15 +56,20 @@ const ExpenseService = {
   // Save income record
   addIncome: async (income) => {
     const user = auth.currentUser;
-    if (!user?.email) throw new Error('User not authenticated');
+    const userEmail = income?.userEmail || user?.email;
+    if (!userEmail) throw new Error('User not authenticated');
+
     const colRef = collection(db, 'income');
     const newRef = doc(colRef);
+
     const payload = {
       ...income,
       id: newRef.id,
-      userEmail: user.email,
+      userEmail,
       createdAt: new Date().toISOString(),
+      amount: Number(income?.amount ?? 0),
     };
+
     await setDoc(newRef, payload);
     return payload;
   },

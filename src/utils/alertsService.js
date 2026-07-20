@@ -6,13 +6,14 @@ const AlertsService = {
   // Alert types: price_change, rebalance_due, debt_alert, goal_milestone, tax_harvest
   addAlert: async (alert) => {
     const user = auth.currentUser;
-    if (!user?.email) throw new Error('User not authenticated');
+    const userEmail = alert?.userEmail || user?.email;
+    if (!userEmail) throw new Error('User not authenticated');
     const colRef = collection(db, 'alerts');
     const newRef = doc(colRef);
     const payload = {
       ...alert,
       id: newRef.id,
-      userEmail: user.email,
+      userEmail: userEmail,
       createdAt: new Date().toISOString(),
       dismissed: false,
     };
@@ -44,6 +45,10 @@ const AlertsService = {
 
   // Auto-generate alerts based on portfolio state
   generateAlerts: async (portfolio, monthlyIncome, monthlyExpenses, userEmail) => {
+    if (!userEmail) {
+      throw new Error('User not authenticated');
+    }
+
     const existingAlerts = await AlertsService.fetchActiveAlerts(userEmail);
     const existingTypes = existingAlerts.map((a) => a.type + '_' + (a.assetId || '')).join('|');
 
@@ -100,9 +105,9 @@ const AlertsService = {
       });
     }
 
-    // Save all new alerts
+    // Save all new alerts (ensure userEmail is present even if auth.currentUser is not ready)
     for (const alert of newAlerts) {
-      await AlertsService.addAlert(alert);
+      await AlertsService.addAlert({ ...alert, userEmail });
     }
 
     return newAlerts;
